@@ -40,6 +40,10 @@ import (
 	"github.com/adrg/xdg"
 )
 
+var (
+	version = "dev"
+)
+
 const (
 	cacheVersion         = "v1"
 	hexDigestPlaceholder = "_"
@@ -295,7 +299,7 @@ The %s environment variable controls output verbosity; false decreases, true inc
 		rc = 1
 		return
 	}
-	req.Header.Set("User-Agent", prog) // TODO version
+	req.Header.Set("User-Agent", prog+"/"+version)
 	// TODO if no checksum, do conditional get: If-None-Match, If-Modified-Since?
 
 	resp, err := hc.Do(req)
