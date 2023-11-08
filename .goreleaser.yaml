@@ -15,7 +15,8 @@ builds:
         goarch: arm64
 
 archives:
-  - format: binary
+  - id: wrun-bin
+    format: binary
 
 nfpms:
   - id: wrun-nfpm
@@ -48,7 +49,7 @@ nfpms:
       group: Applications/Internet
 
 release:
-  ids: [wrun]
+  ids: [wrun-bin]
   footer: >-
     apt and dnf/yum package repositories are available at
     [Packagecloud](https://packagecloud.io/scop/wrun).
