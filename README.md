@@ -21,7 +21,9 @@ URL fragments are treated as hex encoded digests for the download, and checked.
 The first non-flag argument or -- terminates wrun arguments.
 Remaining ones are passed to the downloaded one.
 
-The WRUN_VERBOSE environment variable controls output verbosity; false decreases, true increases.
+Environment variables:
+- WRUN_CACHE_HOME: location of the cache, defaults to wrun in the user cache dir
+- WRUN_VERBOSE: controls output verbosity; false decreases, true increases
 ```
 
 ## License

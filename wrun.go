@@ -188,6 +188,8 @@ func main() {
 
 	// Process flags
 
+	cacheDirEnvVar := strings.ToUpper(prog) + "_CACHE_HOME"
+
 	var (
 		err         error
 		urlMatches  []urlMatch
@@ -208,8 +210,10 @@ URL fragments are treated as hex encoded digests for the download, and checked.
 The first non-flag argument or -- terminates %s arguments.
 Remaining ones are passed to the downloaded one.
 
-The %s environment variable controls output verbosity; false decreases, true increases.
-`, prog, prog, verboseEnvVar)
+Environment variables:
+- %s: location of the cache, defaults to %s in the user cache dir
+- %s: controls output verbosity; false decreases, true increases
+`, prog, prog, cacheDirEnvVar, prog, verboseEnvVar)
 		} else {
 			errorOut("parse flags: %v", err)
 			rc = 2 // usage
@@ -245,7 +249,13 @@ The %s environment variable controls output verbosity; false decreases, true inc
 	// Set up cache
 
 	_, exeBase := path.Split(ur.Path)
-	exePath, err := xdg.CacheFile(filepath.Join(prog, cacheVersion, urlDir(ur), exeBase))
+	var exePath string
+	if cacheDir := os.Getenv(strings.ToUpper(prog) + "_CACHE_HOME"); cacheDir != "" {
+		exePath = filepath.Join(cacheDir, exeBase)
+		err = os.MkdirAll(cacheDir, 0o777)
+	} else {
+		exePath, err = xdg.CacheFile(filepath.Join(prog, cacheVersion, urlDir(ur), exeBase))
+	}
 	if err != nil {
 		errorOut("cache setup: %v", err)
 		rc = 1
