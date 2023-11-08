@@ -18,7 +18,7 @@ archives:
   - format: binary
 
 nfpms:
-  - id: wrun
+  - id: wrun-nfpm
     package_name: wrun
     file_name_template: "{{ .ConventionalFileName }}"
     builds: [wrun]
@@ -46,6 +46,12 @@ nfpms:
         packager: rpm
     rpm:
       group: Applications/Internet
+
+release:
+  ids: [wrun]
+  footer: >-
+    apt and dnf/yum package repositories are available at
+    [Packagecloud](https://packagecloud.io/scop/wrun).
 
 changelog:
   use: github
