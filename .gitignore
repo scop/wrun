@@ -1,2 +1,4 @@
+/.rtx.*.local.toml
+/.rtx.local.toml
 /dist/
 /wrun
