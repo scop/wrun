@@ -1,4 +1,4 @@
-module execdl
+module wrun
 
 go 1.21
 

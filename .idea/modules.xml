@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/execdl.iml" filepath="$PROJECT_DIR$/.idea/execdl.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/wrun.iml" filepath="$PROJECT_DIR$/.idea/wrun.iml" />
     </modules>
   </component>
 </project>

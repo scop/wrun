@@ -74,7 +74,7 @@ func prepareHash(s string) (crypto.Hash, []byte, error) {
 		return 0, nil, err
 	}
 	var found bool
-	hashType, found = hashes[len(digest)] // TODO could support something more elaborate, e.g. `{algo}hexdigest`
+	hashType, found = hashes[len(digest)] // TODO could support something more elaborate, e.g. `{algo}hexdigest` or `algo-hexdigest` or `algo-base64digest` (SRI, https://w3c.github.io/webappsec-subresource-integrity/)
 	if !found {
 		return 0, nil, fmt.Errorf("no supported hash with digest size %d", len(digest))
 	}
@@ -365,6 +365,7 @@ The %s environment variable controls output verbosity; false decreases, true inc
 		return
 	}
 
+	/* TODO does not build on Windows
 	umask := syscall.Umask(0)
 	syscall.Umask(umask)
 	if err = os.Chmod(exePath, os.FileMode(0o777 & ^umask)); err != nil {
@@ -372,6 +373,7 @@ The %s environment variable controls output verbosity; false decreases, true inc
 		rc = 1
 		return
 	}
+	*/
 
 	// Write metadata
 
