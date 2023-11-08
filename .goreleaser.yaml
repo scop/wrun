@@ -1,0 +1,57 @@
+builds:
+  - id: wrun
+    env:
+      - CGO_ENABLED=0
+    main: .
+    binary: wrun
+    goos: [darwin, linux, windows]
+    goarch: [amd64, arm, arm64]
+    ignore:
+      - goos: darwin
+        goarch: arm
+      - goos: windows
+        goarch: arm
+      - goos: windows
+        goarch: arm64
+
+archives:
+  - format: binary
+
+nfpms:
+  - id: wrun
+    package_name: wrun
+    file_name_template: "{{ .ConventionalFileName }}"
+    builds: [wrun]
+    vendor: Ville Skyttä
+    homepage: https://github.com/scop/wrun
+    maintainer: Ville Skyttä <ville.skytta@iki.fi>
+    description: Download, cache, and run executables, same command for multiple OS/architectures
+    license: Apache-2.0
+    section: web
+    formats: [deb, rpm]
+    contents:
+      - src: LICENSE
+        dst: /usr/share/doc/wrun/copyright
+        packager: deb
+      - src: LICENSE
+        dst: /usr/share/doc/wrun/LICENSE
+        type: license
+        packager: rpm
+      - src: README.md
+        dst: /usr/share/doc/wrun/README.md
+        packager: deb
+      - src: README.md
+        dst: /usr/share/doc/wrun/README.md
+        type: readme
+        packager: rpm
+    rpm:
+      group: Applications/Internet
+
+checksum:
+  name_template: checksums.txt
+
+changelog:
+  use: github
+  filters:
+    exclude:
+      - ^Merge pull request
