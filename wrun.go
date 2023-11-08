@@ -364,16 +364,11 @@ The %s environment variable controls output verbosity; false decreases, true inc
 		rc = 1
 		return
 	}
-
-	/* TODO does not build on Windows
-	umask := syscall.Umask(0)
-	syscall.Umask(umask)
-	if err = os.Chmod(exePath, os.FileMode(0o777 & ^umask)); err != nil {
+	if err = makeExecutable(exePath); err != nil {
 		errorOut("make executable: %v", err)
 		rc = 1
 		return
 	}
-	*/
 
 	// Write metadata
 
