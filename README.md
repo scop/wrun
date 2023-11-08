@@ -1,6 +1,7 @@
 # wrun
 
-`wrun` downloads an executable, caches it, and runs it with arguments.
+`wrun` downloads, caches, and runs an executable,
+with the same one command for multiple OS/architectures.
 
 ```shellsession
 $ wrun --help
@@ -11,6 +12,7 @@ Usage of wrun:
     	[<OS>/<architecture>=]URL (at least one required to match)
 
 wrun downloads, caches, and runs executables.
+The same one command works for multiple OS/architectures.
 
 The runtime OS and architecture are matched against the given URL matchers.
 The first matching one in the order given is chosen as the URL to download.

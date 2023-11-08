@@ -200,6 +200,7 @@ func main() {
 		if errors.Is(err, flag.ErrHelp) {
 			fmt.Printf(`
 %s downloads, caches, and runs executables.
+The same one command works for multiple OS/architectures.
 
 The runtime OS and architecture are matched against the given URL matchers.
 The first matching one in the order given is chosen as the URL to download.
