@@ -47,9 +47,6 @@ nfpms:
     rpm:
       group: Applications/Internet
 
-checksum:
-  name_template: checksums.txt
-
 changelog:
   use: github
   filters:
