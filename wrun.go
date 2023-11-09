@@ -45,6 +45,8 @@ var (
 )
 
 const (
+	cacheDirEnvVar       = "WRUN_CACHE_HOME"
+	verboseEnvVar        = "WRUN_VERBOSE"
 	cacheVersion         = "v1"
 	hexDigestPlaceholder = "_"
 )
@@ -162,7 +164,6 @@ func main() {
 
 	// Set up output
 
-	verboseEnvVar := strings.ToUpper(prog) + "_VERBOSE"
 	var verbose *bool
 	if s, ok := os.LookupEnv(verboseEnvVar); ok {
 		v, _ := strconv.ParseBool(s)
@@ -187,8 +188,6 @@ func main() {
 	}
 
 	// Process flags
-
-	cacheDirEnvVar := strings.ToUpper(prog) + "_CACHE_HOME"
 
 	var (
 		err         error
@@ -251,7 +250,7 @@ Environment variables:
 
 	_, exeBase := path.Split(ur.Path)
 	var exePath string
-	if cacheDir := os.Getenv(strings.ToUpper(prog) + "_CACHE_HOME"); cacheDir != "" {
+	if cacheDir := os.Getenv(cacheDirEnvVar); cacheDir != "" {
 		exePath = filepath.Join(cacheDir, exeBase)
 		err = os.MkdirAll(cacheDir, 0o777)
 	} else {
