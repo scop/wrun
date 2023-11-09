@@ -1,0 +1,11 @@
+- id: wrun
+  name: wrun
+  description: Web executable launcher (prebuilt binary)
+  language: python
+  entry: wrun
+
+- id: wrun-src
+  name: wrun
+  description: Web executable launcher (native install from source)
+  language: golang
+  entry: wrun
