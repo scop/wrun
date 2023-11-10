@@ -1,0 +1,22 @@
+name: Release to PyPI
+
+on:
+  push:
+    tags: ["v*-*"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build distribution
+        run: |
+          set -euxo pipefail
+          python3 -m pip install -U build
+          python3 -m build --sdist
+          ls dist
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
