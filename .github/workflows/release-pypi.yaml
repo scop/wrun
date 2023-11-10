@@ -1,0 +1,51 @@
+name: Release to PyPI
+
+on:
+  push:
+    tags: ["v*-*"]
+
+jobs:
+  sanity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Sanity check setup.cfg
+        run: |
+          grep -x "version = ${GITHUB_REF#refs/tags/v}" setup.cfg
+  build:
+    strategy:
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    needs: sanity
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build source distribution
+        if: startsWith(matrix.os, 'ubuntu')
+        run: |
+          set -euxo pipefail
+          python3 -m pip install build~=1.0
+          python3 -m build --sdist --outdir wheelhouse
+          ls wheelhouse
+      - name: Build wheels
+        run: |
+          ${{ !startsWith(matrix.os, 'windows') && 'set -euxo pipefail' || '' }}
+          python3 -m pip install cibuildwheel~=2.16
+          cibuildwheel
+          ls wheelhouse
+      - uses: actions/upload-artifact@v3
+        with:
+          name: dist-files
+          path: wheelhouse/*
+  release:
+    runs-on: ubuntu-latest
+    needs: build
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v3
+        with:
+          name: dist-files
+          path: dist
+      - run: ls dist
+      - uses: pypa/gh-action-pypi-publish@release/v1
