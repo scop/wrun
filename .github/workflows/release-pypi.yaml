@@ -21,7 +21,7 @@ jobs:
       - name: Run auditwheel
         if: startsWith(matrix.os, 'ubuntu')
         run: |
-          set -euo pipefail
+          set -euxo pipefail
           origwhl=dist/*.whl
           docker run -v $PWD:/work -w /work \
           quay.io/pypa/manylinux1_x86_64 \
