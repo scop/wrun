@@ -5,18 +5,44 @@ on:
     tags: ["v*-*"]
 
 jobs:
-  release:
-    runs-on: ubuntu-latest
-    permissions:
-      id-token: write
+  build:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - name: Build distribution
         run: |
-          set -euxo pipefail
+          ${{ !startsWith(matrix.os, 'windows') && 'set -euxo pipefail' || '' }}
           python3 -m pip install -U build
-          python3 -m build --sdist
+          python3 -m build ${{ !startsWith(matrix.os, 'ubuntu') && '--wheel' || '' }}
           ls dist
+      - name: Run auditwheel
+        if: startsWith(matrix.os, 'ubuntu')
+        run: |
+          set -euo pipefail
+          origwhl=dist/*.whl
+          docker run -v $PWD:/work -w /work \
+          quay.io/pypa/manylinux1_x86_64 \
+          sh -c "auditwheel show $origwhl && auditwheel repair -w dist $origwhl"
+          rm $origwhl
+          ls dist/*.whl
+      - uses: actions/upload-artifact@v3
+        with:
+          name: dist-files
+          path: dist/*
+  release:
+    runs-on: ubuntu-latest
+    needs: build
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v3
+        with:
+          name: dist-files
+          path: dist
+      - run: ls -lR
       - uses: pypa/gh-action-pypi-publish@release/v1
         with:
           repository-url: https://test.pypi.org/legacy/
