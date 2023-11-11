@@ -22,7 +22,7 @@ jobs:
         if: startsWith(matrix.os, 'ubuntu')
         run: |
           set -euxo pipefail
-          origwhl=dist/*.whl
+          origwhl=$(ls dist/*.whl)
           docker run -v $PWD:/work -w /work \
           quay.io/pypa/manylinux1_x86_64 \
           sh -c "auditwheel show $origwhl && auditwheel repair -w dist $origwhl"
