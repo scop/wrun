@@ -5,10 +5,12 @@ builds:
     main: .
     binary: wrun
     goos: [darwin, linux, windows]
-    goarch: [amd64, arm, arm64]
+    goarch: [amd64, arm, arm64, 386]
     ignore:
       - goos: darwin
         goarch: arm
+      - goos: darwin
+        goarch: 386
       - goos: windows
         goarch: arm
       - goos: windows
