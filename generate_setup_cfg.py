@@ -6,7 +6,7 @@ import sys
 from urllib.parse import quote as urlquote
 from urllib.request import urlopen
 
-# TODO: verify linux/386 (& i686 too?), linux/armv6hf, and windows/386 markers
+# TODO: verify linux/386 (i386), linux/armv6hf, and windows/386 markers
 setup_cfg_template = """
 [metadata]
 name = wrun_py
@@ -43,6 +43,7 @@ download_scripts =
     [wrun]
     group = wrun-binary
     marker = sys_platform == "linux" and platform_machine == "i386"
+    marker = sys_platform == "linux" and platform_machine == "i686"
     url = ${url_linux_386}
     sha256 = ${sha256_linux_386}
     [wrun]
