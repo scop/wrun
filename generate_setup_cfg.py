@@ -6,6 +6,7 @@ import sys
 from urllib.parse import quote as urlquote
 from urllib.request import urlopen
 
+# TODO: verify linux/386 (& i686 too?), linux/armv6hf, and windows/386 markers
 setup_cfg_template = """
 [metadata]
 name = wrun_py
@@ -41,7 +42,7 @@ download_scripts =
     sha256 = ${sha256_darwin_arm64}
     [wrun]
     group = wrun-binary
-    marker = sys_platform == "linux" and platform_machine == "i386" # TODO: verify, i686 too?
+    marker = sys_platform == "linux" and platform_machine == "i386"
     url = ${url_linux_386}
     sha256 = ${sha256_linux_386}
     [wrun]
@@ -56,14 +57,14 @@ download_scripts =
     sha256 = ${sha256_linux_arm64}
     [wrun]
     group = wrun-binary
-    marker = sys_platform == "linux" and platform_machine == "armv6hf" # TODO: verify
+    marker = sys_platform == "linux" and platform_machine == "armv6hf"
     marker = sys_platform == "linux" and platform_machine == "armv7l"
     url = ${url_linux_armv6}
     sha256 = ${url_linux_armv6}
     [wrun.exe]
     group = wrun-binary
-    marker = sys_platform == "win32" and platform_machine == "x86" # TODO: verify
-    marker = sys_platform == "cygwin" and platform_machine == "i386" # TODO: verify
+    marker = sys_platform == "win32" and platform_machine == "x86"
+    marker = sys_platform == "cygwin" and platform_machine == "i386"
     url = ${url_windows_386}
     sha256 = ${sha256_windows_386}
     [wrun.exe]
