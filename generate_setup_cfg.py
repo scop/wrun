@@ -20,7 +20,7 @@ author_email = ville.skytta@iki.fi
 license = Apache License 2.0
 license_files = LICENSE
 classifiers =
-    License :: OSI Approved :: MIT License
+    License :: OSI Approved :: Apache Software License
     Programming Language :: Python :: 3
 
 [options]
