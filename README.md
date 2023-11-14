@@ -30,6 +30,27 @@ Environment variables:
 - WRUN_VERBOSE: controls output verbosity; false decreases, true increases
 ```
 
+## Installation
+
+Prebuilt binaries are available in
+[project releases](https://github.com/scop/wrun/releases),
+apt and yum package repositories at
+[Packagecloud](https://packagecloud.io/scop/wrun).
+
+Prebuilt binaries are also available from PyPI,
+in the [`wrun-py`](https://pypi.org/project/wrun-py/) package,
+installabled for example with `pip`:
+
+```shell
+python3 -m pip install wrun-py
+```
+
+To build and install from sources, Go is required.
+
+```
+go install github.com/scop/wrun@latest
+```
+
 ## CI usage
 
 Cache resides by default in the
