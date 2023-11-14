@@ -1,4 +1,4 @@
-module wrun
+module github.com/scop/wrun
 
 go 1.21
 
