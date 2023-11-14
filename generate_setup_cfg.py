@@ -20,8 +20,15 @@ author_email = ville.skytta@iki.fi
 license = Apache License 2.0
 license_files = LICENSE
 classifiers =
+    Development Status :: 4 - Beta
+    Intended Audience :: Developers
     License :: OSI Approved :: Apache Software License
+    Operating System :: MacOS
+    Operating System :: Microsoft :: Windows
+    Operating System :: POSIX :: Linux
     Programming Language :: Python :: 3
+    Topic :: Internet :: WWW/HTTP
+    Topic :: Utilities
 
 [options]
 python_requires = >=3.8
