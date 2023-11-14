@@ -39,7 +39,7 @@ apt and yum package repositories at
 
 Prebuilt binaries are also available from PyPI,
 in the [`wrun-py`](https://pypi.org/project/wrun-py/) package,
-installabled for example with `pip`:
+installable for example with `pip`:
 
 ```shell
 python3 -m pip install wrun-py
