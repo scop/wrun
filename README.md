@@ -30,6 +30,15 @@ Environment variables:
 - WRUN_VERBOSE: controls output verbosity; false decreases, true increases
 ```
 
+## CI usage
+
+Cache resides by default in the
+[`$XDG_CACHE_HOME`](https://github.com/adrg/xdg#xdg-base-directory)`/wrun`
+directory. `$WRUN_CACHE_HOME` overrides it.
+
+[pre-commit.ci](https://pre-commit.ci) is not supported, because it
+[disallows network access at runtime](https://github.com/pre-commit-ci/issues/issues/196#issuecomment-1810937079).
+
 ## License
 
 SPDX-License-Identifier: Apache-2.0
