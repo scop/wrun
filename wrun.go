@@ -51,13 +51,23 @@ const (
 	hexDigestPlaceholder = "_"
 )
 
-var hashes = map[int]crypto.Hash{
+var hashesBySize = map[int]crypto.Hash{
 	crypto.MD5.Size():    crypto.MD5,
 	crypto.SHA1.Size():   crypto.SHA1,
 	crypto.SHA224.Size(): crypto.SHA224,
 	crypto.SHA256.Size(): crypto.SHA256,
 	crypto.SHA384.Size(): crypto.SHA384,
 	crypto.SHA512.Size(): crypto.SHA512,
+}
+var hashesByName = map[string]crypto.Hash{
+	"md4":       crypto.MD4,
+	"md5":       crypto.MD5,
+	"sha1":      crypto.SHA1,
+	"sha224":    crypto.SHA224,
+	"sha256":    crypto.SHA256,
+	"sha384":    crypto.SHA384,
+	"sha512":    crypto.SHA512,
+	"ripemd160": crypto.RIPEMD160,
 }
 
 // prepareHash prepares a hash corresponding to the given digest string.
@@ -67,18 +77,32 @@ func prepareHash(s string) (crypto.Hash, []byte, error) {
 	if s == "" {
 		return 0, []byte{}, nil
 	}
+	hashName, hexHash, found := strings.Cut(s, "-") // Docker Hub style, hash=hexDigest
+	if !found {
+		hashName, hexHash, found = strings.Cut(s, "=") // PyPI style, hash-hexDigest
+		if !found {
+			hashName = ""
+			hexHash = s
+		}
+	}
 	var (
 		digest   []byte
 		hashType crypto.Hash
 	)
-	digest, err := hex.DecodeString(s)
+	digest, err := hex.DecodeString(hexHash)
 	if err != nil {
 		return 0, nil, err
 	}
-	var found bool
-	hashType, found = hashes[len(digest)] // TODO could support something more elaborate, e.g. `{algo}hexdigest` or `algo-hexdigest` or `algo-base64digest` (SRI, https://w3c.github.io/webappsec-subresource-integrity/)
-	if !found {
-		return 0, nil, fmt.Errorf("no supported hash with digest size %d", len(digest))
+	if hashName != "" {
+		hashType, found = hashesByName[hashName]
+		if !found {
+			return 0, nil, fmt.Errorf("no supported hash with name %q", hashName)
+		}
+	} else {
+		hashType, found = hashesBySize[len(digest)]
+		if !found {
+			return 0, nil, fmt.Errorf("no supported hash with digest size %d", len(digest))
+		}
 	}
 	if !hashType.Available() {
 		return 0, nil, fmt.Errorf("hash %s not available", hashType)

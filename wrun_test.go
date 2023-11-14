@@ -17,6 +17,7 @@
 package main
 
 import (
+	"crypto"
 	"flag"
 	"net/url"
 	"testing"
@@ -168,6 +169,46 @@ func Test_urlDir(t *testing.T) {
 			u, err := url.Parse(tt.url)
 			require.NoError(t, err)
 			assert.Equal(t, tt.want, urlDir(u))
+		})
+	}
+}
+
+func Test_prepareHash(t *testing.T) {
+	tests := []struct {
+		fragment  string
+		wantHash  crypto.Hash
+		wantInErr string
+	}{
+		{
+			"2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824",
+			crypto.SHA256,
+			"",
+		},
+		{
+			"sha256=2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824",
+			crypto.SHA256,
+			"",
+		},
+		{
+			"sha256-2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824",
+			crypto.SHA256,
+			"",
+		},
+		{
+			"deadbeef",
+			0,
+			"no supported hash",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.fragment, func(t *testing.T) {
+			hash, _, err := prepareHash(tt.fragment)
+			if tt.wantInErr == "" {
+				require.NoError(t, err)
+				assert.Equal(t, tt.wantHash, hash)
+			} else {
+				require.ErrorContains(t, err, tt.wantInErr)
+			}
 		})
 	}
 }
