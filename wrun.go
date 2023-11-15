@@ -37,7 +37,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/adrg/xdg"
 	"github.com/mholt/archiver/v3"
 )
 
@@ -182,31 +181,29 @@ func resolveCacheDir(usePreCommitCache bool) (string, error) {
 		cacheDir = os.Getenv("PRE_COMMIT_HOME")
 		if cacheDir != "" {
 			cacheDir = filepath.Join(cacheDir, "wrun")
-		}
-		if cacheDir == "" {
-			if os.Getenv("XDG_CACHE_HOME") == "" {
-				// Avoid adrg/xdg's platform specific cache home behavior which pre-commit does not do
-				// https://github.com/pre-commit/pre-commit/blob/2280645d0e2f1fa54654d8c36cc8d62f15f4d413/pre_commit/store.py#L32-L34
+		} else {
+			// Do not use os.UserCacheDir(), it has platform specific behavior not matching what pre-commit does.
+			// https://github.com/pre-commit/pre-commit/blob/2280645d0e2f1fa54654d8c36cc8d62f15f4d413/pre_commit/store.py#L32-L34
+			if xdgCacheHome := os.Getenv("XDG_CACHE_HOME"); xdgCacheHome == "" {
 				var homeDir string
 				if homeDir, err = os.UserHomeDir(); err != nil {
-					if err = os.Setenv("XDG_CACHE_HOME", filepath.Join(homeDir, ".cache")); err != nil {
-						xdg.Reload()
-					}
+					return "", fmt.Errorf("cache dir: %w", err)
 				}
+				cacheDir = filepath.Join(homeDir, ".cache")
+			} else {
+				cacheDir = xdgCacheHome
 			}
-			if err == nil {
-				cacheDir, err = xdg.CacheFile(filepath.Join("pre-commit", "wrun"))
-			}
+			cacheDir = filepath.Join(cacheDir, "pre-commit", "wrun")
 		}
-	}
-	if cacheDir == "" {
+	} else {
 		cacheDir = os.Getenv(cacheDirEnvVar)
-	}
-	if cacheDir == "" {
-		cacheDir, err = xdg.CacheFile("wrun")
-	}
-	if err != nil {
-		return "", err
+		if cacheDir == "" {
+			cacheDir, err = os.UserCacheDir()
+			if err != nil {
+				return "", fmt.Errorf("cache dir: %w", err)
+			}
+			cacheDir = filepath.Join(cacheDir, "wrun")
+		}
 	}
 	cacheDir = filepath.Join(cacheDir, cacheVersion)
 	return cacheDir, nil
