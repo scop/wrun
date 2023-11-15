@@ -51,6 +51,21 @@ To build and install from sources, Go is required.
 go install github.com/scop/wrun@latest
 ```
 
+## URL matching
+
+URLs are matched against the Go toolchain wrun was built with using
+the `OS/architecture=` prefix given along with the URLs. Valid values
+for these come from Go, the list is available by running
+`go tool dist list`, or from
+[Go sources](https://cs.opensource.google/go/go/+/refs/tags/go1.21.4:src/cmd/dist/build.go;l=1689-1743).
+
+OS and architecture may contain globs. The special case where the
+`OS/architecture=` prefix is left out is treated as if `*/*=` was
+given.
+
+Order of specifying the URLs is significant; the first matching one
+is chosen.
+
 ## CI usage
 
 Cache resides by default in the
