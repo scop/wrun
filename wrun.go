@@ -47,7 +47,7 @@ var (
 const (
 	cacheDirEnvVar            = "WRUN_CACHE_HOME"
 	verboseEnvVar             = "WRUN_VERBOSE"
-	cacheVersion              = "v1"
+	cacheVersion              = "v2"
 	cacheDirDigestPlaceholder = "_"
 )
 
