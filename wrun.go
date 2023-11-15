@@ -298,14 +298,15 @@ Environment variables:
 		rc = 1
 		return
 	}
-	defer func() {
+	cleanUpTempFile := func() {
+		if closeErr := tmpf.Close(); err != nil && !errors.Is(closeErr, os.ErrClosed) {
+			warnOut("close tempfile: %v", closeErr)
+		}
 		if rmErr := os.Remove(tmpf.Name()); rmErr != nil && !errors.Is(rmErr, os.ErrNotExist) {
 			warnOut("remove tempfile: %v", rmErr)
 		}
-	}()
-	defer func() {
-		_ = tmpf.Close() // ignore error, we may have eagerly closed it already // TODO don't close multiple times, results are undefined
-	}()
+	}
+	defer cleanUpTempFile() // Note: does not happen if we exec successfully
 
 	// Download
 
@@ -397,6 +398,7 @@ Environment variables:
 
 	// Execute
 
+	cleanUpTempFile() // Note: deferred cleanup does not happen if we exec successfully
 	err = exec(exePath)
 	errorOut("exec: %v", err)
 	rc = 1
