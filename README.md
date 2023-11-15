@@ -20,7 +20,7 @@ The matcher OS and architecture may be globs.
 As a special case, a plain URL with no matcher part is treated as if it was given with the matcher */*.
 URL fragments are treated as hex encoded digests for the download, and checked.
 Digest types are identified by type=hexHash or type-hexHash formatted fragments,
-falling back to determining based on the digest length,
+falling back to determining based on the digest length.
 
 The first non-flag argument or -- terminates wrun arguments.
 Remaining ones are passed to the downloaded one.
@@ -50,6 +50,35 @@ To build and install from sources, Go is required.
 ```
 go install github.com/scop/wrun@latest
 ```
+
+## URL matching
+
+URLs are matched against the Go toolchain wrun was built with using
+the `OS/architecture=` prefix given along with the URLs. Valid values
+for these come from Go, the list is available by running
+`go tool dist list`, or from
+[Go sources](https://cs.opensource.google/go/go/+/refs/tags/go1.21.4:src/cmd/dist/build.go;l=1689-1743).
+
+OS and architecture may contain globs. The special case where the
+`OS/architecture=` prefix is left out is treated as if `*/*=` was
+given.
+
+Order of specifying the URLs is significant; the first matching one
+is chosen.
+
+## Download digests
+
+To verify downloads against known good digests, place a digest in the URL
+fragment.
+Supported fragment formats are `digestAlgo-hexDigest`, `digestAlgo=hexDigest`,
+or plain `hexDigest` alone (in which case the digest length is used to determine
+the digest algorithm).
+
+For example:
+
+- `#sha256-2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9842`
+- `#sha512=9b71d224bd62f3785d96d46ad3ea3d73319bfbc2890caadae2dff72519673ca72323c3d99ba5c11d7c7acc6e14b8c5da0c4663475c2e5c3adef46f73bcdec043`
+- `#5d41402abc4b2a76b9719d911017c592` (MD-5 based on length)
 
 ## CI usage
 
