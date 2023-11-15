@@ -327,9 +327,6 @@ Environment variables:
 		rc = 1
 		return
 	}
-	defer func() {
-		_ = resp.Body.Close() // ignore error, we may have eagerly closed it already // TODO don't close multiple times, results are undefined
-	}()
 
 	var (
 		hsh hash.Hash
@@ -348,13 +345,13 @@ Environment variables:
 	}
 
 	n, err := io.Copy(w, resp.Body)
+	if closeErr := resp.Body.Close(); closeErr != nil {
+		warnOut("close http response: %v", closeErr)
+	}
 	if err != nil {
 		errorOut("download: %v", err)
 		rc = 1
 		return
-	}
-	if err = resp.Body.Close(); err != nil {
-		warnOut("close response: %v", err)
 	}
 	if err = tmpf.Close(); err != nil {
 		errorOut("close tempfile: %v", err)
