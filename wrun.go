@@ -49,6 +49,7 @@ const (
 	verboseEnvVar             = "WRUN_VERBOSE"
 	cacheVersion              = "v2"
 	cacheDirDigestPlaceholder = "_"
+	defaultHttpTimeout        = 5 * time.Minute
 )
 
 var hashesByName = map[string]crypto.Hash{
@@ -116,10 +117,16 @@ type urlMatch struct {
 	url     *url.URL
 }
 
+type config struct {
+	urlMatches       []urlMatch
+	httpTimeout      time.Duration
+}
+
 // parseFlags parses command line flags using the given flag set.
-// It returns the processed URL matches, and the HTTP client timeout to use.
-func parseFlags(set *flag.FlagSet, args []string) ([]urlMatch, time.Duration, error) {
-	matches := make([]urlMatch, 0, len(args)/2)
+// It returns the parsed config, or an error if any occurs.
+func parseFlags(set *flag.FlagSet, args []string) (config, error) {
+	cfg := config{}
+	cfg.urlMatches = make([]urlMatch, 0, len(args)/2+3)
 	set.Func("url", "[<OS>/<architecture>=]URL (at least one required to match)", func(s string) error {
 		pattern, ur, found := strings.Cut(s, "=")
 		if found {
@@ -136,16 +143,15 @@ func parseFlags(set *flag.FlagSet, args []string) ([]urlMatch, time.Duration, er
 		if u, err := url.Parse(ur); err != nil {
 			return err
 		} else {
-			matches = append(matches, urlMatch{pattern, u})
+			cfg.urlMatches = append(cfg.urlMatches, urlMatch{pattern, u})
 			return nil
 		}
 	})
-	var d time.Duration
-	set.DurationVar(&d, "http-timeout", 5*time.Minute, "HTTP client timeout")
+	set.DurationVar(&cfg.httpTimeout, "http-timeout", defaultHttpTimeout, "HTTP client timeout")
 	if err := set.Parse(args); err != nil {
-		return nil, 0, err
+		return config{}, err
 	}
-	return matches, d, nil
+	return cfg, nil
 }
 
 // selectURL selects a URL for a system from the given matches.
@@ -199,12 +205,11 @@ func main() {
 	// Process flags
 
 	var (
-		err         error
-		urlMatches  []urlMatch
-		httpTimeout time.Duration
+		err error
+		cfg config
 	)
 	flagSet := flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
-	if urlMatches, httpTimeout, err = parseFlags(flagSet, os.Args[1:]); err != nil {
+	if cfg, err = parseFlags(flagSet, os.Args[1:]); err != nil {
 		if errors.Is(err, flag.ErrHelp) {
 			fmt.Printf(`
 %s downloads, caches, and runs executables.
@@ -233,7 +238,7 @@ Environment variables:
 	// Figure out download URL
 
 	osArch := runtime.GOOS + "/" + runtime.GOARCH
-	ur, err := selectURL(osArch, urlMatches)
+	ur, err := selectURL(osArch, cfg.urlMatches)
 	if err != nil {
 		errorOut("select URL: %v", err)
 		rc = 2 // usage, bad pattern
@@ -311,7 +316,7 @@ Environment variables:
 	// Download
 
 	hc := http.Client{
-		Timeout: httpTimeout,
+		Timeout: cfg.httpTimeout,
 	}
 	req, err := http.NewRequest(http.MethodGet, ur.String(), nil)
 	if err != nil {

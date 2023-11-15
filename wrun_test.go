@@ -44,21 +44,24 @@ func Test_parseFlags(t *testing.T) {
 		"--url", "os2/arch2=" + url2,
 		"--url", urld,
 	}
-	want := []urlMatch{
-		{
-			pattern: "os1/arch1",
-			url:     mustParseURL(t, url1),
+	want := config{
+		urlMatches: []urlMatch{
+			{
+				pattern: "os1/arch1",
+				url:     mustParseURL(t, url1),
+			},
+			{
+				pattern: "os2/arch2",
+				url:     mustParseURL(t, url2),
+			},
+			{
+				pattern: "*/*",
+				url:     mustParseURL(t, urld),
+			},
 		},
-		{
-			pattern: "os2/arch2",
-			url:     mustParseURL(t, url2),
-		},
-		{
-			pattern: "*/*",
-			url:     mustParseURL(t, urld),
-		},
+		httpTimeout:      defaultHttpTimeout,
 	}
-	got, _, err := parseFlags(set, args)
+	got, err := parseFlags(set, args)
 	require.NoError(t, err)
 	assert.Equal(t, want, got)
 }
