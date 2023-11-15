@@ -156,23 +156,11 @@ func Test_urlDir(t *testing.T) {
 			"example.com/path/to/file" + url.PathEscape("?foo=bar") + "/" + cacheDirDigestPlaceholder,
 		},
 		{
-			"https://example.com//path/to/file#2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824",
-			"example.com/path/to/file/sha256-2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824",
-		},
-		{
 			"https://example.com//path/to/file#sha256-2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824",
 			"example.com/path/to/file/sha256-2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824",
 		},
 		{
-			"https://example.com//path/to/file#sha256=2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824",
-			"example.com/path/to/file/sha256-2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824",
-		},
-		{
-			"https://example.com//path/to/file#2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824",
-			"example.com/path/to/file/sha256-2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824",
-		},
-		{
-			"https://example.com/path/to/file?a=1&b=2#7d793037a0760186574b0282f2f435e7",
+			"https://example.com/path/to/file?a=1&b=2#md5-7d793037a0760186574b0282f2f435e7",
 			"example.com/path/to/file" + url.PathEscape("?a=1&b=2") + "/md5-7d793037a0760186574b0282f2f435e7",
 		},
 	}
@@ -194,24 +182,24 @@ func Test_prepareHash(t *testing.T) {
 		wantInErr string
 	}{
 		{
-			"2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824",
-			crypto.SHA256,
-			"",
-		},
-		{
-			"sha256=2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824",
-			crypto.SHA256,
-			"",
-		},
-		{
 			"sha256-2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824",
 			crypto.SHA256,
 			"",
 		},
 		{
+			"sha256-",
+			0,
+			"invalid fragment",
+		},
+		{
+			"-2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824",
+			0,
+			"invalid fragment",
+		},
+		{
 			"deadbeef",
 			0,
-			"no supported hash",
+			"invalid fragment",
 		},
 	}
 	for _, tt := range tests {
