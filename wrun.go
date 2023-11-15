@@ -38,6 +38,7 @@ import (
 	"time"
 
 	"github.com/adrg/xdg"
+	"github.com/mholt/archiver/v3"
 )
 
 var (
@@ -118,8 +119,9 @@ type urlMatch struct {
 }
 
 type config struct {
-	urlMatches       []urlMatch
-	httpTimeout      time.Duration
+	urlMatches     []urlMatch
+	archiveExePath string
+	httpTimeout    time.Duration
 }
 
 // parseFlags parses command line flags using the given flag set.
@@ -147,6 +149,7 @@ func parseFlags(set *flag.FlagSet, args []string) (config, error) {
 			return nil
 		}
 	})
+	set.StringVar(&cfg.archiveExePath, "archive-exe-path", "", "Path to executable within the archive at URLs (implies archive processing)")
 	set.DurationVar(&cfg.httpTimeout, "http-timeout", defaultHttpTimeout, "HTTP client timeout")
 	if err := set.Parse(args); err != nil {
 		return config{}, err
@@ -262,13 +265,30 @@ Environment variables:
 
 	// Set up cache
 
-	_, exeBase := path.Split(ur.Path)
-	var exePath string
+	_, dlBase := path.Split(ur.Path)
+	var (
+		exePath string
+		dlPath  string
+	)
+	// Here's hoping we don't hit path too long errors with this implementation anywhere
+	ps := make([]string, 0, strings.Count(cfg.archiveExePath, "/")+4)
+	ps = append(ps, cacheVersion)
+	ps = append(ps, urlDir(ur, hshType, expectedDigest))
 	if cacheDir := os.Getenv(cacheDirEnvVar); cacheDir != "" {
-		exePath = filepath.Join(cacheDir, exeBase)
-		err = os.MkdirAll(cacheDir, 0o777)
+		ps = append([]string{cacheDir}, ps...)
+		ps = append(ps, dlBase)
+		dlPath = filepath.Join(ps...)
+		ps = append(ps, strings.Split(cfg.archiveExePath, "/")...)
+		exePath = filepath.Join(ps...)
+		err = os.MkdirAll(filepath.Dir(exePath), 0o777)
 	} else {
-		exePath, err = xdg.CacheFile(filepath.Join(prog, cacheVersion, urlDir(ur, hshType, expectedDigest), exeBase))
+		ps = append([]string{prog}, ps...)
+		ps = append(ps, dlBase)
+		dlPath, err = xdg.CacheFile(filepath.Join(ps...))
+		if err == nil {
+			ps = append(ps, strings.Split(cfg.archiveExePath, "/")...)
+			exePath, err = xdg.CacheFile(filepath.Join(ps...))
+		}
 	}
 	if err != nil {
 		errorOut("cache setup: %v", err)
@@ -297,7 +317,8 @@ Environment variables:
 
 	// Set up tempfile for download
 
-	tmpf, err := os.CreateTemp(filepath.Dir(exePath), filepath.Base(exePath))
+	// Use temp filename _prefix_, archiver recognizes by filename extension
+	tmpf, err := os.CreateTemp(filepath.Dir(dlPath), "tmp*-"+filepath.Base(dlPath))
 	if err != nil {
 		errorOut("set up tempfile: %v", err)
 		rc = 1
@@ -381,8 +402,14 @@ Environment variables:
 
 	// Move to final location, make executable
 
-	if err = os.Rename(tmpf.Name(), exePath); err != nil {
-		errorOut("rename tempfile: %v", err)
+	if cfg.archiveExePath == "" {
+		if err = os.Rename(tmpf.Name(), exePath); err != nil {
+			errorOut("rename tempfile: %v", err)
+			rc = 1
+			return
+		}
+	} else if err = archiver.Unarchive(tmpf.Name(), dlPath); err != nil {
+		errorOut("unarchive: %v", err)
 		rc = 1
 		return
 	}
@@ -397,7 +424,7 @@ Environment variables:
 	data, err := json.Marshal(meta)
 	if err != nil {
 		warnOut("encode metadata: %v", err)
-	} else if err = os.WriteFile(exePath+"-metadata.json", data, 0o666); err != nil {
+	} else if err = os.WriteFile(dlPath+"-metadata.json", data, 0o666); err != nil {
 		warnOut("write metadata: %v", err)
 	}
 
