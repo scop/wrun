@@ -47,18 +47,10 @@ var (
 const (
 	cacheDirEnvVar            = "WRUN_CACHE_HOME"
 	verboseEnvVar             = "WRUN_VERBOSE"
-	cacheVersion              = "v1"
+	cacheVersion              = "v2"
 	cacheDirDigestPlaceholder = "_"
 )
 
-var hashesBySize = map[int]crypto.Hash{
-	crypto.MD5.Size():    crypto.MD5,
-	crypto.SHA1.Size():   crypto.SHA1,
-	crypto.SHA224.Size(): crypto.SHA224,
-	crypto.SHA256.Size(): crypto.SHA256,
-	crypto.SHA384.Size(): crypto.SHA384,
-	crypto.SHA512.Size(): crypto.SHA512,
-}
 var hashesByName = map[string]crypto.Hash{
 	hashName(crypto.MD4):       crypto.MD4,
 	hashName(crypto.MD5):       crypto.MD5,
@@ -77,39 +69,25 @@ func hashName(h crypto.Hash) string {
 	return hn
 }
 
-// prepareHash prepares a hash corresponding to the given digest string.
+// prepareHash prepares a hash corresponding to the given fragment string.
 // It returns the hash and the digest to check with it.
 // If s is empty, 0 is returned as the hash.
 func prepareHash(s string) (crypto.Hash, []byte, error) {
 	if s == "" {
 		return 0, []byte{}, nil
 	}
-	name, hexHash, found := strings.Cut(s, "-") // Docker Hub style, hash=hexDigest
-	if !found {
-		name, hexHash, found = strings.Cut(s, "=") // PyPI style, hash-hexDigest
-		if !found {
-			name = ""
-			hexHash = s
-		}
+	name, hexHash, found := strings.Cut(s, "-")
+	if name == "" || hexHash == "" || !found {
+		return 0, nil, fmt.Errorf("invalid fragment format, use hashAlgo-hexDigest")
 	}
-	var (
-		digest   []byte
-		hashType crypto.Hash
-	)
 	digest, err := hex.DecodeString(hexHash)
 	if err != nil {
 		return 0, nil, err
 	}
-	if name != "" {
-		hashType, found = hashesByName[strings.ToLower(name)]
-		if !found {
-			return 0, nil, fmt.Errorf("no supported hash with name %q", name)
-		}
-	} else {
-		hashType, found = hashesBySize[len(digest)]
-		if !found {
-			return 0, nil, fmt.Errorf("no supported hash with digest size %d", len(digest))
-		}
+	var hashType crypto.Hash
+	hashType, found = hashesByName[strings.ToLower(name)]
+	if !found {
+		return 0, nil, fmt.Errorf("no supported hash with name %q", name)
 	}
 	if !hashType.Available() {
 		return 0, nil, fmt.Errorf("hash %s not available", hashType)
