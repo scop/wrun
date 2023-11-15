@@ -119,9 +119,10 @@ type urlMatch struct {
 }
 
 type config struct {
-	urlMatches     []urlMatch
-	archiveExePath string
-	httpTimeout    time.Duration
+	urlMatches        []urlMatch
+	archiveExePath    string
+	usePreCommitCache bool
+	httpTimeout       time.Duration
 }
 
 // parseFlags parses command line flags using the given flag set.
@@ -150,6 +151,7 @@ func parseFlags(set *flag.FlagSet, args []string) (config, error) {
 		}
 	})
 	set.StringVar(&cfg.archiveExePath, "archive-exe-path", "", "Path to executable within the archive at URLs (implies archive processing)")
+	set.BoolVar(&cfg.usePreCommitCache, "use-pre-commit-cache", false, "Use pre-commit's cache dir")
 	set.DurationVar(&cfg.httpTimeout, "http-timeout", defaultHttpTimeout, "HTTP client timeout")
 	if err := set.Parse(args); err != nil {
 		return config{}, err
@@ -169,6 +171,45 @@ func selectURL(s string, urlMatches []urlMatch) (*url.URL, error) {
 		}
 	}
 	return nil, nil
+}
+
+func resolveCacheDir(usePreCommitCache bool) (string, error) {
+	var (
+		cacheDir string
+		err      error
+	)
+	if usePreCommitCache {
+		cacheDir = os.Getenv("PRE_COMMIT_HOME")
+		if cacheDir != "" {
+			cacheDir = filepath.Join(cacheDir, "wrun")
+		}
+		if cacheDir == "" {
+			if os.Getenv("XDG_CACHE_HOME") == "" {
+				// Avoid adrg/xdg's platform specific cache home behavior which pre-commit does not do
+				// https://github.com/pre-commit/pre-commit/blob/2280645d0e2f1fa54654d8c36cc8d62f15f4d413/pre_commit/store.py#L32-L34
+				var homeDir string
+				if homeDir, err = os.UserHomeDir(); err != nil {
+					if err = os.Setenv("XDG_CACHE_HOME", filepath.Join(homeDir, ".cache")); err != nil {
+						xdg.Reload()
+					}
+				}
+			}
+			if err == nil {
+				cacheDir, err = xdg.CacheFile(filepath.Join("pre-commit", "wrun"))
+			}
+		}
+	}
+	if cacheDir == "" {
+		cacheDir = os.Getenv(cacheDirEnvVar)
+	}
+	if cacheDir == "" {
+		cacheDir, err = xdg.CacheFile("wrun")
+	}
+	if err != nil {
+		return "", err
+	}
+	cacheDir = filepath.Join(cacheDir, cacheVersion)
+	return cacheDir, nil
 }
 
 func main() {
@@ -265,31 +306,21 @@ Environment variables:
 
 	// Set up cache
 
-	_, dlBase := path.Split(ur.Path)
-	var (
-		exePath string
-		dlPath  string
-	)
-	// Here's hoping we don't hit path too long errors with this implementation anywhere
-	ps := make([]string, 0, strings.Count(cfg.archiveExePath, "/")+4)
-	ps = append(ps, cacheVersion)
-	ps = append(ps, urlDir(ur, hshType, expectedDigest))
-	if cacheDir := os.Getenv(cacheDirEnvVar); cacheDir != "" {
-		ps = append([]string{cacheDir}, ps...)
-		ps = append(ps, dlBase)
-		dlPath = filepath.Join(ps...)
-		ps = append(ps, strings.Split(cfg.archiveExePath, "/")...)
-		exePath = filepath.Join(ps...)
-		err = os.MkdirAll(filepath.Dir(exePath), 0o777)
-	} else {
-		ps = append([]string{prog}, ps...)
-		ps = append(ps, dlBase)
-		dlPath, err = xdg.CacheFile(filepath.Join(ps...))
-		if err == nil {
-			ps = append(ps, strings.Split(cfg.archiveExePath, "/")...)
-			exePath, err = xdg.CacheFile(filepath.Join(ps...))
-		}
+	var cacheDir string
+	cacheDir, err = resolveCacheDir(cfg.usePreCommitCache)
+	if err != nil {
+		errorOut("cache setup: %v", err)
+		rc = 1
+		return
 	}
+	// Here's hoping we don't hit path too long errors with this implementation anywhere
+	ps := make([]string, 0, strings.Count(cfg.archiveExePath, "/")+3)
+	_, dlBase := path.Split(ur.Path)
+	ps = append(ps, cacheDir, urlDir(ur, hshType, expectedDigest), dlBase)
+	dlPath := filepath.Join(ps...)
+	ps = append(ps, strings.Split(cfg.archiveExePath, "/")...)
+	exePath := filepath.Join(ps...)
+	err = os.MkdirAll(filepath.Dir(exePath), 0o777)
 	if err != nil {
 		errorOut("cache setup: %v", err)
 		rc = 1
