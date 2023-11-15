@@ -18,9 +18,7 @@ The runtime OS and architecture are matched against the given URL matchers.
 The first matching one in the order given is chosen as the URL to download.
 The matcher OS and architecture may be globs.
 As a special case, a plain URL with no matcher part is treated as if it was given with the matcher */*.
-URL fragments are treated as hex encoded digests for the download, and checked.
-Digest types are identified by type=hexHash or type-hexHash formatted fragments,
-falling back to determining based on the digest length.
+URL fragments are treated as hashAlgo-hexDigest strings, and downloads are checked against them.
 
 The first non-flag argument or -- terminates wrun arguments.
 Remaining ones are passed to the downloaded one.
