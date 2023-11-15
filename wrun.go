@@ -45,10 +45,10 @@ var (
 )
 
 const (
-	cacheDirEnvVar       = "WRUN_CACHE_HOME"
-	verboseEnvVar        = "WRUN_VERBOSE"
-	cacheVersion         = "v1"
-	hexDigestPlaceholder = "_"
+	cacheDirEnvVar            = "WRUN_CACHE_HOME"
+	verboseEnvVar             = "WRUN_VERBOSE"
+	cacheVersion              = "v1"
+	cacheDirDigestPlaceholder = "_"
 )
 
 var hashesBySize = map[int]crypto.Hash{
@@ -60,14 +60,21 @@ var hashesBySize = map[int]crypto.Hash{
 	crypto.SHA512.Size(): crypto.SHA512,
 }
 var hashesByName = map[string]crypto.Hash{
-	"md4":       crypto.MD4,
-	"md5":       crypto.MD5,
-	"sha1":      crypto.SHA1,
-	"sha224":    crypto.SHA224,
-	"sha256":    crypto.SHA256,
-	"sha384":    crypto.SHA384,
-	"sha512":    crypto.SHA512,
-	"ripemd160": crypto.RIPEMD160,
+	hashName(crypto.MD4):       crypto.MD4,
+	hashName(crypto.MD5):       crypto.MD5,
+	hashName(crypto.SHA1):      crypto.SHA1,
+	hashName(crypto.SHA224):    crypto.SHA224,
+	hashName(crypto.SHA256):    crypto.SHA256,
+	hashName(crypto.SHA384):    crypto.SHA384,
+	hashName(crypto.SHA512):    crypto.SHA512,
+	hashName(crypto.RIPEMD160): crypto.RIPEMD160,
+}
+
+func hashName(h crypto.Hash) string {
+	hn := h.String()
+	hn = strings.ToLower(hn)
+	hn = strings.ReplaceAll(hn, "-", "")
+	return hn
 }
 
 // prepareHash prepares a hash corresponding to the given digest string.
@@ -77,11 +84,11 @@ func prepareHash(s string) (crypto.Hash, []byte, error) {
 	if s == "" {
 		return 0, []byte{}, nil
 	}
-	hashName, hexHash, found := strings.Cut(s, "-") // Docker Hub style, hash=hexDigest
+	name, hexHash, found := strings.Cut(s, "-") // Docker Hub style, hash=hexDigest
 	if !found {
-		hashName, hexHash, found = strings.Cut(s, "=") // PyPI style, hash-hexDigest
+		name, hexHash, found = strings.Cut(s, "=") // PyPI style, hash-hexDigest
 		if !found {
-			hashName = ""
+			name = ""
 			hexHash = s
 		}
 	}
@@ -93,10 +100,10 @@ func prepareHash(s string) (crypto.Hash, []byte, error) {
 	if err != nil {
 		return 0, nil, err
 	}
-	if hashName != "" {
-		hashType, found = hashesByName[hashName]
+	if name != "" {
+		hashType, found = hashesByName[strings.ToLower(name)]
 		if !found {
-			return 0, nil, fmt.Errorf("no supported hash with name %q", hashName)
+			return 0, nil, fmt.Errorf("no supported hash with name %q", name)
 		}
 	} else {
 		hashType, found = hashesBySize[len(digest)]
@@ -111,17 +118,17 @@ func prepareHash(s string) (crypto.Hash, []byte, error) {
 }
 
 // urlDir gets the cache directory to use for a URL.
-func urlDir(u *url.URL) string {
+func urlDir(u *url.URL, h crypto.Hash, digest []byte) string {
 	segs := make([]string, 0, strings.Count(u.Path, "/")+3)
 	segs = append(segs, strings.ReplaceAll(u.Host, ":", "_"))
 	segs = append(segs, strings.Split(u.Path, "/")...) // Note: filepath.Join later ignores possible empty segments
 	if u.RawQuery != "" {
 		segs[len(segs)-1] = segs[len(segs)-1] + url.PathEscape("?"+u.RawQuery)
 	}
-	if u.Fragment == "" {
-		segs = append(segs, hexDigestPlaceholder)
+	if h == 0 {
+		segs = append(segs, cacheDirDigestPlaceholder)
 	} else {
-		segs = append(segs, u.Fragment)
+		segs = append(segs, hashName(h)+"-"+hex.EncodeToString(digest))
 	}
 	return filepath.Join(segs...)
 }
@@ -280,7 +287,7 @@ Environment variables:
 		exePath = filepath.Join(cacheDir, exeBase)
 		err = os.MkdirAll(cacheDir, 0o777)
 	} else {
-		exePath, err = xdg.CacheFile(filepath.Join(prog, cacheVersion, urlDir(ur), exeBase))
+		exePath, err = xdg.CacheFile(filepath.Join(prog, cacheVersion, urlDir(ur, hshType, expectedDigest), exeBase))
 	}
 	if err != nil {
 		errorOut("cache setup: %v", err)

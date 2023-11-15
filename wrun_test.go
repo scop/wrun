@@ -141,34 +141,48 @@ func Test_urlDir(t *testing.T) {
 	}{
 		{
 			"https://example.com/path/to/file",
-			"example.com/path/to/file/" + hexDigestPlaceholder,
+			"example.com/path/to/file/" + cacheDirDigestPlaceholder,
 		},
 		{
 			"http://example.com/path/to/file",
-			"example.com/path/to/file/" + hexDigestPlaceholder,
+			"example.com/path/to/file/" + cacheDirDigestPlaceholder,
 		},
 		{
 			"https://example.com//path/to/file/",
-			"example.com/path/to/file/" + hexDigestPlaceholder,
+			"example.com/path/to/file/" + cacheDirDigestPlaceholder,
 		},
 		{
 			"https://example.com/path/to/file?foo=bar",
-			"example.com/path/to/file" + url.PathEscape("?foo=bar") + "/" + hexDigestPlaceholder,
+			"example.com/path/to/file" + url.PathEscape("?foo=bar") + "/" + cacheDirDigestPlaceholder,
 		},
 		{
 			"https://example.com//path/to/file#2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824",
-			"example.com/path/to/file/2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824",
+			"example.com/path/to/file/sha256-2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824",
+		},
+		{
+			"https://example.com//path/to/file#sha256-2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824",
+			"example.com/path/to/file/sha256-2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824",
+		},
+		{
+			"https://example.com//path/to/file#sha256=2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824",
+			"example.com/path/to/file/sha256-2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824",
+		},
+		{
+			"https://example.com//path/to/file#2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824",
+			"example.com/path/to/file/sha256-2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824",
 		},
 		{
 			"https://example.com/path/to/file?a=1&b=2#7d793037a0760186574b0282f2f435e7",
-			"example.com/path/to/file" + url.PathEscape("?a=1&b=2") + "/7d793037a0760186574b0282f2f435e7",
+			"example.com/path/to/file" + url.PathEscape("?a=1&b=2") + "/md5-7d793037a0760186574b0282f2f435e7",
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.url, func(t *testing.T) {
 			u, err := url.Parse(tt.url)
 			require.NoError(t, err)
-			assert.Equal(t, tt.want, urlDir(u))
+			h, digest, err := prepareHash(u.Fragment)
+			require.NoError(t, err)
+			assert.Equal(t, tt.want, urlDir(u, h, digest))
 		})
 	}
 }
