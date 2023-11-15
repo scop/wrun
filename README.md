@@ -12,6 +12,8 @@ Usage of wrun:
     	HTTP client timeout (default 5m0s)
   -url value
     	[<OS>/<architecture>=]URL (at least one required to match)
+  -use-pre-commit-cache
+    	Use pre-commit's cache dir
 
 wrun downloads, caches, and runs executables.
 The same one command works for multiple OS/architectures.
@@ -83,6 +85,9 @@ For example:
 Cache resides by default in the
 [`$XDG_CACHE_HOME`](https://github.com/adrg/xdg#xdg-base-directory)`/wrun`
 directory. `$WRUN_CACHE_HOME` overrides it.
+
+If the `-use-pre-commit-cache` flag is given, a subdirectory in
+[pre-commit's cache dir](https://pre-commit.com/#managing-ci-caches) is used instead.
 
 [pre-commit.ci](https://pre-commit.ci) is not supported, because it
 [disallows network access at runtime](https://github.com/pre-commit-ci/issues/issues/196#issuecomment-1810937079).
