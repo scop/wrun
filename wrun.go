@@ -477,10 +477,27 @@ Environment variables:
 			rc = 1
 			return
 		}
-	} else if err = archiver.Unarchive(tmpf.Name(), dlPath); err != nil {
-		errorOut("unarchive: %v", err)
-		rc = 1
-		return
+	} else {
+		var archiveName string
+		if strings.HasSuffix(tmpf.Name(), ".whl") { // Need to rename to .zip for archiver
+			archiveName = strings.TrimSuffix(tmpf.Name(), ".whl") + ".zip"
+			if err = os.Symlink(filepath.Base(tmpf.Name()), archiveName); err != nil { // Failure if new name exists is desirable
+				errorOut("symlink tempfile: %v", err)
+			}
+		} else {
+			archiveName = tmpf.Name()
+		}
+		err = archiver.Unarchive(archiveName, dlPath)
+		if archiveName != tmpf.Name() {
+			if rmErr := os.Remove(archiveName); rmErr != nil {
+				warnOut("remove tempfile symlink: %v", rmErr)
+			}
+		}
+		if err != nil {
+			errorOut("unarchive: %v", err)
+			rc = 1
+			return
+		}
 	}
 	if err = makeExecutable(exePath); err != nil {
 		errorOut("make executable: %v", err)
