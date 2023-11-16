@@ -11,7 +11,7 @@ setup_cfg_template = """
 [metadata]
 name = wrun_py
 version = ${pkg_version}
-description = Python wrapper around invoking wrun (https://github.com/scop/wrun)
+description = Web executable launcher
 long_description = file: README.md
 long_description_content_type = text/markdown
 url = https://github.com/scop/wrun
@@ -26,7 +26,7 @@ classifiers =
     Operating System :: MacOS
     Operating System :: Microsoft :: Windows
     Operating System :: POSIX :: Linux
-    Programming Language :: Python :: 3
+    Programming Language :: Go
     Topic :: Internet :: WWW/HTTP
     Topic :: Utilities
 

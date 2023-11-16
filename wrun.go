@@ -135,7 +135,7 @@ type config struct {
 func parseFlags(set *flag.FlagSet, args []string) (config, error) {
 	cfg := config{}
 	cfg.urlMatches = make([]urlMatch, 0, len(args)/2+3)
-	set.Func("url", "[<OS>/<architecture>=]URL (at least one required)", func(s string) error {
+	set.Func("url", "[OS/arch=]URL matcher (at least one required)", func(s string) error {
 		pattern, ur, found := strings.Cut(s, "=")
 		if found {
 			if strings.Contains(pattern, "://") {
@@ -155,7 +155,7 @@ func parseFlags(set *flag.FlagSet, args []string) (config, error) {
 			return nil
 		}
 	})
-	set.Func("archive-exe-path", "[<OS>/<architecture>=]path to executable within archive (separator always /, implies archive processing)", func(s string) error {
+	set.Func("archive-exe-path", "[OS/arch=]path to executable within archive matcher (separator always /, implies archive processing)", func(s string) error {
 		pattern, pth, found := strings.Cut(s, "=")
 		if found {
 			if pattern == "" {
@@ -295,22 +295,25 @@ func main() {
 		if errors.Is(err, flag.ErrHelp) {
 			fmt.Printf(`
 %s downloads, caches, and runs executables.
-The same one command works for multiple OS/architectures.
 
-The OS and architecture wrun was built for are matched against the given URL matchers.
-The first matching one in the order given is chosen as the URL to download.
-The matcher OS and architecture may be globs.
-As a special case, a plain URL with no matcher part is treated as if it was given with the matcher */*.
-URL fragments are treated as hashAlgo-hexDigest strings, and downloads are checked against them.
+OS and architecture matcher arguments for URLs to download and (if applicable) executables within archives can be used to construct command lines that work across multiple operating systems and architectures.
+
+The OS and architecture wrun was built for are matched against the given matchers.
+OS and architecture parts of the matcher may be globs.
+Order of the matcher arguments is significant: the first match of each is chosen.
+
+As a special case, a matcher argument with no matcher part is treated as if it was given with the matcher */*.
+
+URL fragments, if present, are treated as hashAlgo-hexDigest strings, and downloads are checked against them.
 
 The first non-flag argument or -- terminates %s arguments.
 Remaining ones are passed to the downloaded one.
 
 Environment variables:
-- %s: location of the cache, defaults to %s in the user cache dir
-- %s: controls output verbosity; false decreases, true increases
-- %s: override OS/architecture for URL and archive exe path matching
-`, prog, prog, cacheHomeEnvVar, prog, verboseEnvVar, osArchEnvVar)
+- %s: cache location, defaults to wrun subdir in the user cache dir
+- %s: override OS/arch for matching
+- %s: output verbosity, false decreases, true increases
+`, prog, prog, cacheHomeEnvVar, osArchEnvVar, verboseEnvVar)
 		} else {
 			// Error already printed
 			rc = 2 // usage
