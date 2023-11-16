@@ -207,7 +207,12 @@ func selectArchiveExePath(s string, matches []archiveExePathMatch) (string, erro
 			return "", err
 		}
 		if match {
-			return m.exePath, nil
+			exePath := m.exePath
+			// Auto append .exe to Windows wildcard matches having no filename extension
+			if strings.HasPrefix(s, "windows/") && strings.HasPrefix(m.pattern, "*/") && filepath.Ext(exePath) == "" {
+				exePath += ".exe"
+			}
+			return exePath, nil
 		}
 	}
 	return "", nil
@@ -303,6 +308,7 @@ OS and architecture parts of the matcher may be globs.
 Order of the matcher arguments is significant: the first match of each is chosen.
 
 As a special case, a matcher argument with no matcher part is treated as if it was given with the matcher */*.
+On Windows, .exe is automatically appended to any archive exe path resulting from a */ prefixed match.
 
 URL fragments, if present, are treated as hashAlgo-hexDigest strings, and downloads are checked against them.
 

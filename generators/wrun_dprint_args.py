@@ -76,7 +76,6 @@ def main(version: str) -> None:
             check_hexdigest(url, "sha256", hexdigest)
 
             print(f"-url {os_arch}={url}#sha256-{hexdigest}")
-    print("-archive-exe-path windows/*=dprint.exe")
     print("-archive-exe-path dprint")
 
 

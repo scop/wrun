@@ -138,6 +138,84 @@ func Test_selectURL(t *testing.T) {
 	}
 }
 
+func Test_selectArchiveExePath(t *testing.T) {
+	matches := []archiveExePathMatch{
+		{
+			pattern: "linux/amd64",
+			exePath: "path/to/exe-linux-amd64",
+		},
+		{
+			pattern: "linux/arm64",
+			exePath: "path/to/exe-linux-arm64",
+		},
+		{
+			pattern: "darwin/arm64",
+			exePath: "path/to/exe-darwin-arm64",
+		},
+		{
+			pattern: "darwin/*",
+			exePath: "path/to/exe-darwin",
+		},
+		{
+			pattern: "*/386",
+			exePath: "path/to/exe-386",
+		},
+		{
+			pattern: "*/amd64",
+			exePath: "path/to/exe-amd64.exe",
+		},
+		{
+			pattern: "*/*",
+			exePath: "path/to/exe-generic",
+		},
+	}
+
+	tests := []struct {
+		osArch string
+		want   string
+	}{
+		{
+			osArch: "linux/amd64",
+			want:   "path/to/exe-linux-amd64",
+		},
+		{
+			osArch: "linux/unknown",
+			want:   "path/to/exe-generic",
+		},
+		{
+			osArch: "linux/386",
+			want:   "path/to/exe-386",
+		},
+		{
+			osArch: "windows/386",
+			want:   "path/to/exe-386.exe",
+		},
+		{
+			osArch: "windows/amd64",
+			want:   "path/to/exe-amd64.exe",
+		},
+		{
+			osArch: "darwin/amd64",
+			want:   "path/to/exe-darwin",
+		},
+		{
+			osArch: "darwin/arm64",
+			want:   "path/to/exe-darwin-arm64",
+		},
+		{
+			osArch: "aix/ppc64",
+			want:   "path/to/exe-generic",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.osArch, func(t *testing.T) {
+			p, err := selectArchiveExePath(tt.osArch, matches)
+			require.NoError(t, err)
+			assert.Equal(t, tt.want, p)
+		})
+	}
+}
+
 func Test_urlDir(t *testing.T) {
 	tests := []struct {
 		url  string
