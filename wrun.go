@@ -47,6 +47,7 @@ var (
 const (
 	cacheHomeEnvVar           = "WRUN_CACHE_HOME"
 	verboseEnvVar             = "WRUN_VERBOSE"
+	osArchEnvVar              = "WRUN_OS_ARCH"
 	cacheVersion              = "v2"
 	cacheDirDigestPlaceholder = "_"
 	defaultHttpTimeout        = 5 * time.Minute
@@ -290,7 +291,7 @@ func main() {
 %s downloads, caches, and runs executables.
 The same one command works for multiple OS/architectures.
 
-The runtime OS and architecture are matched against the given URL matchers.
+The OS and architecture wrun was built for are matched against the given URL matchers.
 The first matching one in the order given is chosen as the URL to download.
 The matcher OS and architecture may be globs.
 As a special case, a plain URL with no matcher part is treated as if it was given with the matcher */*.
@@ -302,7 +303,8 @@ Remaining ones are passed to the downloaded one.
 Environment variables:
 - %s: location of the cache, defaults to %s in the user cache dir
 - %s: controls output verbosity; false decreases, true increases
-`, prog, prog, cacheHomeEnvVar, prog, verboseEnvVar)
+- %s: override OS/architecture for URL and archive exe path matching
+`, prog, prog, cacheHomeEnvVar, prog, verboseEnvVar, osArchEnvVar)
 		} else {
 			errorOut("parse flags: %v", err)
 			rc = 2 // usage
@@ -312,7 +314,11 @@ Environment variables:
 
 	// Figure out download URL and exe path in archive
 
-	osArch := runtime.GOOS + "/" + runtime.GOARCH
+	osArch := os.Getenv(osArchEnvVar)
+	if osArch == "" {
+		osArch = runtime.GOOS + "/" + runtime.GOARCH
+	}
+
 	ur, err := selectURL(osArch, cfg.urlMatches)
 	if err != nil {
 		errorOut("select URL: %v", err)
