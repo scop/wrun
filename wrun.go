@@ -45,7 +45,7 @@ var (
 )
 
 const (
-	cacheDirEnvVar            = "WRUN_CACHE_HOME"
+	cacheHomeEnvVar           = "WRUN_CACHE_HOME"
 	verboseEnvVar             = "WRUN_VERBOSE"
 	cacheVersion              = "v2"
 	cacheDirDigestPlaceholder = "_"
@@ -159,14 +159,14 @@ func parseFlags(set *flag.FlagSet, args []string) (config, error) {
 }
 
 // selectURL selects a URL for a system from the given matches.
-func selectURL(s string, urlMatches []urlMatch) (*url.URL, error) {
-	for _, um := range urlMatches {
-		match, err := filepath.Match(um.pattern, s)
+func selectURL(s string, matches []urlMatch) (*url.URL, error) {
+	for _, m := range matches {
+		match, err := filepath.Match(m.pattern, s)
 		if err != nil {
 			return nil, err
 		}
 		if match {
-			return um.url, nil
+			return m.url, nil
 		}
 	}
 	return nil, nil
@@ -196,7 +196,7 @@ func resolveCacheDir(usePreCommitCache bool) (string, error) {
 			cacheDir = filepath.Join(cacheDir, "pre-commit", "wrun")
 		}
 	} else {
-		cacheDir = os.Getenv(cacheDirEnvVar)
+		cacheDir = os.Getenv(cacheHomeEnvVar)
 		if cacheDir == "" {
 			cacheDir, err = os.UserCacheDir()
 			if err != nil {
@@ -268,7 +268,7 @@ Remaining ones are passed to the downloaded one.
 Environment variables:
 - %s: location of the cache, defaults to %s in the user cache dir
 - %s: controls output verbosity; false decreases, true increases
-`, prog, prog, cacheDirEnvVar, prog, verboseEnvVar)
+`, prog, prog, cacheHomeEnvVar, prog, verboseEnvVar)
 		} else {
 			errorOut("parse flags: %v", err)
 			rc = 2 // usage
