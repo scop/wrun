@@ -31,6 +31,7 @@ classifiers =
     Topic :: Utilities
 
 [options]
+packages =
 python_requires = >=3.8
 setup_requires =
     setuptools-download
