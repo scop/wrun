@@ -68,7 +68,7 @@ download_scripts =
     marker = sys_platform == "linux" and platform_machine == "armv6hf"
     marker = sys_platform == "linux" and platform_machine == "armv7l"
     url = ${url_linux_armv6}
-    sha256 = ${url_linux_armv6}
+    sha256 = ${sha256_linux_armv6}
     [wrun.exe]
     group = wrun-binary
     marker = sys_platform == "win32" and platform_machine == "x86"
