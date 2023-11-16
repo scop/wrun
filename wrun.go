@@ -135,7 +135,7 @@ type config struct {
 func parseFlags(set *flag.FlagSet, args []string) (config, error) {
 	cfg := config{}
 	cfg.urlMatches = make([]urlMatch, 0, len(args)/2+3)
-	set.Func("url", "[<OS>/<architecture>=]URL (at least one required to match)", func(s string) error {
+	set.Func("url", "[<OS>/<architecture>=]URL (at least one required)", func(s string) error {
 		pattern, ur, found := strings.Cut(s, "=")
 		if found {
 			if strings.Contains(pattern, "://") {
@@ -174,6 +174,12 @@ func parseFlags(set *flag.FlagSet, args []string) (config, error) {
 	set.BoolVar(&cfg.usePreCommitCache, "use-pre-commit-cache", false, "Use pre-commit's cache dir")
 	set.DurationVar(&cfg.httpTimeout, "http-timeout", defaultHttpTimeout, "HTTP client timeout")
 	if err := set.Parse(args); err != nil {
+		return config{}, err
+	}
+	if len(cfg.urlMatches) == 0 {
+		err := errors.New("flag must occur at least once: -url")
+		_, _ = fmt.Fprintln(set.Output(), err)
+		set.Usage()
 		return config{}, err
 	}
 	return cfg, nil

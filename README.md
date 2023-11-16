@@ -11,7 +11,7 @@ Usage of wrun:
   -http-timeout duration
     	HTTP client timeout (default 5m0s)
   -url value
-    	[<OS>/<architecture>=]URL (at least one required to match)
+    	[<OS>/<architecture>=]URL (at least one required)
   -use-pre-commit-cache
     	Use pre-commit's cache dir
 
