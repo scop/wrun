@@ -7,30 +7,33 @@ with the same one command for multiple OS/architectures.
 $ wrun -help
 Usage of wrun:
   -archive-exe-path value
-    	[<OS>/<architecture>=]path to executable within archive (separator always /, implies archive processing)
+    	[OS/arch=]path to executable within archive matcher (separator always /, implies archive processing)
   -http-timeout duration
     	HTTP client timeout (default 5m0s)
   -url value
-    	[<OS>/<architecture>=]URL (at least one required to match)
+    	[OS/arch=]URL matcher (at least one required)
   -use-pre-commit-cache
     	Use pre-commit's cache dir
 
 wrun downloads, caches, and runs executables.
-The same one command works for multiple OS/architectures.
 
-The OS and architecture wrun was built for are matched against the given URL matchers.
-The first matching one in the order given is chosen as the URL to download.
-The matcher OS and architecture may be globs.
-As a special case, a plain URL with no matcher part is treated as if it was given with the matcher */*.
-URL fragments are treated as hashAlgo-hexDigest strings, and downloads are checked against them.
+OS and architecture matcher arguments for URLs to download and (if applicable) executables within archives can be used to construct command lines that work across multiple operating systems and architectures.
+
+The OS and architecture wrun was built for are matched against the given matchers.
+OS and architecture parts of the matcher may be globs.
+Order of the matcher arguments is significant: the first match of each is chosen.
+
+As a special case, a matcher argument with no matcher part is treated as if it was given with the matcher */*.
+
+URL fragments, if present, are treated as hashAlgo-hexDigest strings, and downloads are checked against them.
 
 The first non-flag argument or -- terminates wrun arguments.
 Remaining ones are passed to the downloaded one.
 
 Environment variables:
-- WRUN_CACHE_HOME: location of the cache, defaults to wrun in the user cache dir
-- WRUN_VERBOSE: controls output verbosity; false decreases, true increases
-- WRUN_OS_ARCH: override OS/architecture for URL and archive exe path matching
+- WRUN_CACHE_HOME: cache location, defaults to wrun subdir in the user cache dir
+- WRUN_OS_ARCH: override OS/arch for matching
+- WRUN_VERBOSE: output verbosity, false decreases, true increases
 ```
 
 ## Installation

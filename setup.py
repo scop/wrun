@@ -18,7 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 #
-# Copied from https://github.com/shellcheck-py/shellcheck-py/tree/v0.9.0.6
+# Copied from https://github.com/shellcheck-py/shellcheck-py/blob/0afa53fa8ddf1516d055db24e7ecb162980e67d7/setup.py
 # SPDX-License-Identifier: MIT
 
 from setuptools import setup
