@@ -306,7 +306,7 @@ Environment variables:
 - %s: override OS/architecture for URL and archive exe path matching
 `, prog, prog, cacheHomeEnvVar, prog, verboseEnvVar, osArchEnvVar)
 		} else {
-			errorOut("parse flags: %v", err)
+			// Error already printed
 			rc = 2 // usage
 		}
 		return
