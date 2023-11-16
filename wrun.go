@@ -117,11 +117,16 @@ type urlMatch struct {
 	url     *url.URL
 }
 
+type archiveExePathMatch struct {
+	pattern string
+	exePath string
+}
+
 type config struct {
-	urlMatches        []urlMatch
-	archiveExePath    string
-	usePreCommitCache bool
-	httpTimeout       time.Duration
+	urlMatches            []urlMatch
+	archiveExePathMatches []archiveExePathMatch
+	usePreCommitCache     bool
+	httpTimeout           time.Duration
 }
 
 // parseFlags parses command line flags using the given flag set.
@@ -149,7 +154,22 @@ func parseFlags(set *flag.FlagSet, args []string) (config, error) {
 			return nil
 		}
 	})
-	set.StringVar(&cfg.archiveExePath, "archive-exe-path", "", "Path to executable within archive (separator always /, implies archive processing)")
+	set.Func("archive-exe-path", "[<OS>/<architecture>=]path to executable within archive (separator always /, implies archive processing)", func(s string) error {
+		pattern, pth, found := strings.Cut(s, "=")
+		if found {
+			if pattern == "" {
+				pattern = "*/*"
+			}
+			if pth == "" {
+				return fmt.Errorf("missing path in %q", s)
+			}
+		} else {
+			pth = pattern
+			pattern = "*/*"
+		}
+		cfg.archiveExePathMatches = append(cfg.archiveExePathMatches, archiveExePathMatch{pattern, pth})
+		return nil
+	})
 	set.BoolVar(&cfg.usePreCommitCache, "use-pre-commit-cache", false, "Use pre-commit's cache dir")
 	set.DurationVar(&cfg.httpTimeout, "http-timeout", defaultHttpTimeout, "HTTP client timeout")
 	if err := set.Parse(args); err != nil {
@@ -170,6 +190,20 @@ func selectURL(s string, matches []urlMatch) (*url.URL, error) {
 		}
 	}
 	return nil, nil
+}
+
+// selectArchiveExePath selects an archive exe path for a system from the given matches.
+func selectArchiveExePath(s string, matches []archiveExePathMatch) (string, error) {
+	for _, m := range matches {
+		match, err := filepath.Match(m.pattern, s)
+		if err != nil {
+			return "", err
+		}
+		if match {
+			return m.exePath, nil
+		}
+	}
+	return "", nil
 }
 
 func resolveCacheDir(usePreCommitCache bool) (string, error) {
@@ -276,7 +310,7 @@ Environment variables:
 		return
 	}
 
-	// Figure out download URL
+	// Figure out download URL and exe path in archive
 
 	osArch := runtime.GOOS + "/" + runtime.GOARCH
 	ur, err := selectURL(osArch, cfg.urlMatches)
@@ -291,6 +325,13 @@ Environment variables:
 		return
 	}
 	infoOut("URL: %s", ur)
+
+	archiveExePath, err := selectArchiveExePath(osArch, cfg.archiveExePathMatches)
+	if err != nil {
+		errorOut("select archive exe path: %v", err)
+		rc = 2 // usage, bad pattern
+		return
+	}
 
 	// Set up hashing
 
@@ -311,11 +352,11 @@ Environment variables:
 		return
 	}
 	// Here's hoping we don't hit path too long errors with this implementation anywhere
-	ps := make([]string, 0, strings.Count(cfg.archiveExePath, "/")+3)
+	ps := make([]string, 0, strings.Count(archiveExePath, "/")+3)
 	_, dlBase := path.Split(ur.Path)
 	ps = append(ps, cacheDir, urlDir(ur, hshType, expectedDigest), dlBase)
 	dlPath := filepath.Join(ps...)
-	ps = append(ps, strings.Split(cfg.archiveExePath, "/")...)
+	ps = append(ps, strings.Split(archiveExePath, "/")...)
 	exePath := filepath.Join(ps...)
 	err = os.MkdirAll(filepath.Dir(exePath), 0o777)
 	if err != nil {
@@ -430,7 +471,7 @@ Environment variables:
 
 	// Move to final location, make executable
 
-	if cfg.archiveExePath == "" {
+	if archiveExePath == "" {
 		if err = os.Rename(tmpf.Name(), exePath); err != nil {
 			errorOut("rename tempfile: %v", err)
 			rc = 1

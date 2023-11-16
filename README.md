@@ -6,8 +6,8 @@ with the same one command for multiple OS/architectures.
 ```shellsession
 $ wrun -help
 Usage of wrun:
-  -archive-exe-path string
-    	Path to executable within archive (separator always /, implies archive processing)
+  -archive-exe-path value
+    	[<OS>/<architecture>=]path to executable within archive (separator always /, implies archive processing)
   -http-timeout duration
     	HTTP client timeout (default 5m0s)
   -url value
