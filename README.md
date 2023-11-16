@@ -93,6 +93,12 @@ If the `-use-pre-commit-cache` flag is given, a subdirectory in
 [pre-commit.ci](https://pre-commit.ci) is not supported, because it
 [disallows network access at runtime](https://github.com/pre-commit-ci/issues/issues/196#issuecomment-1810937079).
 
+## Examples
+
+The [generators](generators/) directory contains scripts that can be
+used to generate command line arguments for various tools commonly
+used tools.
+
 ## License
 
 SPDX-License-Identifier: Apache-2.0
