@@ -18,7 +18,7 @@ Usage of wrun:
 wrun downloads, caches, and runs executables.
 The same one command works for multiple OS/architectures.
 
-The runtime OS and architecture are matched against the given URL matchers.
+The OS and architecture wrun was built for are matched against the given URL matchers.
 The first matching one in the order given is chosen as the URL to download.
 The matcher OS and architecture may be globs.
 As a special case, a plain URL with no matcher part is treated as if it was given with the matcher */*.
@@ -30,6 +30,7 @@ Remaining ones are passed to the downloaded one.
 Environment variables:
 - WRUN_CACHE_HOME: location of the cache, defaults to wrun in the user cache dir
 - WRUN_VERBOSE: controls output verbosity; false decreases, true increases
+- WRUN_OS_ARCH: override OS/architecture for URL and archive exe path matching
 ```
 
 ## Installation
