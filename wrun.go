@@ -396,6 +396,7 @@ Environment variables:
 	if osArch == "" {
 		osArch = runtime.GOOS + "/" + runtime.GOARCH
 	}
+	infoOut("OS/arch: %s", osArch)
 
 	ur, err := selectURL(osArch, cfg.urlMatches)
 	if err != nil {
