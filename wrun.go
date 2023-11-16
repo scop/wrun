@@ -149,7 +149,7 @@ func parseFlags(set *flag.FlagSet, args []string) (config, error) {
 			return nil
 		}
 	})
-	set.StringVar(&cfg.archiveExePath, "archive-exe-path", "", "Path to executable within the archive at URLs (implies archive processing)")
+	set.StringVar(&cfg.archiveExePath, "archive-exe-path", "", "Path to executable within archive (separator always /, implies archive processing)")
 	set.BoolVar(&cfg.usePreCommitCache, "use-pre-commit-cache", false, "Use pre-commit's cache dir")
 	set.DurationVar(&cfg.httpTimeout, "http-timeout", defaultHttpTimeout, "HTTP client timeout")
 	if err := set.Parse(args); err != nil {
