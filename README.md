@@ -7,7 +7,7 @@ with the same one command for multiple OS/architectures.
 $ wrun -help
 Usage of wrun:
   -archive-exe-path string
-    	Path to executable within the archive at URLs (implies archive processing)
+    	Path to executable within archive (separator always /, implies archive processing)
   -http-timeout duration
     	HTTP client timeout (default 5m0s)
   -url value
