@@ -415,7 +415,7 @@ Environment variables:
 		return
 	}
 	cleanUpTempFile := func() {
-		if closeErr := tmpf.Close(); err != nil && !errors.Is(closeErr, os.ErrClosed) {
+		if closeErr := tmpf.Close(); closeErr != nil && !errors.Is(closeErr, os.ErrClosed) {
 			warnOut("close tempfile: %v", closeErr)
 		}
 		if rmErr := os.Remove(tmpf.Name()); rmErr != nil && !errors.Is(rmErr, os.ErrNotExist) {
