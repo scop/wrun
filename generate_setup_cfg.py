@@ -10,7 +10,7 @@ from urllib.request import urlopen
 setup_cfg_template = """
 [metadata]
 name = wrun_py
-version = ${pkg_version}
+version = ${python_pkg_version}
 description = Web executable launcher
 long_description = file: README.md
 long_description_content_type = text/markdown
@@ -118,16 +118,19 @@ def process_checksums(url: str) -> dict[str, str]:
     return data
 
 
-def main(pkg_version: str, checksums_txt_url: str) -> None:
+def main(python_pkg_tag: str) -> None:
+    main_tag, _, _ = python_pkg_tag.partition("-")
+    main_version = main_tag.lstrip("v")
+    checksums_txt_url = f"https://github.com/scop/wrun/releases/download/{urlquote(main_tag)}/wrun_{urlquote(main_version)}_checksums.txt"
     data = process_checksums(checksums_txt_url)
-    data["pkg_version"] = pkg_version.lstrip("v")
+    data["python_pkg_version"] = python_pkg_tag.lstrip("v")
     st = string.Template(setup_cfg_template.lstrip())
     setup_cfg = st.substitute(data)
     sys.stdout.write(setup_cfg)
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 3:
-        print(f"usage: {sys.argv[0]} PKG-VERSION CHECKSUMS-TXT-URL")
+    if len(sys.argv) != 2:
+        print(f"usage: {sys.argv[0]} PYTHON-PKG-TAG")
         sys.exit(2)
-    main(sys.argv[1], sys.argv[2])
+    main(sys.argv[1])
