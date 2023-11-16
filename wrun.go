@@ -32,6 +32,7 @@ import (
 	"path"
 	"path/filepath"
 	"runtime"
+	"runtime/debug"
 	"strconv"
 	"strings"
 	"syscall"
@@ -41,8 +42,58 @@ import (
 )
 
 var (
-	version = "dev"
+	version       = "devel"
+	versionString = ""
 )
+
+func init() {
+	vs := make([]string, 0, 15)
+	vs = append(vs, "wrun ", version)
+	if bi, ok := debug.ReadBuildInfo(); ok {
+		if bi.GoVersion != "" {
+			vs = append(vs, ", built with ", bi.GoVersion)
+		}
+		for _, bs := range bi.Settings {
+			if bs.Key == "GOOS" {
+				vs = append(vs, ", for ", bs.Value)
+				for _, bs = range bi.Settings {
+					if bs.Key == "GOARCH" {
+						vs = append(vs, "/", bs.Value)
+						break
+					}
+				}
+				break
+			}
+		}
+		for _, bs := range bi.Settings {
+			if bs.Key == "vcs" {
+				vs = append(vs, ", from ", bs.Value)
+				for _, bs = range bi.Settings {
+					if bs.Key == "vcs.revision" {
+						vs = append(vs, " rev ", bs.Value)
+						break
+					}
+				}
+				for _, bs = range bi.Settings {
+					if bs.Key == "vcs.time" {
+						vs = append(vs, " dated ", bs.Value)
+						break
+					}
+				}
+				for _, bs = range bi.Settings {
+					if bs.Key == "vcs.modified" {
+						if dirty, err := strconv.ParseBool(bs.Value); err == nil && dirty {
+							vs = append(vs, " (dirty)")
+						}
+						break
+					}
+				}
+				break
+			}
+		}
+	}
+	versionString = strings.Join(vs, "")
+}
 
 const (
 	cacheHomeEnvVar           = "WRUN_CACHE_HOME"
@@ -128,6 +179,7 @@ type config struct {
 	archiveExePathMatches []archiveExePathMatch
 	usePreCommitCache     bool
 	httpTimeout           time.Duration
+	done                  bool
 }
 
 // parseFlags parses command line flags using the given flag set.
@@ -173,10 +225,17 @@ func parseFlags(set *flag.FlagSet, args []string) (config, error) {
 	})
 	set.BoolVar(&cfg.usePreCommitCache, "use-pre-commit-cache", false, "Use pre-commit's cache dir")
 	set.DurationVar(&cfg.httpTimeout, "http-timeout", defaultHttpTimeout, "HTTP client timeout")
+	set.BoolFunc("version", "Output version and exit", func(s string) error {
+		if _, err := fmt.Fprintln(set.Output(), versionString); err != nil {
+			return fmt.Errorf("write version: %w", err)
+		}
+		cfg.done = true
+		return nil
+	})
 	if err := set.Parse(args); err != nil {
 		return config{}, err
 	}
-	if len(cfg.urlMatches) == 0 {
+	if !cfg.done && len(cfg.urlMatches) == 0 {
 		err := errors.New("flag must occur at least once: -url")
 		_, _ = fmt.Fprintln(set.Output(), err)
 		set.Usage()
@@ -325,7 +384,11 @@ Environment variables:
 			rc = 2 // usage
 		}
 		return
+	} else if cfg.done {
+		// All done
+		return
 	}
+	infoOut("%s", versionString)
 
 	// Figure out download URL and exe path in archive
 
