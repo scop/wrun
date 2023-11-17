@@ -84,7 +84,7 @@ def main(version: str) -> None:
 
         check_hexdigest(url["url"], "sha256", hexdigest)
 
-        print(f"-url {os_arch}={url["url"]}#sha256-{hexdigest}")
+        print(f"-url {os_arch}={url['url']}#sha256-{hexdigest}")
         suffix = ".exe" if os_arch.startswith("windows/") else ""
         archive_exe_paths.append(
             f"-archive-exe-path {os_arch}={project}-{version_number}.data/scripts/{project}{suffix}"
