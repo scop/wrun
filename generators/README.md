@@ -33,7 +33,6 @@ the readability can likely be preserved there, too.
 Some tools for which generators would be nice to have, contributions welcome!
 
 - trivy, https://trivy.dev, https://github.com/aquasecurity/trivy/releases
-- typos, https://github.com/crate-ci/typos, https://github.com/crate-ci/typos
 
 ## Non-TODO
 
