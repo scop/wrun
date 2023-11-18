@@ -42,7 +42,8 @@ classifiers =
     Operating System :: MacOS
     Operating System :: Microsoft :: Windows
     Operating System :: POSIX :: Linux
-    Programming Language :: Go
+    # https://github.com/pypa/trove-classifiers/pull/159
+    #Programming Language :: Go
     Topic :: Internet :: WWW/HTTP
     Topic :: Utilities
 
