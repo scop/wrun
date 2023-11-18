@@ -8,6 +8,8 @@ $ wrun -help
 Usage of wrun:
   -archive-exe-path value
     	[OS/arch=]path to executable within archive matcher (separator always /, implies archive processing)
+  -dry-run
+    	Dry run, skip execution (but do download/set up cache)
   -http-timeout duration
     	HTTP client timeout (default 5m0s)
   -url value

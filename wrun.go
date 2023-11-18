@@ -179,6 +179,7 @@ type config struct {
 	archiveExePathMatches []archiveExePathMatch
 	usePreCommitCache     bool
 	httpTimeout           time.Duration
+	dryRun                bool
 	done                  bool
 }
 
@@ -232,6 +233,7 @@ func parseFlags(set *flag.FlagSet, args []string) (config, error) {
 		cfg.done = true
 		return nil
 	})
+	set.BoolVar(&cfg.dryRun, "dry-run", false, "Dry run, skip execution (but do download/set up cache)")
 	if err := set.Parse(args); err != nil {
 		return config{}, err
 	}
@@ -457,6 +459,15 @@ Environment variables:
 		args := make([]string, len(flagSet.Args())+1)
 		args[0] = exe
 		copy(args[1:], flagSet.Args())
+		if cfg.dryRun {
+			infoOut("exec (...not, stat due to dry-run): %v", args)
+			if fi, statErr := os.Stat(exe); statErr != nil {
+				return statErr
+			} else if !fi.Mode().IsRegular() {
+				return fmt.Errorf("not a regular file: %v", exe)
+			}
+			return nil
+		}
 		infoOut("exec: %v", args)
 		return syscall.Exec(exe, args, os.Environ())
 	}
@@ -467,6 +478,10 @@ Environment variables:
 		} else {
 			warnOut("exec cached: %v", err)
 		}
+	} else if cfg.dryRun {
+		return
+	} else {
+		panic("BUG: unreachable; successful non-dry-run cache exec")
 	}
 
 	// Set up tempfile for download
@@ -602,7 +617,10 @@ Environment variables:
 	// Execute
 
 	cleanUpTempFile() // Note: deferred cleanup does not happen if we exec successfully
-	err = exec(exePath)
-	errorOut("exec: %v", err)
-	rc = 1
+	if err = exec(exePath); err != nil {
+		errorOut("exec: %v", err)
+		rc = 1
+	} else if !cfg.dryRun {
+		panic("BUG: unreachable; successful non-dry-run exec")
+	}
 }
