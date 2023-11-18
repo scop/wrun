@@ -28,6 +28,10 @@ Hint: if embedding to a YAML document as a string, e.g. a CI config,
 using [line folding (`>-`)](https://yaml.org/spec/1.2.2/#65-line-folding)
 the readability can likely be preserved there, too.
 
+Some of the scripts operate on upstream provided checksum files.
+They have an option to skip verifying checksums against the actual payloads at
+the executable or archive URLs, `--skip-verify`.
+
 ## TODO
 
 Some tools for which generators would be nice to have, contributions welcome!

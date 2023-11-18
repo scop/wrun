@@ -23,8 +23,8 @@ wrun_shfmt_args.py -- generate wrun command line args for shfmt
 * https://github.com/mvdan/sh/releases
 """
 
+from argparse import ArgumentParser
 import hashlib
-import sys
 from urllib.parse import urljoin, quote as urlquote
 from urllib.request import urlopen
 
@@ -52,7 +52,7 @@ def main(version: str) -> None:
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print(f"usage: {sys.argv[0]} VERSION")
-        sys.exit(2)
-    main(sys.argv[1])
+    parser = ArgumentParser()
+    parser.add_argument("version", metavar="VERSION")
+    args = parser.parse_args()
+    main(args.version)
