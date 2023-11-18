@@ -24,9 +24,9 @@ wrun_committed_args.py -- generate wrun command line args for committed
 * https://warehouse.pypa.io/api-reference/json.html
 """
 
+from argparse import ArgumentParser
 import hashlib
 import json
-import sys
 from urllib.parse import quote as urlquote
 from urllib.request import urlopen
 
@@ -43,24 +43,28 @@ file_os_archs = {
 }
 
 
-def check_hexdigest(url: str, algo: str, expected: str) -> None:
+def check_hexdigest(expected: str, algo: str, url: str | None) -> None:
     try:
         assert len(expected) == len(hashlib.new(algo, b"canary").hexdigest())
         _ = bytes.fromhex(expected)
     except Exception as e:
         raise ValueError(f'not a {algo} hex digest: "{expected}"') from e
+    if not url:
+        return
     with urlopen(url) as f:
         got = hashlib.file_digest(f, algo).hexdigest()
     if got != expected:
         raise ValueError(f'{algo} mismatch for "{url}", expected {expected}, got {got}')
 
 
-def main(version: str) -> None:
+def main(version: str, verify: bool) -> None:
     project = "committed"
     version_number = version.lstrip("v")
     archive_exe_paths = []
 
-    release_url = f"https://pypi.org/pypi/{urlquote(project)}/{urlquote(version_number)}/json"
+    release_url = (
+        f"https://pypi.org/pypi/{urlquote(project)}/{urlquote(version_number)}/json"
+    )
     with urlopen(release_url) as f:
         release_data = json.load(f)
 
@@ -75,14 +79,16 @@ def main(version: str) -> None:
         except KeyError as e:
             raise KeyError(f"no sha256 digest available for {filename}") from e
 
-        lookup_filename = filename.replace(f"-{version_number}-", "-{version_number}-", 1)
+        lookup_filename = filename.replace(
+            f"-{version_number}-", "-{version_number}-", 1
+        )
         if lookup_filename not in file_os_archs:
             raise KeyError(f'unhandled file: "{filename}"')
         os_arch = file_os_archs[lookup_filename]
         if os_arch is None:
             continue
 
-        check_hexdigest(url["url"], "sha256", hexdigest)
+        check_hexdigest(hexdigest, "sha256", url["url"] if verify else None)
 
         print(f"-url {os_arch}={url['url']}#sha256-{hexdigest}")
         suffix = ".exe" if os_arch.startswith("windows/") else ""
@@ -94,7 +100,8 @@ def main(version: str) -> None:
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print(f"usage: {sys.argv[0]} VERSION")
-        sys.exit(2)
-    main(sys.argv[1])
+    parser = ArgumentParser()
+    parser.add_argument("version", metavar="VERSION")
+    parser.add_argument("--skip-verify", dest="verify", action="store_false")
+    args = parser.parse_args()
+    main(args.version, args.verify)

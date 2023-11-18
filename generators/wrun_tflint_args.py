@@ -23,8 +23,8 @@ wrun_tflint_args.py -- generate wrun command line args for tflint
 * https://github.com/terraform-linters/tflint/releases
 """
 
+from argparse import ArgumentParser
 import hashlib
-import sys
 from urllib.parse import urljoin, quote as urlquote
 from urllib.request import urlopen
 
@@ -40,19 +40,21 @@ file_os_archs = {
 }
 
 
-def check_hexdigest(url: str, algo: str, expected: str) -> None:
+def check_hexdigest(expected: str, algo: str, url: str | None) -> None:
     try:
         assert len(expected) == len(hashlib.new(algo, b"canary").hexdigest())
         _ = bytes.fromhex(expected)
     except Exception as e:
         raise ValueError(f'not a {algo} hex digest: "{expected}"') from e
+    if not url:
+        return
     with urlopen(url) as f:
         got = hashlib.file_digest(f, algo).hexdigest()
     if got != expected:
         raise ValueError(f'{algo} mismatch for "{url}", expected {expected}, got {got}')
 
 
-def main(version: str) -> None:
+def main(version: str, verify: bool) -> None:
     base_url = f"https://github.com/terraform-linters/tflint/releases/download/{urlquote(version)}/"
 
     with urlopen(urljoin(base_url, "checksums.txt")) as f:
@@ -71,14 +73,15 @@ def main(version: str) -> None:
                 continue
 
             url = urljoin(base_url, filename)
-            check_hexdigest(url, "sha256", hexdigest)
+            check_hexdigest(hexdigest, "sha256", url if verify else None)
 
             print(f"-url {os_arch}={url}#sha256-{hexdigest}")
     print("-archive-exe-path tflint")
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print(f"usage: {sys.argv[0]} VERSION")
-        sys.exit(2)
-    main(sys.argv[1])
+    parser = ArgumentParser()
+    parser.add_argument("version", metavar="VERSION")
+    parser.add_argument("--skip-verify", dest="verify", action="store_false")
+    args = parser.parse_args()
+    main(args.version, args.verify)
