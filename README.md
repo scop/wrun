@@ -34,7 +34,7 @@ The first non-flag argument or -- terminates wrun arguments.
 Remaining ones are passed to the downloaded one.
 
 Environment variables:
-- WRUN_CACHE_HOME: cache location, defaults to wrun subdir in the user cache dir
+- WRUN_CACHE_HOME: cache location, defaults to wrun subdir in the user's cache dir
 - WRUN_OS_ARCH: override OS/arch for matching
 - WRUN_VERBOSE: output verbosity, false decreases, true increases
 ```
@@ -89,9 +89,9 @@ For example:
 
 ## CI usage
 
-Cache resides by default in the
-[`$XDG_CACHE_HOME`](https://github.com/adrg/xdg#xdg-base-directory)`/wrun`
-directory. `$WRUN_CACHE_HOME` overrides it.
+Cache resides by default in the `wrun` subdirectory of
+the [user's cache directory](https://pkg.go.dev/os#UserCacheDir).
+`$WRUN_CACHE_HOME` overrides it.
 
 If the `-use-pre-commit-cache` flag is given, a subdirectory in
 [pre-commit's cache dir](https://pre-commit.com/#managing-ci-caches) is used instead.

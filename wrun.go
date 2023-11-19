@@ -377,7 +377,7 @@ The first non-flag argument or -- terminates %s arguments.
 Remaining ones are passed to the downloaded one.
 
 Environment variables:
-- %s: cache location, defaults to wrun subdir in the user cache dir
+- %s: cache location, defaults to wrun subdir in the user's cache dir
 - %s: override OS/arch for matching
 - %s: output verbosity, false decreases, true increases
 `, prog, prog, cacheHomeEnvVar, osArchEnvVar, verboseEnvVar)
