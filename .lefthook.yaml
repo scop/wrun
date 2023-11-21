@@ -1,5 +1,18 @@
 pre-commit:
   commands:
+    dprint:
+      glob: "*.{json,jsonc,md}"
+      run: >-
+        wrun
+        -url darwin/amd64=https://github.com/dprint/dprint/releases/download/0.43.0/dprint-x86_64-apple-darwin.zip#sha256-8687ddffc00197807ca37934bdf392fa7f7441b8124a6679c9fcccb862c5c5e7
+        -url darwin/arm64=https://github.com/dprint/dprint/releases/download/0.43.0/dprint-aarch64-apple-darwin.zip#sha256-fa5f29ab77fb32742aba7d5cd1cb01d1e8f84abda5ddcddb5c4489fbad231390
+        -url linux/amd64=https://github.com/dprint/dprint/releases/download/0.43.0/dprint-x86_64-unknown-linux-musl.zip#sha256-a73e3ced32b4b82f4e462e4cb4c8206e87d649715b974ed17f90986856498255
+        -url linux/arm64=https://github.com/dprint/dprint/releases/download/0.43.0/dprint-aarch64-unknown-linux-musl.zip#sha256-76270d79c923c14fdbd617d46765ab4299cd5966532bf3c602a5eb414cd6e755
+        -url windows/amd64=https://github.com/dprint/dprint/releases/download/0.43.0/dprint-x86_64-pc-windows-msvc.zip#sha256-dc36df4049633e0bb281a1cdb64ad95e593f299e560b664958457478267e939e
+        -archive-exe-path dprint
+        --
+        fmt
+        {staged_files}
     golangci-lint:
       glob: "*.go"
       run: >-
