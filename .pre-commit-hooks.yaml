@@ -56,6 +56,6 @@
 
 - id: wrun-src
   name: wrun
-  description: Web executable launcher (native install from source)
+  description: Web executable launcher (build from source, requires/installs Go)
   language: golang
   entry: wrun
