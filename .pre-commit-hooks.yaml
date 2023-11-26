@@ -5,6 +5,10 @@
 # not actively maintained or complete with regards to shellcheck and
 # golangci-lint versions, architectures, and sha256sums. It is just
 # for illustration purposes.
+#
+# Typically the keys to override in a pre-commit wrun hook config
+# include name, description, types, and args. Add others as
+# appropriate for the tool to launch.
 
 # repos:
 #   - repo: https://github.com/scop/wrun
