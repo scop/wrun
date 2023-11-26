@@ -1,3 +1,53 @@
+# Hooks for using wrun with pre-commit, https://pre-commit.com
+#
+# A .pre-commit-config.yaml example that runs both shellcheck and
+# golangci-lint on a repo follows. Please note that this example is
+# not actively maintained with regards to shellcheck and golangci-lint
+# versions, architectures, and sha256sums. It is just for illustration
+# purposes.
+
+# repos:
+#   - repo: https://github.com/scop/wrun
+#     rev: v0.2.0-1
+#     hooks:
+#       - id: wrun
+#         name: shellcheck
+#         description: Test shell scripts with shellcheck
+#         stages: [commit, merge-commit, push, manual]
+#         types: [shell]
+#         require_serial: true
+#         args: [
+#           -url, darwin/amd64=https://github.com/koalaman/shellcheck/releases/download/v0.9.0/shellcheck-v0.9.0.darwin.x86_64.tar.xz#sha256-7d3730694707605d6e60cec4efcb79a0632d61babc035aa16cda1b897536acf5,
+#           -url, linux/amd64=https://github.com/koalaman/shellcheck/releases/download/v0.9.0/shellcheck-v0.9.0.linux.x86_64.tar.xz#sha256-700324c6dd0ebea0117591c6cc9d7350d9c7c5c287acbad7630fa17b1d4d9e2f,
+#           -url, windows/amd64=https://github.com/koalaman/shellcheck/releases/download/v0.9.0/shellcheck-v0.9.0.zip#sha256-ae58191b1ea4ffd9e5b15da9134146e636440302ce3e2f46863e8d71c8be1bbb,
+#           -archive-exe-path, windows/*=shellcheck.exe,
+#           -archive-exe-path, shellcheck-v0.9.0/shellcheck,
+#           -use-pre-commit-cache,
+#           --,
+#         ]
+#   - repo: https://github.com/scop/wrun
+#     rev: v0.2.0-1
+#     hooks:
+#       - id: wrun
+#         name: golangci-lint
+#         description: Lint Go source code with golangci-lint
+#         stages: [commit, merge-commit, push, manual]
+#         types: [go]
+#         pass_filenames: false
+#         args: [
+#           -url, darwin/amd64=https://github.com/golangci/golangci-lint/releases/download/v1.55.2/golangci-lint-1.55.2-darwin-amd64.tar.gz#sha256-632e96e6d5294fbbe7b2c410a49c8fa01c60712a0af85a567de85bcc1623ea21,
+#           -url, darwin/arm64=https://github.com/golangci/golangci-lint/releases/download/v1.55.2/golangci-lint-1.55.2-darwin-arm64.tar.gz#sha256-234463f059249f82045824afdcdd5db5682d0593052f58f6a3039a0a1c3899f6,
+#           -url, linux/amd64=https://github.com/golangci/golangci-lint/releases/download/v1.55.2/golangci-lint-1.55.2-linux-amd64.tar.gz#sha256-ca21c961a33be3bc15e4292dc40c98c8dcc5463a7b6768a3afc123761630c09c,
+#           -url, windows/amd64=https://github.com/golangci/golangci-lint/releases/download/v1.55.2/golangci-lint-1.55.2-windows-amd64.zip#sha256-f57d434d231d43417dfa631587522f8c1991220b43c8ffadb9c7bd279508bf81,
+#           -archive-exe-path, darwin/amd64=golangci-lint-1.55.2-darwin-amd64/golangci-lint,
+#           -archive-exe-path, darwin/arm64=golangci-lint-1.55.2-darwin-arm64/golangci-lint,
+#           -archive-exe-path, linux/amd64=golangci-lint-1.55.2-linux-amd64/golangci-lint,
+#           -archive-exe-path, windows/amd64=golangci-lint-1.55.2-windows-amd64/golangci-lint.exe,
+#           -use-pre-commit-cache,
+#           --,
+#           run,
+#         ]
+
 - id: wrun
   name: wrun
   description: Web executable launcher (prebuilt binary)
