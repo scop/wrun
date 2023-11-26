@@ -90,7 +90,7 @@ For example:
 See `.pre-commit-config.yaml` examples in
 [`.pre-commit-hooks.yaml`](.pre-commit-hooks.yaml).
 
-## CI usage
+## Usage in CI
 
 Cache resides by default in the `wrun` subdirectory of
 the [user's cache directory](https://pkg.go.dev/os#UserCacheDir).
