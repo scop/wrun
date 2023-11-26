@@ -2,9 +2,9 @@
 #
 # A .pre-commit-config.yaml example that runs both shellcheck and
 # golangci-lint on a repo follows. Please note that this example is
-# not actively maintained with regards to shellcheck and golangci-lint
-# versions, architectures, and sha256sums. It is just for illustration
-# purposes.
+# not actively maintained or complete with regards to shellcheck and
+# golangci-lint versions, architectures, and sha256sums. It is just
+# for illustration purposes.
 
 # repos:
 #   - repo: https://github.com/scop/wrun
