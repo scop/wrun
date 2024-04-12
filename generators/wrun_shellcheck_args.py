@@ -29,6 +29,7 @@ from urllib.parse import urljoin, quote as urlquote
 from urllib.request import urlopen
 
 file_os_archs = {
+    "shellcheck-{version}.darwin.aarch64.tar.xz": "darwin/arm64",
     "shellcheck-{version}.darwin.x86_64.tar.xz": "darwin/amd64",
     "shellcheck-{version}.linux.aarch64.tar.xz": "linux/arm64",
     "shellcheck-{version}.linux.armv6hf.tar.xz": "linux/arm",
