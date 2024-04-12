@@ -1,6 +1,6 @@
 module github.com/scop/wrun
 
-go 1.21
+go 1.22
 
 require (
 	github.com/mholt/archiver/v3 v3.5.1
