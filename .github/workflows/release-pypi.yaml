@@ -45,7 +45,7 @@ jobs:
           ls wheelhouse
       - uses: actions/upload-artifact@v4
         with:
-          name: dist-files
+          name: dist-files-${{ matrix.os }}
           path: wheelhouse/*
   release:
     runs-on: ubuntu-latest
@@ -55,7 +55,8 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: dist-files
+          pattern: dist-files-*
+          merge-multiple: true
           path: dist
       - run: ls dist
       - uses: pypa/gh-action-pypi-publish@release/v1
