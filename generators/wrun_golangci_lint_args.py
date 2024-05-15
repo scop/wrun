@@ -50,6 +50,7 @@ file_os_archs = {
     "golangci-lint-{version_number}-linux-s390x.tar.gz": "linux/s390x",
     "golangci-lint-{version_number}-netbsd-386.tar.gz": "netbsd/386",
     "golangci-lint-{version_number}-netbsd-amd64.tar.gz": "netbsd/amd64",
+    "golangci-lint-{version_number}-netbsd-arm64.tar.gz": "netbsd/arm64",
     "golangci-lint-{version_number}-netbsd-armv6.tar.gz": "netbsd/arm",
     "golangci-lint-{version_number}-netbsd-armv7.tar.gz": None,  # using armv6 one
     "golangci-lint-{version_number}-source.tar.gz": None,
