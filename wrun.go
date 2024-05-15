@@ -101,7 +101,7 @@ const (
 	osArchEnvVar              = "WRUN_OS_ARCH"
 	cacheVersion              = "v2"
 	cacheDirDigestPlaceholder = "_"
-	defaultHttpTimeout        = 5 * time.Minute
+	defaultHTTPTimeout        = 5 * time.Minute
 )
 
 var hashesByName = map[string]crypto.Hash{
@@ -225,8 +225,8 @@ func parseFlags(set *flag.FlagSet, args []string) (config, error) {
 		return nil
 	})
 	set.BoolVar(&cfg.usePreCommitCache, "use-pre-commit-cache", false, "Use pre-commit's cache dir")
-	set.DurationVar(&cfg.httpTimeout, "http-timeout", defaultHttpTimeout, "HTTP client timeout")
-	set.BoolFunc("version", "Output version and exit", func(s string) error {
+	set.DurationVar(&cfg.httpTimeout, "http-timeout", defaultHTTPTimeout, "HTTP client timeout")
+	set.BoolFunc("version", "Output version and exit", func(_ string) error {
 		if _, err := fmt.Fprintln(set.Output(), versionString); err != nil {
 			return fmt.Errorf("write version: %w", err)
 		}
@@ -343,7 +343,6 @@ func main() {
 	warnOut := func(format string, a ...any) {
 		if verbose == nil || *verbose {
 			_out(os.Stderr, "WARN", format, a...)
-
 		}
 	}
 	errorOut := func(format string, a ...any) {

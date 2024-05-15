@@ -60,7 +60,7 @@ func Test_parseFlags(t *testing.T) {
 			},
 		},
 		archiveExePathMatches: nil,
-		httpTimeout:           defaultHttpTimeout,
+		httpTimeout:           defaultHTTPTimeout,
 	}
 	got, err := parseFlags(set, args)
 	require.NoError(t, err)
