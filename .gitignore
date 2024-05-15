@@ -1,6 +1,6 @@
 /*.egg-info/
-/.rtx.*.local.toml
-/.rtx.local.toml
+/.mise.*.local.toml
+/.mise.local.toml
 /build/
 /dist/
 /venv/
