@@ -30,22 +30,22 @@ from urllib.parse import urljoin, quote as urlquote
 from urllib.request import urlopen
 
 file_os_archs = {
-    "ruff-aarch64-apple-darwin.tar.gz": "darwin/arm64",
-    "ruff-aarch64-pc-windows-msvc.zip": "windows/arm64",
-    "ruff-aarch64-unknown-linux-gnu.tar.gz": None,  # using musl one
-    "ruff-aarch64-unknown-linux-musl.tar.gz": "linux/arm64",
-    "ruff-armv7-unknown-linux-gnueabihf.tar.gz": None,  # using musl one
-    "ruff-armv7-unknown-linux-musleabihf.tar.gz": "linux/arm",
-    "ruff-i686-pc-windows-msvc.zip": "windows/386",
-    "ruff-i686-unknown-linux-gnu.tar.gz": None,  # using musl one
-    "ruff-i686-unknown-linux-musl.tar.gz": "linux/386",
-    "ruff-powerpc64-unknown-linux-gnu.tar.gz": "linux/ppc64",
-    "ruff-powerpc64le-unknown-linux-gnu.tar.gz": "linux/ppc64le",
-    "ruff-s390x-unknown-linux-gnu.tar.gz": "linux/s390x",
-    "ruff-x86_64-apple-darwin.tar.gz": "darwin/amd64",
-    "ruff-x86_64-pc-windows-msvc.zip": "windows/amd64",
-    "ruff-x86_64-unknown-linux-gnu.tar.gz": None,  # using musl one
-    "ruff-x86_64-unknown-linux-musl.tar.gz": "linux/amd64",
+    "aarch64-apple-darwin.tar.gz": "darwin/arm64",
+    "aarch64-pc-windows-msvc.zip": "windows/arm64",
+    # "aarch64-unknown-linux-gnu.tar.gz": None,  # using musl one
+    "aarch64-unknown-linux-musl.tar.gz": "linux/arm64",
+    # "armv7-unknown-linux-gnueabihf.tar.gz": None,  # using musl one
+    "armv7-unknown-linux-musleabihf.tar.gz": "linux/arm",
+    "i686-pc-windows-msvc.zip": "windows/386",
+    # "i686-unknown-linux-gnu.tar.gz": None,  # using musl one
+    "i686-unknown-linux-musl.tar.gz": "linux/386",
+    "powerpc64-unknown-linux-gnu.tar.gz": "linux/ppc64",
+    "powerpc64le-unknown-linux-gnu.tar.gz": "linux/ppc64le",
+    "s390x-unknown-linux-gnu.tar.gz": "linux/s390x",
+    "x86_64-apple-darwin.tar.gz": "darwin/amd64",
+    "x86_64-pc-windows-msvc.zip": "windows/amd64",
+    # "x86_64-unknown-linux-gnu.tar.gz": None,  # using musl one
+    "x86_64-unknown-linux-musl.tar.gz": "linux/amd64",
 }
 
 
@@ -67,10 +67,11 @@ def main(version: str, verify: bool) -> None:
     base_url = (
         f"https://github.com/astral-sh/ruff/releases/download/{urlquote(version)}/"
     )
+    version_number = version.lstrip("v")
 
-    for fn, os_arch in file_os_archs.items():
-        fn += ".sha256"
-        url = urljoin(base_url, urlquote(fn))
+    for suffix, os_arch in file_os_archs.items():
+        fn = f"ruff-{version_number}-{suffix}"
+        url = urljoin(base_url, urlquote(fn + ".sha256"))
         with urlopen(url) as f:
             for line in f:
                 sline = line.decode()
@@ -79,13 +80,9 @@ def main(version: str, verify: bool) -> None:
                 if len(hexdigest_filename) != 2:
                     raise ValueError(f'invalid checksums line in {fn}: "{sline}"')
                 hexdigest, filename = hexdigest_filename
-
-                filename = filename.lstrip("*")  # Kind of dangerous...
-                if filename not in file_os_archs:
-                    raise KeyError(f'unhandled file: "{filename}"')
-                os_arch = file_os_archs[filename]
-                if os_arch is None:
-                    continue
+                filename = filename.lstrip("*")  # at least some windows ones have this
+                if filename != fn:
+                    raise KeyError(f'unexpected filename in {url}: "{filename}"')
 
                 url = urljoin(base_url, filename)
                 check_hexdigest(hexdigest, "sha256", url if verify else None)
