@@ -29,38 +29,6 @@ import re
 from urllib.parse import urljoin, quote as urlquote
 from urllib.request import urlopen
 
-file_os_archs = {
-    "golangci-lint-{version_number}-darwin-amd64.tar.gz": "darwin/amd64",
-    "golangci-lint-{version_number}-darwin-arm64.tar.gz": "darwin/arm64",
-    "golangci-lint-{version_number}-freebsd-386.tar.gz": "freebsd/386",
-    "golangci-lint-{version_number}-freebsd-amd64.tar.gz": "freebsd/amd64",
-    "golangci-lint-{version_number}-freebsd-armv6.tar.gz": "freebsd/arm",
-    "golangci-lint-{version_number}-freebsd-armv7.tar.gz": None,  # using armv6 one
-    "golangci-lint-{version_number}-illumos-amd64.tar.gz": "illumos/amd64",
-    "golangci-lint-{version_number}-linux-386.tar.gz": "linux/386",
-    "golangci-lint-{version_number}-linux-amd64.tar.gz": "linux/amd64",
-    "golangci-lint-{version_number}-linux-arm64.tar.gz": "linux/arm64",
-    "golangci-lint-{version_number}-linux-armv6.tar.gz": "linux/arm",
-    "golangci-lint-{version_number}-linux-armv7.tar.gz": None,  # using armv6 one
-    "golangci-lint-{version_number}-linux-loong64.tar.gz": "linux/loong64",
-    "golangci-lint-{version_number}-linux-mips64.tar.gz": "linux/mips64",
-    "golangci-lint-{version_number}-linux-mips64le.tar.gz": "linux/mips64le",
-    "golangci-lint-{version_number}-linux-ppc64le.tar.gz": "linux/ppc64le",
-    "golangci-lint-{version_number}-linux-riscv64.tar.gz": "linux/riscv64",
-    "golangci-lint-{version_number}-linux-s390x.tar.gz": "linux/s390x",
-    "golangci-lint-{version_number}-netbsd-386.tar.gz": "netbsd/386",
-    "golangci-lint-{version_number}-netbsd-amd64.tar.gz": "netbsd/amd64",
-    "golangci-lint-{version_number}-netbsd-arm64.tar.gz": "netbsd/arm64",
-    "golangci-lint-{version_number}-netbsd-armv6.tar.gz": "netbsd/arm",
-    "golangci-lint-{version_number}-netbsd-armv7.tar.gz": None,  # using armv6 one
-    "golangci-lint-{version_number}-source.tar.gz": None,
-    "golangci-lint-{version_number}-windows-386.zip": "windows/386",
-    "golangci-lint-{version_number}-windows-amd64.zip": "windows/amd64",
-    "golangci-lint-{version_number}-windows-arm64.zip": "windows/arm64",
-    "golangci-lint-{version_number}-windows-armv6.zip": "windows/arm",
-    "golangci-lint-{version_number}-windows-armv7.zip": None,  # using armv6 one
-}
-
 
 def check_hexdigest(expected: str, algo: str, url: str | None) -> None:
     try:
@@ -92,26 +60,26 @@ def main(version: str, verify: bool) -> None:
                 raise ValueError(f'invalid checksums line: "{sline}"')
             hexdigest, filename = hexdigest_filename
 
-            if filename.endswith(".deb") or filename.endswith(".rpm"):
+            if m:= re.search(r"^(golangci-lint-(.+)-([^-]+)-([^-]+))\.(?:t[\w.]+|zip)$", filename):
+                if m.group(2) != version_number:
+                    continue
+                dirname = m.group(1)
+                os = m.group(3)
+                arch = m.group(4)
+            else:
                 continue
-
-            lookup_filename = filename.replace(
-                f"-{version_number}-", "-{version_number}-", 1
-            )
-            if lookup_filename not in file_os_archs:
-                raise KeyError(f'unhandled file: "{filename}"')
-            os_arch = file_os_archs[lookup_filename]
-            if os_arch is None:
-                continue
+            if arch == "armv7":
+                continue # using armv6 one
+            if arch == "armv6":
+                arch = "arm"
 
             url = urljoin(base_url, filename)
             check_hexdigest(hexdigest, "sha256", url if verify else None)
 
-            print(f"-url {os_arch}={url}#sha256-{hexdigest}")
-            dirname = re.sub(r"\.(t[\w.]+|zip)$", "", filename)
-            suffix = ".exe" if os_arch.startswith("windows/") else ""
+            print(f"-url {os}/{arch}={url}#sha256-{hexdigest}")
+            suffix = ".exe" if os == "windows" else ""
             archive_exe_paths.append(
-                f"-archive-exe-path {os_arch}={dirname}/golangci-lint{suffix}"
+                f"-archive-exe-path {os}/{arch}={dirname}/golangci-lint{suffix}"
             )
     for p in archive_exe_paths:
         print(p)
