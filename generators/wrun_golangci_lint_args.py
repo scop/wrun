@@ -67,7 +67,9 @@ def main(version: str, verify: bool) -> None:
                 raise ValueError(f'invalid checksums line: "{sline}"')
             hexdigest, filename = hexdigest_filename
 
-            if m:= re.search(r"^(golangci-lint-(.+)-([^-]+)-([^-]+))\.(?:t[\w.]+|zip)$", filename):
+            if m := re.search(
+                r"^(golangci-lint-(.+)-([^-]+)-([^-]+))\.(?:t[\w.]+|zip)$", filename
+            ):
                 if m.group(2) != version_number:
                     continue
                 dirname = m.group(1)
@@ -76,7 +78,7 @@ def main(version: str, verify: bool) -> None:
             else:
                 continue
             if arch == "armv7":
-                continue # using armv6 one
+                continue  # using armv6 one
             if arch == "armv6":
                 arch = "arm"
 

@@ -83,7 +83,9 @@ def main(version: str, verify: bool) -> None:
                 raise ValueError(f'invalid checksums line: "{sline}"')
             hexdigest, filename = hexdigest_filename
 
-            lookup_filename = filename.replace(f"_{version_number}_", "_{version_number}_", 1)
+            lookup_filename = filename.replace(
+                f"_{version_number}_", "_{version_number}_", 1
+            )
             if lookup_filename not in file_os_archs:
                 raise KeyError(f'unhandled file: "{filename}"')
             os_arch = file_os_archs[lookup_filename]
