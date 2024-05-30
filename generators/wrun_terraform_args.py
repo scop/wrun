@@ -28,6 +28,9 @@ import hashlib
 from urllib.parse import urljoin, quote as urlquote
 from urllib.request import urlopen
 
+from wrun_utils import latest_atom_version
+
+
 file_os_archs = {
     "terraform_{version}_darwin_amd64.zip": "darwin/amd64",
     "terraform_{version}_darwin_arm64.zip": "darwin/arm64",
@@ -61,9 +64,17 @@ def check_hexdigest(expected: str, algo: str, url: str | None) -> None:
 
 
 def main(version: str, verify: bool) -> None:
-    base_url = f"https://releases.hashicorp.com/terraform/{urlquote(version)}/"
+    if not version:
+        version = latest_atom_version(
+            "https://github.com/hashicorp/terraform/releases.atom"
+        )
+    version_number = version.lstrip("v")
 
-    with urlopen(urljoin(base_url, urlquote(f"terraform_{version}_SHA256SUMS"))) as f:
+    base_url = f"https://releases.hashicorp.com/terraform/{urlquote(version_number)}/"
+
+    with urlopen(
+        urljoin(base_url, urlquote(f"terraform_{version_number}_SHA256SUMS"))
+    ) as f:
         for line in f:
             sline = line.decode()
 
@@ -72,7 +83,7 @@ def main(version: str, verify: bool) -> None:
                 raise ValueError(f'invalid checksums line: "{sline}"')
             hexdigest, filename = hexdigest_filename
 
-            lookup_filename = filename.replace(f"_{version}_", "_{version}_", 1)
+            lookup_filename = filename.replace(f"_{version_number}_", "_{version_number}_", 1)
             if lookup_filename not in file_os_archs:
                 raise KeyError(f'unhandled file: "{filename}"')
             os_arch = file_os_archs[lookup_filename]
@@ -88,7 +99,7 @@ def main(version: str, verify: bool) -> None:
 
 if __name__ == "__main__":
     parser = ArgumentParser()
-    parser.add_argument("version", metavar="VERSION")
+    parser.add_argument("version", metavar="VERSION", nargs="?")
     parser.add_argument("--skip-verify", dest="verify", action="store_false")
     args = parser.parse_args()
     main(args.version, args.verify)

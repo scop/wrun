@@ -28,6 +28,9 @@ import hashlib
 from urllib.parse import urljoin, quote as urlquote
 from urllib.request import urlopen
 
+from wrun_utils import latest_atom_version
+
+
 file_os_archs = {
     "shfmt_{version}_darwin_amd64": "darwin/amd64",
     "shfmt_{version}_darwin_arm64": "darwin/arm64",
@@ -41,6 +44,9 @@ file_os_archs = {
 
 
 def main(version: str) -> None:
+    if not version:
+        version = latest_atom_version("https://github.com/mvdan/sh/releases.atom")
+
     base_url = f"https://github.com/mvdan/sh/releases/download/{urlquote(version)}/"
 
     for fn, os_arch in file_os_archs.items():
@@ -53,6 +59,6 @@ def main(version: str) -> None:
 
 if __name__ == "__main__":
     parser = ArgumentParser()
-    parser.add_argument("version", metavar="VERSION")
+    parser.add_argument("version", metavar="VERSION", nargs="?")
     args = parser.parse_args()
     main(args.version)

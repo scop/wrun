@@ -29,6 +29,8 @@ import re
 from urllib.parse import urljoin, quote as urlquote
 from urllib.request import urlopen
 
+from wrun_utils import latest_atom_version
+
 
 def check_hexdigest(expected: str, algo: str, url: str | None) -> None:
     try:
@@ -45,6 +47,11 @@ def check_hexdigest(expected: str, algo: str, url: str | None) -> None:
 
 
 def main(version: str, verify: bool) -> None:
+    if not version:
+        version = latest_atom_version(
+            "https://github.com/golangci/golangci-lint/releases.atom"
+        )
+
     version_number = version.lstrip("v")
     base_url = f"https://github.com/golangci/golangci-lint/releases/download/{urlquote(version)}/"
     archive_exe_paths = []
@@ -87,7 +94,7 @@ def main(version: str, verify: bool) -> None:
 
 if __name__ == "__main__":
     parser = ArgumentParser()
-    parser.add_argument("version", metavar="VERSION")
+    parser.add_argument("version", metavar="VERSION", nargs="?")
     parser.add_argument("--skip-verify", dest="verify", action="store_false")
     args = parser.parse_args()
     main(args.version, args.verify)

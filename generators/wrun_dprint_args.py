@@ -28,6 +28,9 @@ import hashlib
 from urllib.parse import urljoin, quote as urlquote
 from urllib.request import urlopen
 
+from wrun_utils import latest_atom_version
+
+
 file_os_archs = {
     "dprint-aarch64-apple-darwin.zip": "darwin/arm64",
     "dprint-aarch64-unknown-linux-gnu.zip": None,  # using musl one
@@ -55,6 +58,9 @@ def check_hexdigest(expected: str, algo: str, url: str | None) -> None:
 
 
 def main(version: str, verify: bool) -> None:
+    if not version:
+        version = latest_atom_version("https://github.com/dprint/dprint/releases.atom")
+
     base_url = (
         f"https://github.com/dprint/dprint/releases/download/{urlquote(version)}/"
     )
@@ -83,7 +89,7 @@ def main(version: str, verify: bool) -> None:
 
 if __name__ == "__main__":
     parser = ArgumentParser()
-    parser.add_argument("version", metavar="VERSION")
+    parser.add_argument("version", metavar="VERSION", nargs="?")
     parser.add_argument("--skip-verify", dest="verify", action="store_false")
     args = parser.parse_args()
     main(args.version, args.verify)

@@ -28,6 +28,9 @@ import hashlib
 from urllib.parse import urljoin, quote as urlquote
 from urllib.request import urlopen
 
+from wrun_utils import latest_atom_version
+
+
 file_os_archs = {
     "shellcheck-{version}.darwin.aarch64.tar.xz": "darwin/arm64",
     "shellcheck-{version}.darwin.x86_64.tar.xz": "darwin/amd64",
@@ -39,6 +42,11 @@ file_os_archs = {
 
 
 def main(version: str) -> None:
+    if not version:
+        version = latest_atom_version(
+            "https://github.com/koalaman/shellcheck/releases.atom"
+        )
+
     base_url = (
         f"https://github.com/koalaman/shellcheck/releases/download/{urlquote(version)}/"
     )
@@ -55,6 +63,6 @@ def main(version: str) -> None:
 
 if __name__ == "__main__":
     parser = ArgumentParser()
-    parser.add_argument("version", metavar="VERSION")
+    parser.add_argument("version", metavar="VERSION", nargs="?")
     args = parser.parse_args()
     main(args.version)

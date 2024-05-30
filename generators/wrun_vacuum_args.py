@@ -28,6 +28,9 @@ import hashlib
 from urllib.parse import urljoin, quote as urlquote
 from urllib.request import urlopen
 
+from wrun_utils import latest_atom_version
+
+
 file_os_archs = {
     "vacuum_{version_number}_darwin_arm64.tar.gz": "darwin/arm64",
     "vacuum_{version_number}_darwin_x86_64.tar.gz": "darwin/amd64",
@@ -55,6 +58,11 @@ def check_hexdigest(expected: str, algo: str, url: str | None) -> None:
 
 
 def main(version: str, verify: bool) -> None:
+    if not version:
+        version = latest_atom_version(
+            "https://github.com/daveshanley/vacuum/releases.atom"
+        )
+
     version_number = version.lstrip("v")
     base_url = (
         f"https://github.com/daveshanley/vacuum/releases/download/{urlquote(version)}/"
@@ -87,7 +95,7 @@ def main(version: str, verify: bool) -> None:
 
 if __name__ == "__main__":
     parser = ArgumentParser()
-    parser.add_argument("version", metavar="VERSION")
+    parser.add_argument("version", metavar="VERSION", nargs="?")
     parser.add_argument("--skip-verify", dest="verify", action="store_false")
     args = parser.parse_args()
     main(args.version, args.verify)

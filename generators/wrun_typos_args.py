@@ -30,6 +30,9 @@ import json
 from urllib.parse import quote as urlquote
 from urllib.request import urlopen
 
+from wrun_utils import latest_rss2_version
+
+
 file_os_archs = {
     "typos-{version_number}-py3-none-macosx_10_7_x86_64.whl": "darwin/amd64",
     "typos-{version_number}-py3-none-macosx_11_0_arm64.whl": "darwin/arm64",
@@ -58,6 +61,9 @@ def check_hexdigest(expected: str, algo: str, url: str | None) -> None:
 
 
 def main(version: str, verify: bool) -> None:
+    if not version:
+        version = latest_rss2_version("https://pypi.org/rss/project/typos/releases.xml")
+
     project = "typos"
     version_number = version.lstrip("v")
     archive_exe_paths = []
@@ -101,7 +107,7 @@ def main(version: str, verify: bool) -> None:
 
 if __name__ == "__main__":
     parser = ArgumentParser()
-    parser.add_argument("version", metavar="VERSION")
+    parser.add_argument("version", metavar="VERSION", nargs="?")
     parser.add_argument("--skip-verify", dest="verify", action="store_false")
     args = parser.parse_args()
     main(args.version, args.verify)

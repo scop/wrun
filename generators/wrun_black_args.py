@@ -28,6 +28,9 @@ import hashlib
 from urllib.parse import urljoin, quote as urlquote
 from urllib.request import urlopen
 
+from wrun_utils import latest_atom_version
+
+
 file_os_archs = {
     "black_linux": "linux/amd64",
     "black_macos": "darwin/amd64",
@@ -36,6 +39,9 @@ file_os_archs = {
 
 
 def main(version: str) -> None:
+    if not version:
+        version = latest_atom_version("https://github.com/psf/black/releases.atom")
+
     base_url = f"https://github.com/psf/black/releases/download/{urlquote(version)}/"
 
     for filename, os_arch in file_os_archs.items():
@@ -48,6 +54,6 @@ def main(version: str) -> None:
 
 if __name__ == "__main__":
     parser = ArgumentParser()
-    parser.add_argument("version", metavar="VERSION")
+    parser.add_argument("version", metavar="VERSION", nargs="?")
     args = parser.parse_args()
     main(args.version)

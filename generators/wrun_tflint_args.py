@@ -28,6 +28,9 @@ import hashlib
 from urllib.parse import urljoin, quote as urlquote
 from urllib.request import urlopen
 
+from wrun_utils import latest_atom_version
+
+
 file_os_archs = {
     "tflint_darwin_amd64.zip": "darwin/amd64",
     "tflint_darwin_arm64.zip": "darwin/arm64",
@@ -55,6 +58,11 @@ def check_hexdigest(expected: str, algo: str, url: str | None) -> None:
 
 
 def main(version: str, verify: bool) -> None:
+    if not version:
+        version = latest_atom_version(
+            "https://github.com/terraform-linters/tflint/releases.atom"
+        )
+
     base_url = f"https://github.com/terraform-linters/tflint/releases/download/{urlquote(version)}/"
 
     with urlopen(urljoin(base_url, "checksums.txt")) as f:
@@ -81,7 +89,7 @@ def main(version: str, verify: bool) -> None:
 
 if __name__ == "__main__":
     parser = ArgumentParser()
-    parser.add_argument("version", metavar="VERSION")
+    parser.add_argument("version", metavar="VERSION", nargs="?")
     parser.add_argument("--skip-verify", dest="verify", action="store_false")
     args = parser.parse_args()
     main(args.version, args.verify)
