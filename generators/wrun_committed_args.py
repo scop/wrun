@@ -25,12 +25,11 @@ wrun_committed_args.py -- generate wrun command line args for committed
 """
 
 from argparse import ArgumentParser
-import hashlib
 import json
 from urllib.parse import quote as urlquote
 from urllib.request import urlopen
 
-from wrun_utils import latest_rss2_version
+from wrun_utils import check_hexdigest, latest_rss2_version
 
 
 file_os_archs = {
@@ -44,20 +43,6 @@ file_os_archs = {
     "committed-{version_number}-py3-none-win32.whl": "windows/386",
     "committed-{version_number}-py3-none-win_amd64.whl": "windows/amd64",
 }
-
-
-def check_hexdigest(expected: str, algo: str, url: str | None) -> None:
-    try:
-        assert len(expected) == len(hashlib.new(algo, b"canary").hexdigest())
-        _ = bytes.fromhex(expected)
-    except Exception as e:
-        raise ValueError(f'not a {algo} hex digest: "{expected}"') from e
-    if not url:
-        return
-    with urlopen(url) as f:
-        got = hashlib.file_digest(f, algo).hexdigest()
-    if got != expected:
-        raise ValueError(f'{algo} mismatch for "{url}", expected {expected}, got {got}')
 
 
 def main(version: str, verify: bool) -> None:

@@ -24,11 +24,10 @@ wrun_tflint_args.py -- generate wrun command line args for tflint
 """
 
 from argparse import ArgumentParser
-import hashlib
 from urllib.parse import urljoin, quote as urlquote
 from urllib.request import urlopen
 
-from wrun_utils import latest_atom_version
+from wrun_utils import check_hexdigest, latest_atom_version
 
 
 file_os_archs = {
@@ -41,20 +40,6 @@ file_os_archs = {
     "tflint_windows_386.zip": "windows/386",
     "tflint_windows_amd64.zip": "windows/amd64",
 }
-
-
-def check_hexdigest(expected: str, algo: str, url: str | None) -> None:
-    try:
-        assert len(expected) == len(hashlib.new(algo, b"canary").hexdigest())
-        _ = bytes.fromhex(expected)
-    except Exception as e:
-        raise ValueError(f'not a {algo} hex digest: "{expected}"') from e
-    if not url:
-        return
-    with urlopen(url) as f:
-        got = hashlib.file_digest(f, algo).hexdigest()
-    if got != expected:
-        raise ValueError(f'{algo} mismatch for "{url}", expected {expected}, got {got}')
 
 
 def main(version: str, verify: bool) -> None:

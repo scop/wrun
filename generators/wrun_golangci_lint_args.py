@@ -24,26 +24,11 @@ wrun_golangci_lint_args.py -- generate wrun command line args for golangci-lint
 """
 
 from argparse import ArgumentParser
-import hashlib
 import re
 from urllib.parse import urljoin, quote as urlquote
 from urllib.request import urlopen
 
-from wrun_utils import latest_atom_version
-
-
-def check_hexdigest(expected: str, algo: str, url: str | None) -> None:
-    try:
-        assert len(expected) == len(hashlib.new(algo, b"canary").hexdigest())
-        _ = bytes.fromhex(expected)
-    except Exception as e:
-        raise ValueError(f'not a {algo} hex digest: "{expected}"') from e
-    if not url:
-        return
-    with urlopen(url) as f:
-        got = hashlib.file_digest(f, algo).hexdigest()
-    if got != expected:
-        raise ValueError(f'{algo} mismatch for "{url}", expected {expected}, got {got}')
+from wrun_utils import check_hexdigest, latest_atom_version
 
 
 def main(version: str, verify: bool) -> None:
