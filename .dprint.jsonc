@@ -1,15 +1,6 @@
 {
   "json": {},
   "markdown": {},
-  "excludes": [
-    // https://github.com/dprint/dprint/issues/378
-    ".git/**",
-    "*.egg-info/**",
-    "build/**",
-    "dist/**",
-    "venv/**",
-    "wheelhouse/**",
-  ],
   "plugins": [
     "https://plugins.dprint.dev/json-0.19.3.wasm",
     "https://plugins.dprint.dev/markdown-0.17.1.wasm",
