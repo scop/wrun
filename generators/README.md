@@ -34,9 +34,8 @@ the executable or archive URLs, `--skip-verify`.
 
 ## TODO
 
-Some tools for which generators would be nice to have, contributions welcome!
-
-- trivy, https://trivy.dev, https://github.com/aquasecurity/trivy/releases
+Some more generators for commonly used tools would be nice to have,
+contributions welcome!
 
 ## Non-TODO
 
