@@ -14,8 +14,6 @@ Usage of wrun:
     	HTTP client timeout (default 5m0s)
   -url value
     	[OS/arch=]URL matcher (at least one required)
-  -use-pre-commit-cache
-    	Use pre-commit's cache dir
 
 wrun downloads, caches, and runs executables.
 
@@ -95,9 +93,6 @@ See `.pre-commit-config.yaml` examples in
 Cache resides by default in the `wrun` subdirectory of
 the [user's cache directory](https://pkg.go.dev/os#UserCacheDir).
 `$WRUN_CACHE_HOME` overrides it.
-
-If the `-use-pre-commit-cache` flag is given, a subdirectory in
-[pre-commit's cache dir](https://pre-commit.com/#managing-ci-caches) is used instead.
 
 [pre-commit.ci](https://pre-commit.ci) is not supported, because it
 [disallows network access at runtime](https://github.com/pre-commit-ci/issues/issues/196#issuecomment-1810937079).

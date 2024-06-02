@@ -177,7 +177,6 @@ type archiveExePathMatch struct {
 type config struct {
 	urlMatches            []urlMatch
 	archiveExePathMatches []archiveExePathMatch
-	usePreCommitCache     bool
 	httpTimeout           time.Duration
 	dryRun                bool
 	done                  bool
@@ -224,7 +223,6 @@ func parseFlags(set *flag.FlagSet, args []string) (config, error) {
 		cfg.archiveExePathMatches = append(cfg.archiveExePathMatches, archiveExePathMatch{pattern, pth})
 		return nil
 	})
-	set.BoolVar(&cfg.usePreCommitCache, "use-pre-commit-cache", false, "Use pre-commit's cache dir")
 	set.DurationVar(&cfg.httpTimeout, "http-timeout", defaultHTTPTimeout, "HTTP client timeout")
 	set.BoolFunc("version", "Output version and exit", func(_ string) error {
 		if _, err := fmt.Fprintln(set.Output(), versionString); err != nil {
@@ -279,38 +277,15 @@ func selectArchiveExePath(s string, matches []archiveExePathMatch) (string, erro
 	return "", nil
 }
 
-func resolveCacheDir(usePreCommitCache bool) (string, error) {
-	var (
-		cacheDir string
-		err      error
-	)
-	if usePreCommitCache {
-		cacheDir = os.Getenv("PRE_COMMIT_HOME")
-		if cacheDir != "" {
-			cacheDir = filepath.Join(cacheDir, "wrun")
-		} else {
-			// Do not use os.UserCacheDir(), it has platform specific behavior not matching what pre-commit does.
-			// https://github.com/pre-commit/pre-commit/blob/2280645d0e2f1fa54654d8c36cc8d62f15f4d413/pre_commit/store.py#L32-L34
-			if xdgCacheHome := os.Getenv("XDG_CACHE_HOME"); xdgCacheHome == "" {
-				var homeDir string
-				if homeDir, err = os.UserHomeDir(); err != nil {
-					return "", fmt.Errorf("cache dir: %w", err)
-				}
-				cacheDir = filepath.Join(homeDir, ".cache")
-			} else {
-				cacheDir = xdgCacheHome
-			}
-			cacheDir = filepath.Join(cacheDir, "pre-commit", "wrun")
+func resolveCacheDir() (string, error) {
+	cacheDir := os.Getenv(cacheHomeEnvVar)
+	if cacheDir == "" {
+		var err error
+		cacheDir, err = os.UserCacheDir()
+		if err != nil {
+			return "", fmt.Errorf("cache dir: %w", err)
 		}
-	} else {
-		cacheDir = os.Getenv(cacheHomeEnvVar)
-		if cacheDir == "" {
-			cacheDir, err = os.UserCacheDir()
-			if err != nil {
-				return "", fmt.Errorf("cache dir: %w", err)
-			}
-			cacheDir = filepath.Join(cacheDir, "wrun")
-		}
+		cacheDir = filepath.Join(cacheDir, "wrun")
 	}
 	cacheDir = filepath.Join(cacheDir, cacheVersion)
 	return cacheDir, nil
@@ -431,7 +406,7 @@ Environment variables:
 	// Set up cache
 
 	var cacheDir string
-	cacheDir, err = resolveCacheDir(cfg.usePreCommitCache)
+	cacheDir, err = resolveCacheDir()
 	if err != nil {
 		errorOut("cache setup: %v", err)
 		rc = 1
