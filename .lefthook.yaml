@@ -71,18 +71,18 @@ pre-commit:
       glob: "*.{py,pyi}"
       run: >-
         wrun
-        -url darwin/amd64=https://github.com/astral-sh/ruff/releases/download/v0.4.6/ruff-0.4.6-x86_64-apple-darwin.tar.gz#sha256-566e96e074a2d05c97a8d56d3a7239d235e30adeee8f11495a8715e812275012
-        -url darwin/arm64=https://github.com/astral-sh/ruff/releases/download/v0.4.6/ruff-0.4.6-aarch64-apple-darwin.tar.gz#sha256-231a24dc2fc2496c8684551227100f485f5c980f5861037e878a2701ce02cc57
-        -url linux/386=https://github.com/astral-sh/ruff/releases/download/v0.4.6/ruff-0.4.6-i686-unknown-linux-musl.tar.gz#sha256-f03f3bdc0efa50d1901f311cb96bbaadbfb5eb240b59fc1682b8e787c8ab091d
-        -url linux/amd64=https://github.com/astral-sh/ruff/releases/download/v0.4.6/ruff-0.4.6-x86_64-unknown-linux-musl.tar.gz#sha256-59d2ff184a29e260f6f27b48c809496748a3740261cda4becfe23c05c48eca34
-        -url linux/arm64=https://github.com/astral-sh/ruff/releases/download/v0.4.6/ruff-0.4.6-aarch64-unknown-linux-musl.tar.gz#sha256-a7408d3d3023d991d1c6a78269f93db0dd639c9024470fccb63f1af615f2220a
-        -url linux/arm=https://github.com/astral-sh/ruff/releases/download/v0.4.6/ruff-0.4.6-armv7-unknown-linux-musleabihf.tar.gz#sha256-8fff44be5bb05169f8bfb49f872f71ff55ef05b8b7b52b80f0ac7d973a743087
-        -url linux/ppc64=https://github.com/astral-sh/ruff/releases/download/v0.4.6/ruff-0.4.6-powerpc64-unknown-linux-gnu.tar.gz#sha256-c8230cba8f304503daf6732099375928c126c6d3254bcfe642fe37e398008727
-        -url linux/ppc64le=https://github.com/astral-sh/ruff/releases/download/v0.4.6/ruff-0.4.6-powerpc64le-unknown-linux-gnu.tar.gz#sha256-8158a197b955e9c7e720c6191d4de98f602033f5a15e66843a438544666fa07d
-        -url linux/s390x=https://github.com/astral-sh/ruff/releases/download/v0.4.6/ruff-0.4.6-s390x-unknown-linux-gnu.tar.gz#sha256-1c9d86e6d08d742aaa0305e004c2b848aa33b240e729befd09cdefcec356b3e0
-        -url windows/386=https://github.com/astral-sh/ruff/releases/download/v0.4.6/ruff-0.4.6-i686-pc-windows-msvc.zip#sha256-36c36935ce395a9d38f9f9a6271cc990d022d2a16ec187753f33b16d7f1ca2e4
-        -url windows/amd64=https://github.com/astral-sh/ruff/releases/download/v0.4.6/ruff-0.4.6-x86_64-pc-windows-msvc.zip#sha256-0bd9f80fe9c6cb1fcde9f835b4960b22192d81cd71533c52114e548a82164aca
-        -url windows/arm64=https://github.com/astral-sh/ruff/releases/download/v0.4.6/ruff-0.4.6-aarch64-pc-windows-msvc.zip#sha256-a9fae31935454dc881bc779af0565aebf24391d080b8ca7c44146330f9162917
+        -url darwin/amd64=https://github.com/astral-sh/ruff/releases/download/v0.4.8/ruff-0.4.8-x86_64-apple-darwin.tar.gz#sha256-534425542c504dcd0eeca3f26155a72394b02b312d3a026d14015b56cb1ae259
+        -url darwin/arm64=https://github.com/astral-sh/ruff/releases/download/v0.4.8/ruff-0.4.8-aarch64-apple-darwin.tar.gz#sha256-a33ee7dbd52ba3b0ce4005914f200fb1a138306f1bba69963a7b9f10032aad1c
+        -url linux/386=https://github.com/astral-sh/ruff/releases/download/v0.4.8/ruff-0.4.8-i686-unknown-linux-musl.tar.gz#sha256-69fca92a038740def8bff80ad460592c1c63576ce9c01ab0ed882cf7360e4b82
+        -url linux/amd64=https://github.com/astral-sh/ruff/releases/download/v0.4.8/ruff-0.4.8-x86_64-unknown-linux-musl.tar.gz#sha256-0cfa9a8b1f9de43dc642808552c72d40d7619905fa91cd40b90d858b792accf6
+        -url linux/arm64=https://github.com/astral-sh/ruff/releases/download/v0.4.8/ruff-0.4.8-aarch64-unknown-linux-musl.tar.gz#sha256-1467455eae9dc234fe2d898a246b2a4266f3b3e35d1247db76cb1f65bbfe33f8
+        -url linux/arm=https://github.com/astral-sh/ruff/releases/download/v0.4.8/ruff-0.4.8-armv7-unknown-linux-musleabihf.tar.gz#sha256-41d24bc8adae3eda2ff2ba2eff77bf0baf32f4c2d34a7f666e1553f780e027f3
+        -url linux/ppc64=https://github.com/astral-sh/ruff/releases/download/v0.4.8/ruff-0.4.8-powerpc64-unknown-linux-gnu.tar.gz#sha256-10347afab812ce9c3bd574621f38af3ebafd373a8c5051229c0e7c45eebe8301
+        -url linux/ppc64le=https://github.com/astral-sh/ruff/releases/download/v0.4.8/ruff-0.4.8-powerpc64le-unknown-linux-gnu.tar.gz#sha256-5beb920599a54394fef7a92cd1ab2be941c8bd9bba0ada0ce8c8b14d780ecb86
+        -url linux/s390x=https://github.com/astral-sh/ruff/releases/download/v0.4.8/ruff-0.4.8-s390x-unknown-linux-gnu.tar.gz#sha256-a170fe0a332050205c17e821fae199ccfab8d3a5b9ffc803f4260aaa511e6c36
+        -url windows/386=https://github.com/astral-sh/ruff/releases/download/v0.4.8/ruff-0.4.8-i686-pc-windows-msvc.zip#sha256-b5a64df0ae78d89d67d6247b3694eb516b7ca3021404f74860cbd3b0db3aed89
+        -url windows/amd64=https://github.com/astral-sh/ruff/releases/download/v0.4.8/ruff-0.4.8-x86_64-pc-windows-msvc.zip#sha256-a2dd4edaf097916cbd79a743bd180d5a046ff37f03a0043e91bed42c17d24770
+        -url windows/arm64=https://github.com/astral-sh/ruff/releases/download/v0.4.8/ruff-0.4.8-aarch64-pc-windows-msvc.zip#sha256-84dd466862fc9532c1ecd30f080ab4b9f876a46a1158fe726e808026bdb9c726
         -archive-exe-path ruff
         --
         check
@@ -91,18 +91,18 @@ pre-commit:
       glob: "*.{py,pyi}"
       run: >-
         wrun
-        -url darwin/amd64=https://github.com/astral-sh/ruff/releases/download/v0.4.6/ruff-0.4.6-x86_64-apple-darwin.tar.gz#sha256-566e96e074a2d05c97a8d56d3a7239d235e30adeee8f11495a8715e812275012
-        -url darwin/arm64=https://github.com/astral-sh/ruff/releases/download/v0.4.6/ruff-0.4.6-aarch64-apple-darwin.tar.gz#sha256-231a24dc2fc2496c8684551227100f485f5c980f5861037e878a2701ce02cc57
-        -url linux/386=https://github.com/astral-sh/ruff/releases/download/v0.4.6/ruff-0.4.6-i686-unknown-linux-musl.tar.gz#sha256-f03f3bdc0efa50d1901f311cb96bbaadbfb5eb240b59fc1682b8e787c8ab091d
-        -url linux/amd64=https://github.com/astral-sh/ruff/releases/download/v0.4.6/ruff-0.4.6-x86_64-unknown-linux-musl.tar.gz#sha256-59d2ff184a29e260f6f27b48c809496748a3740261cda4becfe23c05c48eca34
-        -url linux/arm64=https://github.com/astral-sh/ruff/releases/download/v0.4.6/ruff-0.4.6-aarch64-unknown-linux-musl.tar.gz#sha256-a7408d3d3023d991d1c6a78269f93db0dd639c9024470fccb63f1af615f2220a
-        -url linux/arm=https://github.com/astral-sh/ruff/releases/download/v0.4.6/ruff-0.4.6-armv7-unknown-linux-musleabihf.tar.gz#sha256-8fff44be5bb05169f8bfb49f872f71ff55ef05b8b7b52b80f0ac7d973a743087
-        -url linux/ppc64=https://github.com/astral-sh/ruff/releases/download/v0.4.6/ruff-0.4.6-powerpc64-unknown-linux-gnu.tar.gz#sha256-c8230cba8f304503daf6732099375928c126c6d3254bcfe642fe37e398008727
-        -url linux/ppc64le=https://github.com/astral-sh/ruff/releases/download/v0.4.6/ruff-0.4.6-powerpc64le-unknown-linux-gnu.tar.gz#sha256-8158a197b955e9c7e720c6191d4de98f602033f5a15e66843a438544666fa07d
-        -url linux/s390x=https://github.com/astral-sh/ruff/releases/download/v0.4.6/ruff-0.4.6-s390x-unknown-linux-gnu.tar.gz#sha256-1c9d86e6d08d742aaa0305e004c2b848aa33b240e729befd09cdefcec356b3e0
-        -url windows/386=https://github.com/astral-sh/ruff/releases/download/v0.4.6/ruff-0.4.6-i686-pc-windows-msvc.zip#sha256-36c36935ce395a9d38f9f9a6271cc990d022d2a16ec187753f33b16d7f1ca2e4
-        -url windows/amd64=https://github.com/astral-sh/ruff/releases/download/v0.4.6/ruff-0.4.6-x86_64-pc-windows-msvc.zip#sha256-0bd9f80fe9c6cb1fcde9f835b4960b22192d81cd71533c52114e548a82164aca
-        -url windows/arm64=https://github.com/astral-sh/ruff/releases/download/v0.4.6/ruff-0.4.6-aarch64-pc-windows-msvc.zip#sha256-a9fae31935454dc881bc779af0565aebf24391d080b8ca7c44146330f9162917
+        -url darwin/amd64=https://github.com/astral-sh/ruff/releases/download/v0.4.8/ruff-0.4.8-x86_64-apple-darwin.tar.gz#sha256-534425542c504dcd0eeca3f26155a72394b02b312d3a026d14015b56cb1ae259
+        -url darwin/arm64=https://github.com/astral-sh/ruff/releases/download/v0.4.8/ruff-0.4.8-aarch64-apple-darwin.tar.gz#sha256-a33ee7dbd52ba3b0ce4005914f200fb1a138306f1bba69963a7b9f10032aad1c
+        -url linux/386=https://github.com/astral-sh/ruff/releases/download/v0.4.8/ruff-0.4.8-i686-unknown-linux-musl.tar.gz#sha256-69fca92a038740def8bff80ad460592c1c63576ce9c01ab0ed882cf7360e4b82
+        -url linux/amd64=https://github.com/astral-sh/ruff/releases/download/v0.4.8/ruff-0.4.8-x86_64-unknown-linux-musl.tar.gz#sha256-0cfa9a8b1f9de43dc642808552c72d40d7619905fa91cd40b90d858b792accf6
+        -url linux/arm64=https://github.com/astral-sh/ruff/releases/download/v0.4.8/ruff-0.4.8-aarch64-unknown-linux-musl.tar.gz#sha256-1467455eae9dc234fe2d898a246b2a4266f3b3e35d1247db76cb1f65bbfe33f8
+        -url linux/arm=https://github.com/astral-sh/ruff/releases/download/v0.4.8/ruff-0.4.8-armv7-unknown-linux-musleabihf.tar.gz#sha256-41d24bc8adae3eda2ff2ba2eff77bf0baf32f4c2d34a7f666e1553f780e027f3
+        -url linux/ppc64=https://github.com/astral-sh/ruff/releases/download/v0.4.8/ruff-0.4.8-powerpc64-unknown-linux-gnu.tar.gz#sha256-10347afab812ce9c3bd574621f38af3ebafd373a8c5051229c0e7c45eebe8301
+        -url linux/ppc64le=https://github.com/astral-sh/ruff/releases/download/v0.4.8/ruff-0.4.8-powerpc64le-unknown-linux-gnu.tar.gz#sha256-5beb920599a54394fef7a92cd1ab2be941c8bd9bba0ada0ce8c8b14d780ecb86
+        -url linux/s390x=https://github.com/astral-sh/ruff/releases/download/v0.4.8/ruff-0.4.8-s390x-unknown-linux-gnu.tar.gz#sha256-a170fe0a332050205c17e821fae199ccfab8d3a5b9ffc803f4260aaa511e6c36
+        -url windows/386=https://github.com/astral-sh/ruff/releases/download/v0.4.8/ruff-0.4.8-i686-pc-windows-msvc.zip#sha256-b5a64df0ae78d89d67d6247b3694eb516b7ca3021404f74860cbd3b0db3aed89
+        -url windows/amd64=https://github.com/astral-sh/ruff/releases/download/v0.4.8/ruff-0.4.8-x86_64-pc-windows-msvc.zip#sha256-a2dd4edaf097916cbd79a743bd180d5a046ff37f03a0043e91bed42c17d24770
+        -url windows/arm64=https://github.com/astral-sh/ruff/releases/download/v0.4.8/ruff-0.4.8-aarch64-pc-windows-msvc.zip#sha256-84dd466862fc9532c1ecd30f080ab4b9f876a46a1158fe726e808026bdb9c726
         -archive-exe-path ruff
         --
         format
