@@ -7,6 +7,27 @@ on:
       - main
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v3
+        with:
+          path: | # setup-go handles Go
+            ~/.cache/wrun
+            ~/.npm
+          key: lint-${{ hashFiles('.lefthook.yaml') }}
+      - uses: actions/setup-go@v4
+        with:
+          go-version: ">=1.22"
+          check-latest: true
+      - name: Install dependencies
+        run: |
+          go build -v .
+      - name: Run lefthook pre-commit
+        run: |
+          export PATH=$PWD:$PATH LEFTHOOK_QUIET=meta,execution WRUN_VERBOSE=true
+          npm exec --yes -- lefthook run pre-commit --all-files --force --no-tty
   test:
     runs-on: ubuntu-latest
     steps:
