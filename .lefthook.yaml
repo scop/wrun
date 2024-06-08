@@ -4,11 +4,11 @@ pre-commit:
       glob: "*.{json,jsonc,md}"
       run: >-
         wrun
-        -url darwin/amd64=https://github.com/dprint/dprint/releases/download/0.46.1/dprint-x86_64-apple-darwin.zip#sha256-cdea84bce1d84c26e8eced2265d246b79a849ec2e7d1377d98dd7bdb21c7ce83
-        -url darwin/arm64=https://github.com/dprint/dprint/releases/download/0.46.1/dprint-aarch64-apple-darwin.zip#sha256-f3ff4faef83d14c3b4ae262e79a40d4e0fc3fa1903d0b6e9b82f0b25b00e9499
-        -url linux/amd64=https://github.com/dprint/dprint/releases/download/0.46.1/dprint-x86_64-unknown-linux-musl.zip#sha256-4a7d6fa6b920ab150f580965556086cdd7992e07078e627ab9a9d1c3bd30ba85
-        -url linux/arm64=https://github.com/dprint/dprint/releases/download/0.46.1/dprint-aarch64-unknown-linux-musl.zip#sha256-e2b6d87167d21f1f01571790e79526ef9caff3b8b75f5cac348c4f06f60a8c16
-        -url windows/amd64=https://github.com/dprint/dprint/releases/download/0.46.1/dprint-x86_64-pc-windows-msvc.zip#sha256-74e5ab38c744d5903862c2b5174d0fef9759b5506da775e1fb93b6a68c63101d
+        -url darwin/amd64=https://github.com/dprint/dprint/releases/download/0.46.2/dprint-x86_64-apple-darwin.zip#sha256-88abd8a6f416b624fdfae338ae6fca440f4a36b35199f0d03438caeb7715d820
+        -url darwin/arm64=https://github.com/dprint/dprint/releases/download/0.46.2/dprint-aarch64-apple-darwin.zip#sha256-a331d1c9ad2abb96d46c33d25f1166bd5497dde0c48eb8a8f3d98143cd4bca5b
+        -url linux/amd64=https://github.com/dprint/dprint/releases/download/0.46.2/dprint-x86_64-unknown-linux-musl.zip#sha256-bbe9fe8eae9abdcfccdeca97fd8c524efd6137de702ee96e82b0ecb4ad432ebf
+        -url linux/arm64=https://github.com/dprint/dprint/releases/download/0.46.2/dprint-aarch64-unknown-linux-musl.zip#sha256-d7b6f88c320bffcbb1dfeb6030d5a1ef23d18d81721e39abdbf4b8bdab389ba4
+        -url windows/amd64=https://github.com/dprint/dprint/releases/download/0.46.2/dprint-x86_64-pc-windows-msvc.zip#sha256-53ab1991d23be9de8bf3b920f8605aee55629321fcacccfc5df38d49b2eb5160
         -archive-exe-path dprint
         --
         fmt
