@@ -8,7 +8,7 @@ jobs:
   sanity:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
       - name: Sanity check setup.cfg
         run: |
           grep -x "version = ${GITHUB_REF#refs/tags/v}" setup.cfg
@@ -19,7 +19,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     needs: sanity
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
       - name: Build source distribution
         if: startsWith(matrix.os, 'ubuntu')
         run: |
@@ -43,7 +43,7 @@ jobs:
           python3 -m pip install cibuildwheel~=2.16
           cibuildwheel
           ls wheelhouse
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808
         with:
           name: dist-files-${{ matrix.os }}
           path: wheelhouse/*
@@ -53,10 +53,10 @@ jobs:
     permissions:
       id-token: write
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@65a9edc5881444af0b9093a5e628f2fe47ea3b2e
         with:
           pattern: dist-files-*
           merge-multiple: true
           path: dist
       - run: ls dist
-      - uses: pypa/gh-action-pypi-publish@release/v1
+      - uses: pypa/gh-action-pypi-publish@81e9d935c883d0b210363ab89cf05f3894778450
