@@ -25,6 +25,7 @@ wrun_typos_args.py -- generate wrun command line args for typos
 """
 
 from argparse import ArgumentParser
+from fnmatch import fnmatch
 import json
 from urllib.parse import quote as urlquote
 from urllib.request import urlopen
@@ -33,15 +34,15 @@ from wrun_utils import check_hexdigest, latest_rss2_version
 
 
 file_os_archs = {
-    "typos-{version_number}-py3-none-macosx_10_7_x86_64.whl": "darwin/amd64",
-    "typos-{version_number}-py3-none-macosx_11_0_arm64.whl": "darwin/arm64",
-    "typos-{version_number}-py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.whl": None,  # using musl one
-    "typos-{version_number}-py3-none-manylinux_2_17_i686.manylinux2014_i686.whl": "linux/386",
-    "typos-{version_number}-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl": None,  # using musl one
-    "typos-{version_number}-py3-none-musllinux_1_2_aarch64.whl": "linux/arm64",
-    "typos-{version_number}-py3-none-musllinux_1_2_x86_64.whl": "linux/amd64",
-    "typos-{version_number}-py3-none-win32.whl": "windows/386",
-    "typos-{version_number}-py3-none-win_amd64.whl": "windows/amd64",
+    "typos-VERSION_NUMBER-py3-none-macosx_*_x86_64.whl": "darwin/amd64",
+    "typos-VERSION_NUMBER-py3-none-macosx_*_arm64.whl": "darwin/arm64",
+    "typos-VERSION_NUMBER-py3-none-manylinux_*_aarch64.manylinux*_aarch64.whl": None,  # using musl one
+    "typos-VERSION_NUMBER-py3-none-manylinux_*_i686.manylinux*_i686.whl": "linux/386",
+    "typos-VERSION_NUMBER-py3-none-manylinux_*_x86_64.manylinux*_x86_64.whl": None,  # using musl one
+    "typos-VERSION_NUMBER-py3-none-musllinux_*_aarch64.whl": "linux/arm64",
+    "typos-VERSION_NUMBER-py3-none-musllinux_*_x86_64.whl": "linux/amd64",
+    "typos-VERSION_NUMBER-py3-none-win32.whl": "windows/386",
+    "typos-VERSION_NUMBER-py3-none-win_amd64.whl": "windows/amd64",
 }
 
 
@@ -70,12 +71,16 @@ def main(version: str, verify: bool) -> None:
         except KeyError as e:
             raise KeyError(f"no sha256 digest available for {filename}") from e
 
-        lookup_filename = filename.replace(
-            f"-{version_number}-", "-{version_number}-", 1
-        )
-        if lookup_filename not in file_os_archs:
-            raise KeyError(f'unhandled file: "{filename}"')
-        os_arch = file_os_archs[lookup_filename]
+        lookup_filename = filename.replace(f"-{version_number}-", "-VERSION_NUMBER-", 1)
+        os_arch_found = False
+        for file_glob, file_os_arch in file_os_archs.items():
+            if fnmatch(lookup_filename, file_glob):
+                if os_arch_found:
+                    raise KeyError(f"multiple os/arch matches for {filename}")
+                os_arch_found = True
+                os_arch = file_os_arch
+        if not os_arch_found:
+            raise KeyError(f"unhandled file: {filename}")
         if os_arch is None:
             continue
 
