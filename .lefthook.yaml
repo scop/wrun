@@ -13,6 +13,7 @@ pre-commit:
         --
         fmt
         {staged_files}
+        && git diff --exit-code
     golangci-lint:
       glob: "*.go"
       run: >-
@@ -67,6 +68,7 @@ pre-commit:
         -archive-exe-path windows/arm=golangci-lint-1.59.0-windows-armv6/golangci-lint.exe
         --
         run
+        && git diff --exit-code
     ruff:
       glob: "*.{py,pyi}"
       run: >-
@@ -87,6 +89,7 @@ pre-commit:
         --
         check
         {staged_files}
+        && git diff --exit-code
     ruff-format:
       glob: "*.{py,pyi}"
       run: >-
@@ -107,3 +110,4 @@ pre-commit:
         --
         format
         {staged_files}
+        && git diff --exit-code
