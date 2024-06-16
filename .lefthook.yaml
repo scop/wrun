@@ -1,6 +1,7 @@
 pre-commit:
   commands:
     dprint:
+      priority: 1
       glob: "*.{json,jsonc,md}"
       run: >-
         wrun
@@ -13,8 +14,8 @@ pre-commit:
         --
         fmt
         {staged_files}
-        && git diff --exit-code
     golangci-lint:
+      priority: 1
       glob: "*.go"
       run: >-
         wrun
@@ -68,8 +69,8 @@ pre-commit:
         -archive-exe-path windows/arm=golangci-lint-1.59.1-windows-armv6/golangci-lint.exe
         --
         run
-        && git diff --exit-code
     ruff:
+      priority: 1
       glob: "*.{py,pyi}"
       run: >-
         wrun
@@ -89,8 +90,8 @@ pre-commit:
         --
         check
         {staged_files}
-        && git diff --exit-code
     ruff-format:
+      priority: 1
       glob: "*.{py,pyi}"
       run: >-
         wrun
@@ -110,4 +111,13 @@ pre-commit:
         --
         format
         {staged_files}
-        && git diff --exit-code
+    check for changes made by hooks:
+      run: |-
+        if test -n "${CI-}"; then
+          git diff --exit-code {staged_files}
+        else
+          git diff --quiet {staged_files}
+        fi
+        rc=$?
+        test $rc -eq 0 || echo "error: found files modified by hooks" >&2
+        exit $rc
