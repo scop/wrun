@@ -31,20 +31,20 @@ from . import check_hexdigest, latest_atom_version
 
 
 file_os_archs = {
-    "terraform_{version}_darwin_amd64.zip": "darwin/amd64",
-    "terraform_{version}_darwin_arm64.zip": "darwin/arm64",
-    "terraform_{version}_freebsd_386.zip": "freebsd/386",
-    "terraform_{version}_freebsd_amd64.zip": "freebsd/amd64",
-    "terraform_{version}_freebsd_arm.zip": "freebsd/arm",
-    "terraform_{version}_linux_386.zip": "linux/386",
-    "terraform_{version}_linux_amd64.zip": "linux/amd64",
-    "terraform_{version}_linux_arm.zip": "linux/arm",
-    "terraform_{version}_linux_arm64.zip": "linux/arm64",
-    "terraform_{version}_openbsd_386.zip": "openbsd/386",
-    "terraform_{version}_openbsd_amd64.zip": "openbsd/amd64",
-    "terraform_{version}_solaris_amd64.zip": "solaris/amd64",
-    "terraform_{version}_windows_386.zip": "windows/386",
-    "terraform_{version}_windows_amd64.zip": "windows/amd64",
+    "terraform_VERSION_NUMBER_darwin_amd64.zip": "darwin/amd64",
+    "terraform_VERSION_NUMBER_darwin_arm64.zip": "darwin/arm64",
+    "terraform_VERSION_NUMBER_freebsd_386.zip": "freebsd/386",
+    "terraform_VERSION_NUMBER_freebsd_amd64.zip": "freebsd/amd64",
+    "terraform_VERSION_NUMBER_freebsd_arm.zip": "freebsd/arm",
+    "terraform_VERSION_NUMBER_linux_386.zip": "linux/386",
+    "terraform_VERSION_NUMBER_linux_amd64.zip": "linux/amd64",
+    "terraform_VERSION_NUMBER_linux_arm.zip": "linux/arm",
+    "terraform_VERSION_NUMBER_linux_arm64.zip": "linux/arm64",
+    "terraform_VERSION_NUMBER_openbsd_386.zip": "openbsd/386",
+    "terraform_VERSION_NUMBER_openbsd_amd64.zip": "openbsd/amd64",
+    "terraform_VERSION_NUMBER_solaris_amd64.zip": "solaris/amd64",
+    "terraform_VERSION_NUMBER_windows_386.zip": "windows/386",
+    "terraform_VERSION_NUMBER_windows_amd64.zip": "windows/amd64",
 }
 
 
@@ -74,7 +74,7 @@ def main() -> None:
             hexdigest, filename = hexdigest_filename
 
             lookup_filename = filename.replace(
-                f"_{version_number}_", "_{version_number}_", 1
+                f"_{version_number}_", "_VERSION_NUMBER_", 1
             )
             if lookup_filename not in file_os_archs:
                 raise KeyError(f'unhandled file: "{filename}"')
