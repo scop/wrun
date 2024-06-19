@@ -49,8 +49,8 @@ at least yet at time of writing.
 Unless mentioned otherwise, reasoning is that there is no `wrun`
 runnable asset available for the tool.
 
-- commitlint, https://commitlint.js.org
-- gitlint, https://jorisroovers.com/gitlint/
-- perlcritic, https://github.com/Perl-Critic/Perl-Critic
-- perltidy, https://github.com/perltidy/perltidy
-- prettier, https://prettier.io
+- [commitlint](https://commitlint.js.org)
+- [gitlint](https://jorisroovers.com/gitlint/)
+- [perlcritic](https://github.com/Perl-Critic/Perl-Critic)
+- [perltidy](https://github.com/perltidy/perltidy)
+- [prettier](https://prettier.io)
