@@ -17,7 +17,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 """
-wrun_golangci_lint_args.py -- generate wrun command line args for golangci-lint
+golangci_lint.py -- generate wrun command line args for golangci-lint
 
 * https://golangci-lint.run
 * https://github.com/golangci/golangci-lint/releases
@@ -28,17 +28,22 @@ import re
 from urllib.parse import urljoin, quote as urlquote
 from urllib.request import urlopen
 
-from wrun_utils import check_hexdigest, latest_atom_version
+from . import check_hexdigest, latest_atom_version
 
 
-def main(version: str, verify: bool) -> None:
-    if not version:
-        version = latest_atom_version(
+def main() -> None:
+    parser = ArgumentParser()
+    parser.add_argument("version", metavar="VERSION", nargs="?")
+    parser.add_argument("--skip-verify", dest="verify", action="store_false")
+    args = parser.parse_args()
+
+    if not args.version:
+        args.version = latest_atom_version(
             "https://github.com/golangci/golangci-lint/releases.atom"
         )
 
-    version_number = version.lstrip("v")
-    base_url = f"https://github.com/golangci/golangci-lint/releases/download/{urlquote(version)}/"
+    version_number = args.version.lstrip("v")
+    base_url = f"https://github.com/golangci/golangci-lint/releases/download/{urlquote(args.version)}/"
     archive_exe_paths = []
 
     with urlopen(
@@ -68,7 +73,7 @@ def main(version: str, verify: bool) -> None:
                 arch = "arm"
 
             url = urljoin(base_url, filename)
-            check_hexdigest(hexdigest, "sha256", url if verify else None)
+            check_hexdigest(hexdigest, "sha256", url if args.verify else None)
 
             print(f"-url {os}/{arch}={url}#sha256-{hexdigest}")
             suffix = ".exe" if os == "windows" else ""
@@ -80,8 +85,4 @@ def main(version: str, verify: bool) -> None:
 
 
 if __name__ == "__main__":
-    parser = ArgumentParser()
-    parser.add_argument("version", metavar="VERSION", nargs="?")
-    parser.add_argument("--skip-verify", dest="verify", action="store_false")
-    args = parser.parse_args()
-    main(args.version, args.verify)
+    main()

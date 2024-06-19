@@ -1,8 +1,9 @@
-/*.egg-info/
 /.mise.*.local.toml
 /.mise.local.toml
 /build/
 /dist/
+/src/*.egg-info/
 /venv/
 /wheelhouse/
 /wrun
+__pycache__/

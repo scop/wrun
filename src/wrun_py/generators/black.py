@@ -17,7 +17,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 """
-wrun_black_args.py -- generate wrun command line args for black
+black.py -- generate wrun command line args for black
 
 * https://black.readthedocs.io
 * https://github.com/psf/black/releases
@@ -28,7 +28,7 @@ import hashlib
 from urllib.parse import urljoin, quote as urlquote
 from urllib.request import urlopen
 
-from wrun_utils import latest_atom_version
+from . import latest_atom_version
 
 
 file_os_archs = {
@@ -38,11 +38,17 @@ file_os_archs = {
 }
 
 
-def main(version: str) -> None:
-    if not version:
-        version = latest_atom_version("https://github.com/psf/black/releases.atom")
+def main() -> None:
+    parser = ArgumentParser()
+    parser.add_argument("version", metavar="VERSION", nargs="?")
+    args = parser.parse_args()
 
-    base_url = f"https://github.com/psf/black/releases/download/{urlquote(version)}/"
+    if not args.version:
+        args.version = latest_atom_version("https://github.com/psf/black/releases.atom")
+
+    base_url = (
+        f"https://github.com/psf/black/releases/download/{urlquote(args.version)}/"
+    )
 
     for filename, os_arch in file_os_archs.items():
         url = urljoin(base_url, filename)
@@ -53,7 +59,4 @@ def main(version: str) -> None:
 
 
 if __name__ == "__main__":
-    parser = ArgumentParser()
-    parser.add_argument("version", metavar="VERSION", nargs="?")
-    args = parser.parse_args()
-    main(args.version)
+    main()

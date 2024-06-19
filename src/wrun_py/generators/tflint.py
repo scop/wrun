@@ -17,40 +17,45 @@
 # SPDX-License-Identifier: Apache-2.0
 
 """
-wrun_dprint_args.py -- generate wrun command line args for dprint
+tflint.py -- generate wrun command line args for tflint
 
-* https://dprint.dev
-* https://github.com/dprint/dprint/releases
+* https://github.com/terraform-linters/tflint
+* https://github.com/terraform-linters/tflint/releases
 """
 
 from argparse import ArgumentParser
 from urllib.parse import urljoin, quote as urlquote
 from urllib.request import urlopen
 
-from wrun_utils import check_hexdigest, latest_atom_version
+from . import check_hexdigest, latest_atom_version
 
 
 file_os_archs = {
-    "dprint-aarch64-apple-darwin.zip": "darwin/arm64",
-    "dprint-aarch64-unknown-linux-gnu.zip": None,  # using musl one
-    "dprint-aarch64-unknown-linux-musl.zip": "linux/arm64",
-    "dprint-x86_64-apple-darwin.zip": "darwin/amd64",
-    "dprint-x86_64-pc-windows-msvc-installer.exe": None,
-    "dprint-x86_64-pc-windows-msvc.zip": "windows/amd64",
-    "dprint-x86_64-unknown-linux-gnu.zip": None,  # using musl one
-    "dprint-x86_64-unknown-linux-musl.zip": "linux/amd64",
+    "tflint_darwin_amd64.zip": "darwin/amd64",
+    "tflint_darwin_arm64.zip": "darwin/arm64",
+    "tflint_linux_386.zip": "linux/386",
+    "tflint_linux_amd64.zip": "linux/amd64",
+    "tflint_linux_arm.zip": "linux/arm",
+    "tflint_linux_arm64.zip": "linux/arm64",
+    "tflint_windows_386.zip": "windows/386",
+    "tflint_windows_amd64.zip": "windows/amd64",
 }
 
 
-def main(version: str, verify: bool) -> None:
-    if not version:
-        version = latest_atom_version("https://github.com/dprint/dprint/releases.atom")
+def main() -> None:
+    parser = ArgumentParser()
+    parser.add_argument("version", metavar="VERSION", nargs="?")
+    parser.add_argument("--skip-verify", dest="verify", action="store_false")
+    args = parser.parse_args()
 
-    base_url = (
-        f"https://github.com/dprint/dprint/releases/download/{urlquote(version)}/"
-    )
+    if not args.version:
+        args.version = latest_atom_version(
+            "https://github.com/terraform-linters/tflint/releases.atom"
+        )
 
-    with urlopen(urljoin(base_url, "SHASUMS256.txt")) as f:
+    base_url = f"https://github.com/terraform-linters/tflint/releases/download/{urlquote(args.version)}/"
+
+    with urlopen(urljoin(base_url, "checksums.txt")) as f:
         for line in f:
             sline = line.decode()
 
@@ -66,15 +71,11 @@ def main(version: str, verify: bool) -> None:
                 continue
 
             url = urljoin(base_url, filename)
-            check_hexdigest(hexdigest, "sha256", url if verify else None)
+            check_hexdigest(hexdigest, "sha256", url if args.verify else None)
 
             print(f"-url {os_arch}={url}#sha256-{hexdigest}")
-    print("-archive-exe-path dprint")
+    print("-archive-exe-path tflint")
 
 
 if __name__ == "__main__":
-    parser = ArgumentParser()
-    parser.add_argument("version", metavar="VERSION", nargs="?")
-    parser.add_argument("--skip-verify", dest="verify", action="store_false")
-    args = parser.parse_args()
-    main(args.version, args.verify)
+    main()

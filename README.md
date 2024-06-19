@@ -97,11 +97,11 @@ the [user's cache directory](https://pkg.go.dev/os#UserCacheDir).
 [pre-commit.ci](https://pre-commit.ci) is not supported, because it
 [disallows network access at runtime](https://github.com/pre-commit-ci/issues/issues/196#issuecomment-1810937079).
 
-## Examples
+## Command line argument generators
 
-The [generators](generators/) directory contains scripts that can be
+The [src/wrun_py/generators](src/wrun_py/generators/) directory contains scripts that can be
 used to generate command line arguments for various tools commonly
-used tools.
+used tools. See [README.md](src/wrun_py/generators/README.md) there for more information.
 
 ## License
 

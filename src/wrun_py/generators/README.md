@@ -16,12 +16,14 @@ be found in wrun Git history.
 The general usage is:
 
 ```shell
-python3 wrun_TOOL_args.py VERSION
+# set PYTHONPATH=src if running from a wrun git checkout
+python3 -m wrun_py.generators.TOOL [VERSION]
 ```
 
-...where `TOOL` is the tool in question, and `VERSION` is the version
+...where `TOOL` is the tool in question, and `VERSION` is the optional version
 to generate for, typically the Git tag rather than the numeric
-version if they differ.
+version if they differ. If not provided, version defaults to the latest of
+the tool.
 
 The output is newline separated for readability.
 Hint: if embedding to a YAML document as a string, e.g. a CI config,

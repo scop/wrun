@@ -18,7 +18,7 @@
 
 
 """
-wrun_ruff_args.py -- generate wrun command line args for ruff
+ruff.py -- generate wrun command line args for ruff
 
 * https://docs.astral.sh/ruff/
 * https://github.com/astral-sh/ruff/releases
@@ -28,7 +28,7 @@ from argparse import ArgumentParser
 from urllib.parse import urljoin, quote as urlquote
 from urllib.request import urlopen
 
-from wrun_utils import check_hexdigest, latest_atom_version
+from . import check_hexdigest, latest_atom_version
 
 
 file_os_archs = {
@@ -51,14 +51,21 @@ file_os_archs = {
 }
 
 
-def main(version: str, verify: bool) -> None:
-    if not version:
-        version = latest_atom_version("https://github.com/astral-sh/ruff/releases.atom")
+def main() -> None:
+    parser = ArgumentParser()
+    parser.add_argument("version", metavar="VERSION", nargs="?")
+    parser.add_argument("--skip-verify", dest="verify", action="store_false")
+    args = parser.parse_args()
+
+    if not args.version:
+        args.version = latest_atom_version(
+            "https://github.com/astral-sh/ruff/releases.atom"
+        )
 
     base_url = (
-        f"https://github.com/astral-sh/ruff/releases/download/{urlquote(version)}/"
+        f"https://github.com/astral-sh/ruff/releases/download/{urlquote(args.version)}/"
     )
-    version_number = version.lstrip("v")
+    version_number = args.version.lstrip("v")
 
     for suffix, os_arch in file_os_archs.items():
         fn = f"ruff-{version_number}-{suffix}"
@@ -76,15 +83,11 @@ def main(version: str, verify: bool) -> None:
                     raise KeyError(f'unexpected filename in {url}: "{filename}"')
 
                 url = urljoin(base_url, filename)
-                check_hexdigest(hexdigest, "sha256", url if verify else None)
+                check_hexdigest(hexdigest, "sha256", url if args.verify else None)
 
                 print(f"-url {os_arch}={url}#sha256-{hexdigest}")
     print("-archive-exe-path ruff")
 
 
 if __name__ == "__main__":
-    parser = ArgumentParser()
-    parser.add_argument("version", metavar="VERSION", nargs="?")
-    parser.add_argument("--skip-verify", dest="verify", action="store_false")
-    args = parser.parse_args()
-    main(args.version, args.verify)
+    main()

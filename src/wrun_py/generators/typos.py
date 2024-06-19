@@ -17,7 +17,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 """
-wrun_typos_args.py -- generate wrun command line args for typos
+typos.py -- generate wrun command line args for typos
 
 * https://github.com/crate-ci/typos
 * https://pypi.org/project/typos/#files
@@ -30,7 +30,7 @@ import json
 from urllib.parse import quote as urlquote
 from urllib.request import urlopen
 
-from wrun_utils import check_hexdigest, latest_rss2_version
+from . import check_hexdigest, latest_rss2_version
 
 
 file_os_archs = {
@@ -46,12 +46,19 @@ file_os_archs = {
 }
 
 
-def main(version: str, verify: bool) -> None:
-    if not version:
-        version = latest_rss2_version("https://pypi.org/rss/project/typos/releases.xml")
+def main() -> None:
+    parser = ArgumentParser()
+    parser.add_argument("version", metavar="VERSION", nargs="?")
+    parser.add_argument("--skip-verify", dest="verify", action="store_false")
+    args = parser.parse_args()
+
+    if not args.version:
+        args.version = latest_rss2_version(
+            "https://pypi.org/rss/project/typos/releases.xml"
+        )
 
     project = "typos"
-    version_number = version.lstrip("v")
+    version_number = args.version.lstrip("v")
     archive_exe_paths = []
 
     release_url = (
@@ -84,7 +91,7 @@ def main(version: str, verify: bool) -> None:
         if os_arch is None:
             continue
 
-        check_hexdigest(hexdigest, "sha256", url["url"] if verify else None)
+        check_hexdigest(hexdigest, "sha256", url["url"] if args.verify else None)
 
         print(f"-url {os_arch}={url['url']}#sha256-{hexdigest}")
         suffix = ".exe" if os_arch.startswith("windows/") else ""
@@ -96,8 +103,4 @@ def main(version: str, verify: bool) -> None:
 
 
 if __name__ == "__main__":
-    parser = ArgumentParser()
-    parser.add_argument("version", metavar="VERSION", nargs="?")
-    parser.add_argument("--skip-verify", dest="verify", action="store_false")
-    args = parser.parse_args()
-    main(args.version, args.verify)
+    main()

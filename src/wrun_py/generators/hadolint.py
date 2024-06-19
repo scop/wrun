@@ -18,7 +18,7 @@
 
 
 """
-wrun_hadolint_args.py -- generate wrun command line args for hadolint
+hadolint.py -- generate wrun command line args for hadolint
 
 * https://hadolint.github.io/hadolint/
 * https://github.com/hadolint/hadolint/releases
@@ -28,7 +28,7 @@ from argparse import ArgumentParser
 from urllib.parse import urljoin, quote as urlquote
 from urllib.request import urlopen
 
-from wrun_utils import check_hexdigest, latest_atom_version
+from . import check_hexdigest, latest_atom_version
 
 
 file_os_archs = {
@@ -39,15 +39,18 @@ file_os_archs = {
 }
 
 
-def main(version: str, verify: bool) -> None:
-    if not version:
-        version = latest_atom_version(
+def main() -> None:
+    parser = ArgumentParser()
+    parser.add_argument("version", metavar="VERSION", nargs="?")
+    parser.add_argument("--skip-verify", dest="verify", action="store_false")
+    args = parser.parse_args()
+
+    if not args.version:
+        args.version = latest_atom_version(
             "https://github.com/hadolint/hadolint/releases.atom"
         )
 
-    base_url = (
-        f"https://github.com/hadolint/hadolint/releases/download/{urlquote(version)}/"
-    )
+    base_url = f"https://github.com/hadolint/hadolint/releases/download/{urlquote(args.version)}/"
 
     for suffix, os_arch in file_os_archs.items():
         fn = f"hadolint-{suffix}"
@@ -65,14 +68,10 @@ def main(version: str, verify: bool) -> None:
                     raise KeyError(f'unexpected filename in {url}: "{filename}"')
 
                 url = urljoin(base_url, filename)
-                check_hexdigest(hexdigest, "sha256", url if verify else None)
+                check_hexdigest(hexdigest, "sha256", url if args.verify else None)
 
                 print(f"-url {os_arch}={url}#sha256-{hexdigest}")
 
 
 if __name__ == "__main__":
-    parser = ArgumentParser()
-    parser.add_argument("version", metavar="VERSION", nargs="?")
-    parser.add_argument("--skip-verify", dest="verify", action="store_false")
-    args = parser.parse_args()
-    main(args.version, args.verify)
+    main()
