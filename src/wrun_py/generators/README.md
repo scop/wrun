@@ -39,6 +39,8 @@ the executable or archive URLs, `--skip-verify`.
 Some more generators for commonly used tools would be nice to have,
 contributions welcome!
 
+- [tofu](https://github.com/opentofu/opentofu)
+
 ## Non-TODO
 
 Some tools for which generators would be nice to have, but cannot be done,
