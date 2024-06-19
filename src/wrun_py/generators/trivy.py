@@ -63,7 +63,7 @@ def main() -> None:
         for line in f:
             sline = line.decode()
 
-            hexdigest_filename = sline.split(maxsplit=3)
+            hexdigest_filename = sline.split(maxsplit=2)
             if len(hexdigest_filename) != 2:
                 raise ValueError(f'invalid checksums line: "{sline}"')
             hexdigest, filename = hexdigest_filename
