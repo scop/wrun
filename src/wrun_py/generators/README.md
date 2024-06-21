@@ -1,8 +1,8 @@
 # wrun command line argument generators
 
-This directory contains scripts to generate wrun command line
-arguments for various tools' releases. Generated arguments will
-contain `-url`s, and `-archive-exe-path`s if applicable.
+wrun generators are scripts to generate wrun command line arguments
+for various tools' releases. Generated arguments will contain `-url`s,
+and `-archive-exe-path`s if applicable.
 
 The scripts are not robust against all kinds of changes that might be
 occurring in upstream release assets, and may need tweaking at times.
@@ -16,7 +16,8 @@ be found in wrun Git history.
 The general usage is:
 
 ```shell
-# set PYTHONPATH=src if running from a wrun git checkout
+# set PYTHONPATH=src if running from a wrun git checkout,
+# and PYTHONPATH=/usr/share/wrun if from deb or rpm packages.
 python3 -m wrun_py.generators.TOOL [VERSION]
 ```
 
@@ -24,6 +25,10 @@ python3 -m wrun_py.generators.TOOL [VERSION]
 to generate for, typically the Git tag rather than the numeric
 version if they differ. If not provided, version defaults to the latest of
 the tool.
+
+When installed from PyPI or deb/rpm packages, there are also
+`wrun-TOOL-args` wrapper executables installed that effectively run
+the above command.
 
 The output is newline separated for readability.
 Hint: if embedding to a YAML document as a string, e.g. a CI config,

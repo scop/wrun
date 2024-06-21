@@ -35,6 +35,62 @@ nfpms:
     section: web
     formats: [deb, rpm]
     contents:
+      - src: src/wrun-args.sh
+        dst: /usr/bin/wrun-black-args
+        file_info:
+          mode: 0755
+      - src: src/wrun-args.sh
+        dst: /usr/bin/wrun-committed-args
+        file_info:
+          mode: 0755
+      - src: src/wrun-args.sh
+        dst: /usr/bin/wrun-dprint-args
+        file_info:
+          mode: 0755
+      - src: src/wrun-args.sh
+        dst: /usr/bin/wrun-golangci-lint-args
+        file_info:
+          mode: 0755
+      - src: src/wrun-args.sh
+        dst: /usr/bin/wrun-hadolint-args
+        file_info:
+          mode: 0755
+      - src: src/wrun-args.sh
+        dst: /usr/bin/wrun-ruff-args
+        file_info:
+          mode: 0755
+      - src: src/wrun-args.sh
+        dst: /usr/bin/wrun-shellcheck-args
+        file_info:
+          mode: 0755
+      - src: src/wrun-args.sh
+        dst: /usr/bin/wrun-shfmt-args
+        file_info:
+          mode: 0755
+      - src: src/wrun-args.sh
+        dst: /usr/bin/wrun-terraform-args
+        file_info:
+          mode: 0755
+      - src: src/wrun-args.sh
+        dst: /usr/bin/wrun-tflint-args
+        file_info:
+          mode: 0755
+      - src: src/wrun-args.sh
+        dst: /usr/bin/wrun-trivy-args
+        file_info:
+          mode: 0755
+      - src: src/wrun-args.sh
+        dst: /usr/bin/wrun-typos-args
+        file_info:
+          mode: 0755
+      - src: src/wrun-args.sh
+        dst: /usr/bin/wrun-vacuum-args
+        file_info:
+          mode: 0755
+      - src: src/wrun_py/*.py
+        dst: /usr/share/wrun/wrun_py/
+      - src: src/wrun_py/generators/*.py
+        dst: /usr/share/wrun/wrun_py/generators/
       - src: LICENSE
         dst: /usr/share/doc/wrun/copyright
         packager: deb
@@ -45,8 +101,15 @@ nfpms:
       - src: README.md
         dst: /usr/share/doc/wrun/README.md
         packager: deb
+      - src: src/wrun_py/generators/README.md
+        dst: /usr/share/doc/wrun/README-generators.md
+        packager: deb
       - src: README.md
         dst: /usr/share/doc/wrun/README.md
+        type: readme
+        packager: rpm
+      - src: src/wrun_py/generators/README.md
+        dst: /usr/share/doc/wrun/README-generators.md
         type: readme
         packager: rpm
     rpm:
