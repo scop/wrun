@@ -1,0 +1,41 @@
+name: Check generators
+
+on:
+  pull_request:
+    paths:
+      - "cmd/**/*.go"
+      - "internal/**/*.go"
+      - ".github/workflows/check-generators.yaml"
+  push:
+    branches:
+      - main
+    paths:
+      - "cmd/**/*.go"
+      - "internal/**/*.go"
+      - ".github/workflows/check-generators.yaml"
+  schedule:
+    - cron: "42 0 * * 6"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+      - uses: actions/setup-go@0a12ed9d6a96ab950c8f026ed9f722fe0da7ef32 # v5.0.2
+        with:
+          go-version-file: go.mod
+          check-latest: true
+      - name: Run generators
+        run: |
+          set -euxo pipefail
+          rc=0
+          tmpfile=$(mktemp --tmpdir wrun-generate-test-XXXXXX)
+          trap 'rm -f "$tmpfile"' EXIT
+          for gen in black shellcheck terraform; do
+            printf "go run . generate "%s" || rc=\$?\n" "$gen" >>"$tmpfile"
+          done
+          for repo in github pypi; do
+            go run . generate "$repo" --help | sed -ne '/^Examples/,/^$/p' | sed -ne '/^wrun generate /s/^wrun \(.*\)/go run . \1 || rc=$?/p' >>"$tmpfile"
+          done
+          . "$tmpfile"
+          exit $rc
