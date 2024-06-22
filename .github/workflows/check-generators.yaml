@@ -1,0 +1,34 @@
+name: Check generators
+
+on:
+  pull_request:
+    paths:
+      - "src/wrun_py/**"
+      - ".github/workflows/check-generators.yaml"
+  push:
+    branches:
+      - main
+    paths:
+      - "src/wrun_py/**"
+      - ".github/workflows/check-generators.yaml"
+  schedule:
+    - cron: "42 0 * * 6"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+      - name: Run generators
+        run: |
+          set -euxo pipefail
+          export PYTHONPATH=src
+          rc=0
+          for script in src/wrun_py/generators/[a-z]*.py; do
+            tool=${script##*/}; tool=${tool%.py}
+            if grep -qwF skip-verify "$script"; then
+              python3 -m "wrun_py.generators.$tool" --skip-verify || rc=$?
+            fi
+            python3 -m "wrun_py.generators.$tool" || rc=$?
+          done
+          exit $rc
