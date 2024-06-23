@@ -18,7 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 #
-# Copied from https://github.com/shellcheck-py/shellcheck-py/blob/0afa53fa8ddf1516d055db24e7ecb162980e67d7/setup.py
+# Adapted from https://github.com/shellcheck-py/shellcheck-py/blob/0afa53fa8ddf1516d055db24e7ecb162980e67d7/setup.py
 # SPDX-License-Identifier: MIT
 
 from setuptools import setup
@@ -37,8 +37,9 @@ else:
 
         def get_tag(self):
             _, _, plat = orig_bdist_wheel.get_tag(self)
-            # We don't contain any python source, nor any python extensions
-            return "py2.py3", "none", plat
+            # Declare that we're just Python 3, no ABI, to ship only one wheel.
+            # Byte-compiled generators won't be shipped, at least for now.
+            return "py3", "none", plat
 
     cmdclass = {"bdist_wheel": bdist_wheel}
 
