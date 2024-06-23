@@ -31,6 +31,17 @@ def check_hexdigest(expected: str, algo: str, url: str | None) -> None:
     if not url:
         return
     with urlopen(url) as f:
-        got = hashlib.file_digest(f, algo).hexdigest()
+        got = file_digest(f, algo).hexdigest()
     if got != expected:
         raise ValueError(f'{algo} mismatch for "{url}", expected {expected}, got {got}')
+
+
+try:
+    from hashlib import file_digest
+except ImportError:  # Python < 3.11
+
+    def file_digest(fileobj, digest: str):
+        do = hashlib.new(digest)
+        while data := fileobj.read(50 * 1024):
+            do.update(data)
+        return do

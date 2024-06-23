@@ -24,11 +24,10 @@ black.py -- generate wrun command line args for black
 """
 
 from argparse import ArgumentParser
-import hashlib
 from urllib.parse import urljoin, quote as urlquote
 from urllib.request import urlopen
 
-from . import latest_atom_version
+from . import file_digest, latest_atom_version
 
 
 file_os_archs = {
@@ -53,9 +52,9 @@ def main() -> None:
     for filename, os_arch in file_os_archs.items():
         url = urljoin(base_url, filename)
         with urlopen(url) as f:
-            hexdigest = hashlib.file_digest(f, "sha256").hexdigest()
+            digest = file_digest(f, "sha256")
 
-        print(f"-url {os_arch}={url}#sha256-{hexdigest}")
+        print(f"-url {os_arch}={url}#sha256-{digest.hexdigest()}")
 
 
 if __name__ == "__main__":
