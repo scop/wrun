@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools >=61", "setuptools-download", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "wrun_py"
+version = "0.2.1-1"
+description = "Web executable launcher"
+readme = "README.md"
+requires-python = ">=3.8"
+license = { file = "LICENSE" }
+authors = [{ name = "Ville Skyttä", email = "ville.skytta@iki.fi" }]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: MacOS",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Go",
+    "Topic :: Internet :: WWW/HTTP",
+    "Topic :: Utilities",
+]
+
+[project.scripts]
+wrun-black-args = "wrun_py.generators.black:main"
+wrun-committed-args = "wrun_py.generators.committed:main"
+wrun-dprint-args = "wrun_py.generators.dprint:main"
+wrun-golangci-lint-args = "wrun_py.generators.golangci_lint:main"
+wrun-hadolint-args = "wrun_py.generators.hadolint:main"
+wrun-ruff-args = "wrun_py.generators.ruff:main"
+wrun-shellcheck-args = "wrun_py.generators.shellcheck:main"
+wrun-shfmt-args = "wrun_py.generators.shfmt:main"
+wrun-terraform-args = "wrun_py.generators.terraform:main"
+wrun-tflint-args = "wrun_py.generators.tflint:main"
+wrun-trivy-args = "wrun_py.generators.trivy:main"
+wrun-typos-args = "wrun_py.generators.typos:main"
+wrun-vacuum-args = "wrun_py.generators.vacuum:main"
+
+[project.urls]
+Homepage = "https://github.com/scop/wrun"
