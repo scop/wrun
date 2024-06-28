@@ -14,7 +14,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-package main
+package cmd
 
 import (
 	"bytes"
@@ -39,6 +39,8 @@ import (
 	"time"
 
 	"github.com/mholt/archiver/v3"
+
+	wrun "github.com/scop/wrun/internal"
 )
 
 var (
@@ -104,50 +106,6 @@ const (
 	defaultHTTPTimeout        = 5 * time.Minute
 )
 
-var hashesByName = map[string]crypto.Hash{
-	hashName(crypto.MD4):       crypto.MD4,
-	hashName(crypto.MD5):       crypto.MD5,
-	hashName(crypto.SHA1):      crypto.SHA1,
-	hashName(crypto.SHA224):    crypto.SHA224,
-	hashName(crypto.SHA256):    crypto.SHA256,
-	hashName(crypto.SHA384):    crypto.SHA384,
-	hashName(crypto.SHA512):    crypto.SHA512,
-	hashName(crypto.RIPEMD160): crypto.RIPEMD160,
-}
-
-func hashName(h crypto.Hash) string {
-	hn := h.String()
-	hn = strings.ToLower(hn)
-	hn = strings.ReplaceAll(hn, "-", "")
-	return hn
-}
-
-// prepareHash prepares a hash corresponding to the given fragment string.
-// It returns the hash and the digest to check with it.
-// If s is empty, 0 is returned as the hash.
-func prepareHash(s string) (crypto.Hash, []byte, error) {
-	if s == "" {
-		return 0, []byte{}, nil
-	}
-	name, hexHash, found := strings.Cut(s, "-")
-	if name == "" || hexHash == "" || !found {
-		return 0, nil, fmt.Errorf("invalid fragment format, use hashAlgo-hexDigest")
-	}
-	digest, err := hex.DecodeString(hexHash)
-	if err != nil {
-		return 0, nil, err
-	}
-	var hashType crypto.Hash
-	hashType, found = hashesByName[strings.ToLower(name)]
-	if !found {
-		return 0, nil, fmt.Errorf("no supported hash with name %q", name)
-	}
-	if !hashType.Available() {
-		return 0, nil, fmt.Errorf("hash %s not available", hashType)
-	}
-	return hashType, digest, nil
-}
-
 // urlDir gets the cache directory to use for a URL.
 func urlDir(u *url.URL, h crypto.Hash, digest []byte) string {
 	segs := make([]string, 0, strings.Count(u.Path, "/")+3)
@@ -159,7 +117,7 @@ func urlDir(u *url.URL, h crypto.Hash, digest []byte) string {
 	if h == 0 {
 		segs = append(segs, cacheDirDigestPlaceholder)
 	} else {
-		segs = append(segs, hashName(h)+"-"+hex.EncodeToString(digest))
+		segs = append(segs, wrun.HashName(h)+"-"+hex.EncodeToString(digest))
 	}
 	return filepath.Join(segs...)
 }
@@ -291,7 +249,7 @@ func resolveCacheDir() (string, error) {
 	return cacheDir, nil
 }
 
-func main() {
+func Execute() {
 	// Basics
 
 	rc := 0
@@ -396,9 +354,9 @@ Environment variables:
 
 	// Set up hashing
 
-	hshType, expectedDigest, err := prepareHash(ur.Fragment)
+	hshType, expectedDigest, err := wrun.ParseHashFragment(ur.Fragment)
 	if err != nil {
-		errorOut("prepare hash: %v", err)
+		errorOut("parse hash fragment: %v", err)
 		rc = 1
 		return
 	}
@@ -573,7 +531,7 @@ Environment variables:
 			return
 		}
 	}
-	if err = makeExecutable(exePath); err != nil {
+	if err = wrun.MakeExecutable(exePath); err != nil {
 		errorOut("make executable: %v", err)
 		rc = 1
 		return
