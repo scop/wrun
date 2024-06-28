@@ -14,7 +14,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-package main
+package cmd
 
 import (
 	"crypto"
@@ -24,6 +24,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	wrun "github.com/scop/wrun/internal"
 )
 
 func mustParseURL(t *testing.T, s string) *url.URL {
@@ -250,7 +252,7 @@ func Test_urlDir(t *testing.T) {
 		t.Run(tt.url, func(t *testing.T) {
 			u, err := url.Parse(tt.url)
 			require.NoError(t, err)
-			h, digest, err := prepareHash(u.Fragment)
+			h, digest, err := wrun.ParseHashFragment(u.Fragment)
 			require.NoError(t, err)
 			assert.Equal(t, tt.want, urlDir(u, h, digest))
 		})
@@ -286,7 +288,7 @@ func Test_prepareHash(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.fragment, func(t *testing.T) {
-			hash, _, err := prepareHash(tt.fragment)
+			hash, _, err := wrun.ParseHashFragment(tt.fragment)
 			if tt.wantInErr == "" {
 				require.NoError(t, err)
 				assert.Equal(t, tt.wantHash, hash)

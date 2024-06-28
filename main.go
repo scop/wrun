@@ -14,17 +14,10 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-//go:build !windows
-
 package main
 
-import (
-	"os"
-	"syscall"
-)
+import "github.com/scop/wrun/cmd"
 
-func makeExecutable(path string) error {
-	umask := syscall.Umask(0)
-	syscall.Umask(umask)
-	return os.Chmod(path, os.FileMode(0o777 & ^umask))
+func main() {
+	cmd.Execute()
 }
