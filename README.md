@@ -64,7 +64,7 @@ URLs are matched against the Go toolchain wrun was built with using
 the `OS/architecture=` prefix given along with the URLs. Valid values
 for these come from Go, the list is available by running
 `go tool dist list`, or from
-[Go sources](https://cs.opensource.google/go/go/+/refs/tags/go1.21.4:src/cmd/dist/build.go;l=1689-1743).
+[Go sources](https://cs.opensource.google/go/go/+/refs/tags/go1.22.4:src/cmd/dist/build.go;l=1690-1740).
 
 OS and architecture may contain globs. The special case where the
 `OS/architecture=` prefix is left out is treated as if `*/*=` was
