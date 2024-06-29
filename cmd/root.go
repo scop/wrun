@@ -230,7 +230,7 @@ Environment variables:
 	fs.BoolVarP(&cfg.dryRun, "dry-run", "n", false, "dry run, skip execution (but do download/set up cache)")
 	fs.StringSliceVarP(&urlArgs, "url", "u", nil, "[OS/arch=]URL matcher (at least one required)")
 	if err := rootCmd.MarkFlagRequired("url"); err != nil {
-		panic(fmt.Sprintf("BUG: mark flag required: %v", err))
+		outputFn(cfg, levelBug)("mark flag required: %v", err)
 	}
 	fs.StringSliceVarP(&exePathArgs, "archive-exe-path", "p", nil, "[OS/arch=]path to executable within archive matcher (separator always /, implies archive processing)")
 	fs.DurationVarP(&cfg.httpTimeout, "http-timeout", "t", defaultHTTPTimeout, "HTTP client timeout")
@@ -291,27 +291,10 @@ func resolveCacheDir() (string, error) {
 func run(cfg config, args []string) exitStatus {
 	// Set up output
 
-	var verbose *bool
-	if s, ok := os.LookupEnv(verboseEnvVar); ok {
-		v, _ := strconv.ParseBool(s)
-		verbose = &v
-	}
-	_out := func(w io.Writer, level, format string, a ...any) {
-		_, _ = fmt.Fprintf(w, cfg.prog+": "+level+": "+format+"\n", a...)
-	}
-	infoOut := func(format string, a ...any) {
-		if verbose != nil && *verbose {
-			_out(os.Stdout, "INFO", format, a...)
-		}
-	}
-	warnOut := func(format string, a ...any) {
-		if verbose == nil || *verbose {
-			_out(os.Stderr, "WARN", format, a...)
-		}
-	}
-	errorOut := func(format string, a ...any) {
-		_out(os.Stderr, " ERR", format, a...)
-	}
+	infoOut := outputFn(cfg, levelInfo)
+	warnOut := outputFn(cfg, levelWarn)
+	errorOut := outputFn(cfg, levelError)
+	bugOut := outputFn(cfg, levelBug)
 
 	infoOut("%s", versionString)
 
@@ -398,7 +381,7 @@ func run(cfg config, args []string) exitStatus {
 	} else if cfg.dryRun {
 		return esSuccess
 	} else {
-		panic("BUG: unreachable; successful non-dry-run cache exec")
+		bugOut("unreachable; successful non-dry-run cache exec")
 	}
 
 	// Set up tempfile for download
@@ -529,7 +512,7 @@ func run(cfg config, args []string) exitStatus {
 		errorOut("exec: %v", err)
 		return esError
 	} else if !cfg.dryRun {
-		panic("BUG: unreachable; successful non-dry-run exec")
+		bugOut("unreachable; successful non-dry-run exec")
 	}
 
 	return esSuccess
