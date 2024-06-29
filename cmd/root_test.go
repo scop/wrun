@@ -18,7 +18,6 @@ package cmd
 
 import (
 	"crypto"
-	"flag"
 	"net/url"
 	"testing"
 
@@ -36,17 +35,16 @@ func mustParseURL(t *testing.T, s string) *url.URL {
 }
 
 func Test_parseFlags(t *testing.T) {
-	var err error
 	url1 := "https://example.com/os1-arch1"
 	url2 := "https://example.com/os2-arch2"
 	urld := "https://example.com/default-no-pattern"
-	set := flag.NewFlagSet("test", flag.ContinueOnError)
-	args := []string{
-		"--url", "os1/arch1=" + url1,
-		"--url", "os2/arch2=" + url2,
-		"--url", urld,
+	urlArgs := []string{
+		"os1/arch1=" + url1,
+		"os2/arch2=" + url2,
+		urld,
 	}
-	want := config{
+	exePathArgs := []string{}
+	want := &config{
 		urlMatches: []urlMatch{
 			{
 				pattern: "os1/arch1",
@@ -62,11 +60,11 @@ func Test_parseFlags(t *testing.T) {
 			},
 		},
 		archiveExePathMatches: nil,
-		httpTimeout:           defaultHTTPTimeout,
 	}
-	got, err := parseFlags(set, args)
+	cfg := &config{}
+	err := parseFlags(cfg, urlArgs, exePathArgs)
 	require.NoError(t, err)
-	assert.Equal(t, want, got)
+	assert.Equal(t, want, cfg)
 }
 
 func Test_selectURL(t *testing.T) {

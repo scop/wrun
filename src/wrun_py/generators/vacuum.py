@@ -77,8 +77,8 @@ def main() -> None:
             url = urljoin(base_url, filename)
             check_hexdigest(hexdigest, "sha256", url if args.verify else None)
 
-            print(f"-url {os_arch}={url}#sha256-{hexdigest}")
-    print("-archive-exe-path vacuum")
+            print(f"--url {os_arch}={url}#sha256-{hexdigest}")
+    print("--archive-exe-path vacuum")
 
 
 if __name__ == "__main__":

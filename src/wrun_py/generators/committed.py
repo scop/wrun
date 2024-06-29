@@ -93,10 +93,10 @@ def main() -> None:
 
         check_hexdigest(hexdigest, "sha256", url["url"] if args.verify else None)
 
-        print(f"-url {os_arch}={url['url']}#sha256-{hexdigest}")
+        print(f"--url {os_arch}={url['url']}#sha256-{hexdigest}")
         suffix = ".exe" if os_arch.startswith("windows/") else ""
         archive_exe_paths.append(
-            f"-archive-exe-path {os_arch}={project}-{version_number}.data/scripts/{project}{suffix}"
+            f"--archive-exe-path {os_arch}={project}-{version_number}.data/scripts/{project}{suffix}"
         )
     for p in archive_exe_paths:
         print(p)

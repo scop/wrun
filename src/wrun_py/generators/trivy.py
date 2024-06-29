@@ -82,8 +82,8 @@ def main() -> None:
             url = urljoin(base_url, filename)
             check_hexdigest(hexdigest, "sha256", url if args.verify else None)
 
-            print(f"-url {os_arch}={url}#sha256-{hexdigest}")
-    print("-archive-exe-path trivy")
+            print(f"--url {os_arch}={url}#sha256-{hexdigest}")
+    print("--archive-exe-path trivy")
 
 
 if __name__ == "__main__":

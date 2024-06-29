@@ -57,9 +57,9 @@ def main() -> None:
         with urlopen(url) as f:
             digest = file_digest(f, "sha256")
 
-        print(f"-url {os_arch}={url}#sha256-{digest.hexdigest()}")
-    print("-archive-exe-path windows/*=shellcheck.exe")
-    print(f"-archive-exe-path shellcheck-{args.version}/shellcheck")
+        print(f"--url {os_arch}={url}#sha256-{digest.hexdigest()}")
+    print("--archive-exe-path windows/*=shellcheck.exe")
+    print(f"--archive-exe-path shellcheck-{args.version}/shellcheck")
 
 
 if __name__ == "__main__":

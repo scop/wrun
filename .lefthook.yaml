@@ -5,12 +5,12 @@ pre-commit:
       glob: "*.{json,jsonc,md}"
       run: >-
         wrun
-        -url darwin/amd64=https://github.com/dprint/dprint/releases/download/0.47.2/dprint-x86_64-apple-darwin.zip#sha256-b174a7bc1ee55413da80b4469a5bcd1d91fdda2b813ac212bc8bbd0df293c448
-        -url darwin/arm64=https://github.com/dprint/dprint/releases/download/0.47.2/dprint-aarch64-apple-darwin.zip#sha256-d3af3952e4590663282e66413153f20cf7d3f6ac2795990d3652dec8971f68bb
-        -url linux/amd64=https://github.com/dprint/dprint/releases/download/0.47.2/dprint-x86_64-unknown-linux-musl.zip#sha256-c821d938d27f85c4c1e68196faa6fb90e64b9ac6ee7396a018489300569f81d0
-        -url linux/arm64=https://github.com/dprint/dprint/releases/download/0.47.2/dprint-aarch64-unknown-linux-musl.zip#sha256-8bfe2b1bde933333ba9d84ce33af6cf7129c498bd5f3f8f0abf18c3c0bc4cd26
-        -url windows/amd64=https://github.com/dprint/dprint/releases/download/0.47.2/dprint-x86_64-pc-windows-msvc.zip#sha256-20ed46ace9d70dadf564cdee3fdf3d06e44539b05c67387f461062890330c218
-        -archive-exe-path dprint
+        --url darwin/amd64=https://github.com/dprint/dprint/releases/download/0.47.2/dprint-x86_64-apple-darwin.zip#sha256-b174a7bc1ee55413da80b4469a5bcd1d91fdda2b813ac212bc8bbd0df293c448
+        --url darwin/arm64=https://github.com/dprint/dprint/releases/download/0.47.2/dprint-aarch64-apple-darwin.zip#sha256-d3af3952e4590663282e66413153f20cf7d3f6ac2795990d3652dec8971f68bb
+        --url linux/amd64=https://github.com/dprint/dprint/releases/download/0.47.2/dprint-x86_64-unknown-linux-musl.zip#sha256-c821d938d27f85c4c1e68196faa6fb90e64b9ac6ee7396a018489300569f81d0
+        --url linux/arm64=https://github.com/dprint/dprint/releases/download/0.47.2/dprint-aarch64-unknown-linux-musl.zip#sha256-8bfe2b1bde933333ba9d84ce33af6cf7129c498bd5f3f8f0abf18c3c0bc4cd26
+        --url windows/amd64=https://github.com/dprint/dprint/releases/download/0.47.2/dprint-x86_64-pc-windows-msvc.zip#sha256-20ed46ace9d70dadf564cdee3fdf3d06e44539b05c67387f461062890330c218
+        --archive-exe-path dprint
         --
         fmt
         {staged_files}
@@ -19,54 +19,54 @@ pre-commit:
       glob: "*.go"
       run: >-
         wrun
-        -url darwin/amd64=https://github.com/golangci/golangci-lint/releases/download/v1.59.1/golangci-lint-1.59.1-darwin-amd64.tar.gz#sha256-2f945063394a489c0037f0369c0ce21bc007565c08f90b924a35f4c04721cbc0
-        -url darwin/arm64=https://github.com/golangci/golangci-lint/releases/download/v1.59.1/golangci-lint-1.59.1-darwin-arm64.tar.gz#sha256-16ec8a86974ddebd466a5cc071bb9f44d06d2a1f4bf93d13fbcb59e1704edb39
-        -url freebsd/386=https://github.com/golangci/golangci-lint/releases/download/v1.59.1/golangci-lint-1.59.1-freebsd-386.tar.gz#sha256-05c9036f20fee445c4658422d5047a103804b71d29121d81ec12412916da902d
-        -url freebsd/amd64=https://github.com/golangci/golangci-lint/releases/download/v1.59.1/golangci-lint-1.59.1-freebsd-amd64.tar.gz#sha256-71f130cb4dda2f3bcbe22e58842c6288982e63d551fca918f73630e66a413ac1
-        -url freebsd/arm=https://github.com/golangci/golangci-lint/releases/download/v1.59.1/golangci-lint-1.59.1-freebsd-armv6.tar.gz#sha256-a773bdb398b0677ae1e952d08304cab7895b6edab47098434f8cd06d1f5b40ba
-        -url illumos/amd64=https://github.com/golangci/golangci-lint/releases/download/v1.59.1/golangci-lint-1.59.1-illumos-amd64.tar.gz#sha256-1b77ca6d3755d11d34bd2bf86e09b55de6d527f6ff355a04a6e9449c14e3a380
-        -url linux/386=https://github.com/golangci/golangci-lint/releases/download/v1.59.1/golangci-lint-1.59.1-linux-386.tar.gz#sha256-b244eb2eebfc16e28ba2c5b01030d79030d8aea67029b4f2c7af4ec1b9027e68
-        -url linux/amd64=https://github.com/golangci/golangci-lint/releases/download/v1.59.1/golangci-lint-1.59.1-linux-amd64.tar.gz#sha256-c30696f1292cff8778a495400745f0f9c0406a3f38d8bb12cef48d599f6c7791
-        -url linux/arm64=https://github.com/golangci/golangci-lint/releases/download/v1.59.1/golangci-lint-1.59.1-linux-arm64.tar.gz#sha256-8264507b560ae89dd080d5a0c7198ca5198e2b45f937a1f7fd873a8baa8e0b8f
-        -url linux/arm=https://github.com/golangci/golangci-lint/releases/download/v1.59.1/golangci-lint-1.59.1-linux-armv6.tar.gz#sha256-43b8ad76ad1e8991052f0dc46d1dc5fb5c44c6a2c2fefbd427b1fa64d2f0602b
-        -url linux/loong64=https://github.com/golangci/golangci-lint/releases/download/v1.59.1/golangci-lint-1.59.1-linux-loong64.tar.gz#sha256-966fc871a915e90f28a0e547bf3e6d6859299b4a9d289cd905b5ddb510e1b374
-        -url linux/mips64=https://github.com/golangci/golangci-lint/releases/download/v1.59.1/golangci-lint-1.59.1-linux-mips64.tar.gz#sha256-44455175bc34781706b7c796bda86cae9c7502b1fe00e571fa449e56fb54cb4f
-        -url linux/mips64le=https://github.com/golangci/golangci-lint/releases/download/v1.59.1/golangci-lint-1.59.1-linux-mips64le.tar.gz#sha256-0868af33b3f63304a88da205de57e82fa82235484cb67a90247b2f8e7c281f75
-        -url linux/ppc64le=https://github.com/golangci/golangci-lint/releases/download/v1.59.1/golangci-lint-1.59.1-linux-ppc64le.tar.gz#sha256-f321dbabd75bb6e5c11801b15f7c3603f90adff1379af22b6dd9975f0bd2717b
-        -url linux/riscv64=https://github.com/golangci/golangci-lint/releases/download/v1.59.1/golangci-lint-1.59.1-linux-riscv64.tar.gz#sha256-4d72e42924fd8d84eac5d9929c08293df4d755b3a9eace4b4fdffc68f344bef7
-        -url linux/s390x=https://github.com/golangci/golangci-lint/releases/download/v1.59.1/golangci-lint-1.59.1-linux-s390x.tar.gz#sha256-09ad6378a3e123ab0a01bf3fbd02469773384232c78d109dd01cd4a3aa5472fe
-        -url netbsd/386=https://github.com/golangci/golangci-lint/releases/download/v1.59.1/golangci-lint-1.59.1-netbsd-386.tar.gz#sha256-c8a00162d9c9596a53907872853c943f6f4ae4aba3db868f6f39b07ac9fdab73
-        -url netbsd/amd64=https://github.com/golangci/golangci-lint/releases/download/v1.59.1/golangci-lint-1.59.1-netbsd-amd64.tar.gz#sha256-0541f21db96bafd96b1a247a28be5328e02618643dde37ca6b47589f6dc8c0c7
-        -url netbsd/arm64=https://github.com/golangci/golangci-lint/releases/download/v1.59.1/golangci-lint-1.59.1-netbsd-arm64.tar.gz#sha256-a8b53286ab9e0c623c604f08acf272a1f8cc6aafe9fda721aa2c1c1f11f845bb
-        -url netbsd/arm=https://github.com/golangci/golangci-lint/releases/download/v1.59.1/golangci-lint-1.59.1-netbsd-armv6.tar.gz#sha256-d10ba660758e5f27c34d72fbd6f30149653adb54275b0d49c466b7b5bdb1b811
-        -url windows/386=https://github.com/golangci/golangci-lint/releases/download/v1.59.1/golangci-lint-1.59.1-windows-386.zip#sha256-4cd2c86810a0be3eb076db66d94da6bbe4460afa86cb95652a7632a6ac48723d
-        -url windows/amd64=https://github.com/golangci/golangci-lint/releases/download/v1.59.1/golangci-lint-1.59.1-windows-amd64.zip#sha256-82eb91e8e3cbbc987d8bb5684caaaa12aeb39479135bea90d2805512233f4741
-        -url windows/arm64=https://github.com/golangci/golangci-lint/releases/download/v1.59.1/golangci-lint-1.59.1-windows-arm64.zip#sha256-5deaaf959e415df9f610059923b0ae40413fe3a5602c493bb84ec57581594901
-        -url windows/arm=https://github.com/golangci/golangci-lint/releases/download/v1.59.1/golangci-lint-1.59.1-windows-armv6.zip#sha256-19e11455c8fb6a4ffa7692974531e70028a7ada86ea5bd43c76990af0d7e1cff
-        -archive-exe-path darwin/amd64=golangci-lint-1.59.1-darwin-amd64/golangci-lint
-        -archive-exe-path darwin/arm64=golangci-lint-1.59.1-darwin-arm64/golangci-lint
-        -archive-exe-path freebsd/386=golangci-lint-1.59.1-freebsd-386/golangci-lint
-        -archive-exe-path freebsd/amd64=golangci-lint-1.59.1-freebsd-amd64/golangci-lint
-        -archive-exe-path freebsd/arm=golangci-lint-1.59.1-freebsd-armv6/golangci-lint
-        -archive-exe-path illumos/amd64=golangci-lint-1.59.1-illumos-amd64/golangci-lint
-        -archive-exe-path linux/386=golangci-lint-1.59.1-linux-386/golangci-lint
-        -archive-exe-path linux/amd64=golangci-lint-1.59.1-linux-amd64/golangci-lint
-        -archive-exe-path linux/arm64=golangci-lint-1.59.1-linux-arm64/golangci-lint
-        -archive-exe-path linux/arm=golangci-lint-1.59.1-linux-armv6/golangci-lint
-        -archive-exe-path linux/loong64=golangci-lint-1.59.1-linux-loong64/golangci-lint
-        -archive-exe-path linux/mips64=golangci-lint-1.59.1-linux-mips64/golangci-lint
-        -archive-exe-path linux/mips64le=golangci-lint-1.59.1-linux-mips64le/golangci-lint
-        -archive-exe-path linux/ppc64le=golangci-lint-1.59.1-linux-ppc64le/golangci-lint
-        -archive-exe-path linux/riscv64=golangci-lint-1.59.1-linux-riscv64/golangci-lint
-        -archive-exe-path linux/s390x=golangci-lint-1.59.1-linux-s390x/golangci-lint
-        -archive-exe-path netbsd/386=golangci-lint-1.59.1-netbsd-386/golangci-lint
-        -archive-exe-path netbsd/amd64=golangci-lint-1.59.1-netbsd-amd64/golangci-lint
-        -archive-exe-path netbsd/arm64=golangci-lint-1.59.1-netbsd-arm64/golangci-lint
-        -archive-exe-path netbsd/arm=golangci-lint-1.59.1-netbsd-armv6/golangci-lint
-        -archive-exe-path windows/386=golangci-lint-1.59.1-windows-386/golangci-lint.exe
-        -archive-exe-path windows/amd64=golangci-lint-1.59.1-windows-amd64/golangci-lint.exe
-        -archive-exe-path windows/arm64=golangci-lint-1.59.1-windows-arm64/golangci-lint.exe
-        -archive-exe-path windows/arm=golangci-lint-1.59.1-windows-armv6/golangci-lint.exe
+        --url darwin/amd64=https://github.com/golangci/golangci-lint/releases/download/v1.59.1/golangci-lint-1.59.1-darwin-amd64.tar.gz#sha256-2f945063394a489c0037f0369c0ce21bc007565c08f90b924a35f4c04721cbc0
+        --url darwin/arm64=https://github.com/golangci/golangci-lint/releases/download/v1.59.1/golangci-lint-1.59.1-darwin-arm64.tar.gz#sha256-16ec8a86974ddebd466a5cc071bb9f44d06d2a1f4bf93d13fbcb59e1704edb39
+        --url freebsd/386=https://github.com/golangci/golangci-lint/releases/download/v1.59.1/golangci-lint-1.59.1-freebsd-386.tar.gz#sha256-05c9036f20fee445c4658422d5047a103804b71d29121d81ec12412916da902d
+        --url freebsd/amd64=https://github.com/golangci/golangci-lint/releases/download/v1.59.1/golangci-lint-1.59.1-freebsd-amd64.tar.gz#sha256-71f130cb4dda2f3bcbe22e58842c6288982e63d551fca918f73630e66a413ac1
+        --url freebsd/arm=https://github.com/golangci/golangci-lint/releases/download/v1.59.1/golangci-lint-1.59.1-freebsd-armv6.tar.gz#sha256-a773bdb398b0677ae1e952d08304cab7895b6edab47098434f8cd06d1f5b40ba
+        --url illumos/amd64=https://github.com/golangci/golangci-lint/releases/download/v1.59.1/golangci-lint-1.59.1-illumos-amd64.tar.gz#sha256-1b77ca6d3755d11d34bd2bf86e09b55de6d527f6ff355a04a6e9449c14e3a380
+        --url linux/386=https://github.com/golangci/golangci-lint/releases/download/v1.59.1/golangci-lint-1.59.1-linux-386.tar.gz#sha256-b244eb2eebfc16e28ba2c5b01030d79030d8aea67029b4f2c7af4ec1b9027e68
+        --url linux/amd64=https://github.com/golangci/golangci-lint/releases/download/v1.59.1/golangci-lint-1.59.1-linux-amd64.tar.gz#sha256-c30696f1292cff8778a495400745f0f9c0406a3f38d8bb12cef48d599f6c7791
+        --url linux/arm64=https://github.com/golangci/golangci-lint/releases/download/v1.59.1/golangci-lint-1.59.1-linux-arm64.tar.gz#sha256-8264507b560ae89dd080d5a0c7198ca5198e2b45f937a1f7fd873a8baa8e0b8f
+        --url linux/arm=https://github.com/golangci/golangci-lint/releases/download/v1.59.1/golangci-lint-1.59.1-linux-armv6.tar.gz#sha256-43b8ad76ad1e8991052f0dc46d1dc5fb5c44c6a2c2fefbd427b1fa64d2f0602b
+        --url linux/loong64=https://github.com/golangci/golangci-lint/releases/download/v1.59.1/golangci-lint-1.59.1-linux-loong64.tar.gz#sha256-966fc871a915e90f28a0e547bf3e6d6859299b4a9d289cd905b5ddb510e1b374
+        --url linux/mips64=https://github.com/golangci/golangci-lint/releases/download/v1.59.1/golangci-lint-1.59.1-linux-mips64.tar.gz#sha256-44455175bc34781706b7c796bda86cae9c7502b1fe00e571fa449e56fb54cb4f
+        --url linux/mips64le=https://github.com/golangci/golangci-lint/releases/download/v1.59.1/golangci-lint-1.59.1-linux-mips64le.tar.gz#sha256-0868af33b3f63304a88da205de57e82fa82235484cb67a90247b2f8e7c281f75
+        --url linux/ppc64le=https://github.com/golangci/golangci-lint/releases/download/v1.59.1/golangci-lint-1.59.1-linux-ppc64le.tar.gz#sha256-f321dbabd75bb6e5c11801b15f7c3603f90adff1379af22b6dd9975f0bd2717b
+        --url linux/riscv64=https://github.com/golangci/golangci-lint/releases/download/v1.59.1/golangci-lint-1.59.1-linux-riscv64.tar.gz#sha256-4d72e42924fd8d84eac5d9929c08293df4d755b3a9eace4b4fdffc68f344bef7
+        --url linux/s390x=https://github.com/golangci/golangci-lint/releases/download/v1.59.1/golangci-lint-1.59.1-linux-s390x.tar.gz#sha256-09ad6378a3e123ab0a01bf3fbd02469773384232c78d109dd01cd4a3aa5472fe
+        --url netbsd/386=https://github.com/golangci/golangci-lint/releases/download/v1.59.1/golangci-lint-1.59.1-netbsd-386.tar.gz#sha256-c8a00162d9c9596a53907872853c943f6f4ae4aba3db868f6f39b07ac9fdab73
+        --url netbsd/amd64=https://github.com/golangci/golangci-lint/releases/download/v1.59.1/golangci-lint-1.59.1-netbsd-amd64.tar.gz#sha256-0541f21db96bafd96b1a247a28be5328e02618643dde37ca6b47589f6dc8c0c7
+        --url netbsd/arm64=https://github.com/golangci/golangci-lint/releases/download/v1.59.1/golangci-lint-1.59.1-netbsd-arm64.tar.gz#sha256-a8b53286ab9e0c623c604f08acf272a1f8cc6aafe9fda721aa2c1c1f11f845bb
+        --url netbsd/arm=https://github.com/golangci/golangci-lint/releases/download/v1.59.1/golangci-lint-1.59.1-netbsd-armv6.tar.gz#sha256-d10ba660758e5f27c34d72fbd6f30149653adb54275b0d49c466b7b5bdb1b811
+        --url windows/386=https://github.com/golangci/golangci-lint/releases/download/v1.59.1/golangci-lint-1.59.1-windows-386.zip#sha256-4cd2c86810a0be3eb076db66d94da6bbe4460afa86cb95652a7632a6ac48723d
+        --url windows/amd64=https://github.com/golangci/golangci-lint/releases/download/v1.59.1/golangci-lint-1.59.1-windows-amd64.zip#sha256-82eb91e8e3cbbc987d8bb5684caaaa12aeb39479135bea90d2805512233f4741
+        --url windows/arm64=https://github.com/golangci/golangci-lint/releases/download/v1.59.1/golangci-lint-1.59.1-windows-arm64.zip#sha256-5deaaf959e415df9f610059923b0ae40413fe3a5602c493bb84ec57581594901
+        --url windows/arm=https://github.com/golangci/golangci-lint/releases/download/v1.59.1/golangci-lint-1.59.1-windows-armv6.zip#sha256-19e11455c8fb6a4ffa7692974531e70028a7ada86ea5bd43c76990af0d7e1cff
+        --archive-exe-path darwin/amd64=golangci-lint-1.59.1-darwin-amd64/golangci-lint
+        --archive-exe-path darwin/arm64=golangci-lint-1.59.1-darwin-arm64/golangci-lint
+        --archive-exe-path freebsd/386=golangci-lint-1.59.1-freebsd-386/golangci-lint
+        --archive-exe-path freebsd/amd64=golangci-lint-1.59.1-freebsd-amd64/golangci-lint
+        --archive-exe-path freebsd/arm=golangci-lint-1.59.1-freebsd-armv6/golangci-lint
+        --archive-exe-path illumos/amd64=golangci-lint-1.59.1-illumos-amd64/golangci-lint
+        --archive-exe-path linux/386=golangci-lint-1.59.1-linux-386/golangci-lint
+        --archive-exe-path linux/amd64=golangci-lint-1.59.1-linux-amd64/golangci-lint
+        --archive-exe-path linux/arm64=golangci-lint-1.59.1-linux-arm64/golangci-lint
+        --archive-exe-path linux/arm=golangci-lint-1.59.1-linux-armv6/golangci-lint
+        --archive-exe-path linux/loong64=golangci-lint-1.59.1-linux-loong64/golangci-lint
+        --archive-exe-path linux/mips64=golangci-lint-1.59.1-linux-mips64/golangci-lint
+        --archive-exe-path linux/mips64le=golangci-lint-1.59.1-linux-mips64le/golangci-lint
+        --archive-exe-path linux/ppc64le=golangci-lint-1.59.1-linux-ppc64le/golangci-lint
+        --archive-exe-path linux/riscv64=golangci-lint-1.59.1-linux-riscv64/golangci-lint
+        --archive-exe-path linux/s390x=golangci-lint-1.59.1-linux-s390x/golangci-lint
+        --archive-exe-path netbsd/386=golangci-lint-1.59.1-netbsd-386/golangci-lint
+        --archive-exe-path netbsd/amd64=golangci-lint-1.59.1-netbsd-amd64/golangci-lint
+        --archive-exe-path netbsd/arm64=golangci-lint-1.59.1-netbsd-arm64/golangci-lint
+        --archive-exe-path netbsd/arm=golangci-lint-1.59.1-netbsd-armv6/golangci-lint
+        --archive-exe-path windows/386=golangci-lint-1.59.1-windows-386/golangci-lint.exe
+        --archive-exe-path windows/amd64=golangci-lint-1.59.1-windows-amd64/golangci-lint.exe
+        --archive-exe-path windows/arm64=golangci-lint-1.59.1-windows-arm64/golangci-lint.exe
+        --archive-exe-path windows/arm=golangci-lint-1.59.1-windows-armv6/golangci-lint.exe
         --
         run
     ruff:
@@ -74,28 +74,28 @@ pre-commit:
       glob: "*.{py,pyi}"
       run: >-
         wrun
-        -url darwin/amd64=https://github.com/astral-sh/ruff/releases/download/0.5.5/ruff-x86_64-apple-darwin.tar.gz#sha256-86dccec7ca8d7295bb3fcbb81d35f7f9541cb565ca9483aa60d1b5a5f5394fe3
-        -url darwin/arm64=https://github.com/astral-sh/ruff/releases/download/0.5.5/ruff-aarch64-apple-darwin.tar.gz#sha256-452fd58f29471a923c6b2cbb54935c4552ff327096951d51593db9886f600628
-        -url linux/386=https://github.com/astral-sh/ruff/releases/download/0.5.5/ruff-i686-unknown-linux-musl.tar.gz#sha256-a94d61080b0e5a7de01d70979b3a2a047a17222303f73a209715a6dee76234cd
-        -url linux/amd64=https://github.com/astral-sh/ruff/releases/download/0.5.5/ruff-x86_64-unknown-linux-musl.tar.gz#sha256-ffbc7246df97ac56e76c9d87f4fb38d118657d2dd37511ba2b5afa983bb8c9e9
-        -url linux/arm=https://github.com/astral-sh/ruff/releases/download/0.5.5/ruff-arm-unknown-linux-musleabihf.tar.gz#sha256-75f5d1420580f8b1ffe6369110f6756c2bc8a8efef53de2e6a991f62985d0f75
-        -url linux/arm64=https://github.com/astral-sh/ruff/releases/download/0.5.5/ruff-aarch64-unknown-linux-musl.tar.gz#sha256-4f29e5958fe573ca746e601fe2f00dbe400e3b5dfe0b11be691341c61a70cd62
-        -url linux/ppc64=https://github.com/astral-sh/ruff/releases/download/0.5.5/ruff-powerpc64-unknown-linux-gnu.tar.gz#sha256-b63e223dfdebfe5341dfbfc5d806de321ac4e578d159a60ef6fe824bf6f65af1
-        -url linux/ppc64le=https://github.com/astral-sh/ruff/releases/download/0.5.5/ruff-powerpc64le-unknown-linux-gnu.tar.gz#sha256-37cb512811fcf5e9739b685b5650bde0ee59092dd5117ee7dd4ce7f922d57d13
-        -url linux/s390x=https://github.com/astral-sh/ruff/releases/download/0.5.5/ruff-s390x-unknown-linux-gnu.tar.gz#sha256-6e48b86a7f2deb032792deb3044142e77631c605028c7e94a53184b537d8a7a2
-        -url windows/386=https://github.com/astral-sh/ruff/releases/download/0.5.5/ruff-i686-pc-windows-msvc.zip#sha256-75a604d31e2ecc4890727b8ac55e63be7cb3151800be56e62c4aa70f67b6d3e2
-        -url windows/amd64=https://github.com/astral-sh/ruff/releases/download/0.5.5/ruff-x86_64-pc-windows-msvc.zip#sha256-161eb7ae4f38d8b54e46b153f0a5b2ee6de55d198ca495ee1c0a1c0b2e0a8f26
-        -url windows/arm64=https://github.com/astral-sh/ruff/releases/download/0.5.5/ruff-aarch64-pc-windows-msvc.zip#sha256-f179ae5848892e940da3b27893bb5d0a9b1176a8228a55e099cd9bc7f16c0090
-        -archive-exe-path darwin/amd64=ruff-x86_64-apple-darwin/ruff
-        -archive-exe-path darwin/arm64=ruff-aarch64-apple-darwin/ruff
-        -archive-exe-path linux/386=ruff-i686-unknown-linux-musl/ruff
-        -archive-exe-path linux/amd64=ruff-x86_64-unknown-linux-musl/ruff
-        -archive-exe-path linux/arm64=ruff-aarch64-unknown-linux-musl/ruff
-        -archive-exe-path linux/arm=ruff-arm-unknown-linux-musleabihf/ruff
-        -archive-exe-path linux/ppc64=ruff-powerpc64-unknown-linux-gnu/ruff
-        -archive-exe-path linux/ppc64le=ruff-powerpc64le-unknown-linux-gnu/ruff
-        -archive-exe-path linux/s390x=ruff-s390x-unknown-linux-gnu/ruff
-        -archive-exe-path windows/*=ruff.exe
+        --url darwin/amd64=https://github.com/astral-sh/ruff/releases/download/0.5.5/ruff-x86_64-apple-darwin.tar.gz#sha256-86dccec7ca8d7295bb3fcbb81d35f7f9541cb565ca9483aa60d1b5a5f5394fe3
+        --url darwin/arm64=https://github.com/astral-sh/ruff/releases/download/0.5.5/ruff-aarch64-apple-darwin.tar.gz#sha256-452fd58f29471a923c6b2cbb54935c4552ff327096951d51593db9886f600628
+        --url linux/386=https://github.com/astral-sh/ruff/releases/download/0.5.5/ruff-i686-unknown-linux-musl.tar.gz#sha256-a94d61080b0e5a7de01d70979b3a2a047a17222303f73a209715a6dee76234cd
+        --url linux/amd64=https://github.com/astral-sh/ruff/releases/download/0.5.5/ruff-x86_64-unknown-linux-musl.tar.gz#sha256-ffbc7246df97ac56e76c9d87f4fb38d118657d2dd37511ba2b5afa983bb8c9e9
+        --url linux/arm=https://github.com/astral-sh/ruff/releases/download/0.5.5/ruff-arm-unknown-linux-musleabihf.tar.gz#sha256-75f5d1420580f8b1ffe6369110f6756c2bc8a8efef53de2e6a991f62985d0f75
+        --url linux/arm64=https://github.com/astral-sh/ruff/releases/download/0.5.5/ruff-aarch64-unknown-linux-musl.tar.gz#sha256-4f29e5958fe573ca746e601fe2f00dbe400e3b5dfe0b11be691341c61a70cd62
+        --url linux/ppc64=https://github.com/astral-sh/ruff/releases/download/0.5.5/ruff-powerpc64-unknown-linux-gnu.tar.gz#sha256-b63e223dfdebfe5341dfbfc5d806de321ac4e578d159a60ef6fe824bf6f65af1
+        --url linux/ppc64le=https://github.com/astral-sh/ruff/releases/download/0.5.5/ruff-powerpc64le-unknown-linux-gnu.tar.gz#sha256-37cb512811fcf5e9739b685b5650bde0ee59092dd5117ee7dd4ce7f922d57d13
+        --url linux/s390x=https://github.com/astral-sh/ruff/releases/download/0.5.5/ruff-s390x-unknown-linux-gnu.tar.gz#sha256-6e48b86a7f2deb032792deb3044142e77631c605028c7e94a53184b537d8a7a2
+        --url windows/386=https://github.com/astral-sh/ruff/releases/download/0.5.5/ruff-i686-pc-windows-msvc.zip#sha256-75a604d31e2ecc4890727b8ac55e63be7cb3151800be56e62c4aa70f67b6d3e2
+        --url windows/amd64=https://github.com/astral-sh/ruff/releases/download/0.5.5/ruff-x86_64-pc-windows-msvc.zip#sha256-161eb7ae4f38d8b54e46b153f0a5b2ee6de55d198ca495ee1c0a1c0b2e0a8f26
+        --url windows/arm64=https://github.com/astral-sh/ruff/releases/download/0.5.5/ruff-aarch64-pc-windows-msvc.zip#sha256-f179ae5848892e940da3b27893bb5d0a9b1176a8228a55e099cd9bc7f16c0090
+        --archive-exe-path darwin/amd64=ruff-x86_64-apple-darwin/ruff
+        --archive-exe-path darwin/arm64=ruff-aarch64-apple-darwin/ruff
+        --archive-exe-path linux/386=ruff-i686-unknown-linux-musl/ruff
+        --archive-exe-path linux/amd64=ruff-x86_64-unknown-linux-musl/ruff
+        --archive-exe-path linux/arm64=ruff-aarch64-unknown-linux-musl/ruff
+        --archive-exe-path linux/arm=ruff-arm-unknown-linux-musleabihf/ruff
+        --archive-exe-path linux/ppc64=ruff-powerpc64-unknown-linux-gnu/ruff
+        --archive-exe-path linux/ppc64le=ruff-powerpc64le-unknown-linux-gnu/ruff
+        --archive-exe-path linux/s390x=ruff-s390x-unknown-linux-gnu/ruff
+        --archive-exe-path windows/*=ruff.exe
         --
         check
         {staged_files}
@@ -104,28 +104,28 @@ pre-commit:
       glob: "*.{py,pyi}"
       run: >-
         wrun
-        -url darwin/amd64=https://github.com/astral-sh/ruff/releases/download/0.5.5/ruff-x86_64-apple-darwin.tar.gz#sha256-86dccec7ca8d7295bb3fcbb81d35f7f9541cb565ca9483aa60d1b5a5f5394fe3
-        -url darwin/arm64=https://github.com/astral-sh/ruff/releases/download/0.5.5/ruff-aarch64-apple-darwin.tar.gz#sha256-452fd58f29471a923c6b2cbb54935c4552ff327096951d51593db9886f600628
-        -url linux/386=https://github.com/astral-sh/ruff/releases/download/0.5.5/ruff-i686-unknown-linux-musl.tar.gz#sha256-a94d61080b0e5a7de01d70979b3a2a047a17222303f73a209715a6dee76234cd
-        -url linux/amd64=https://github.com/astral-sh/ruff/releases/download/0.5.5/ruff-x86_64-unknown-linux-musl.tar.gz#sha256-ffbc7246df97ac56e76c9d87f4fb38d118657d2dd37511ba2b5afa983bb8c9e9
-        -url linux/arm=https://github.com/astral-sh/ruff/releases/download/0.5.5/ruff-arm-unknown-linux-musleabihf.tar.gz#sha256-75f5d1420580f8b1ffe6369110f6756c2bc8a8efef53de2e6a991f62985d0f75
-        -url linux/arm64=https://github.com/astral-sh/ruff/releases/download/0.5.5/ruff-aarch64-unknown-linux-musl.tar.gz#sha256-4f29e5958fe573ca746e601fe2f00dbe400e3b5dfe0b11be691341c61a70cd62
-        -url linux/ppc64=https://github.com/astral-sh/ruff/releases/download/0.5.5/ruff-powerpc64-unknown-linux-gnu.tar.gz#sha256-b63e223dfdebfe5341dfbfc5d806de321ac4e578d159a60ef6fe824bf6f65af1
-        -url linux/ppc64le=https://github.com/astral-sh/ruff/releases/download/0.5.5/ruff-powerpc64le-unknown-linux-gnu.tar.gz#sha256-37cb512811fcf5e9739b685b5650bde0ee59092dd5117ee7dd4ce7f922d57d13
-        -url linux/s390x=https://github.com/astral-sh/ruff/releases/download/0.5.5/ruff-s390x-unknown-linux-gnu.tar.gz#sha256-6e48b86a7f2deb032792deb3044142e77631c605028c7e94a53184b537d8a7a2
-        -url windows/386=https://github.com/astral-sh/ruff/releases/download/0.5.5/ruff-i686-pc-windows-msvc.zip#sha256-75a604d31e2ecc4890727b8ac55e63be7cb3151800be56e62c4aa70f67b6d3e2
-        -url windows/amd64=https://github.com/astral-sh/ruff/releases/download/0.5.5/ruff-x86_64-pc-windows-msvc.zip#sha256-161eb7ae4f38d8b54e46b153f0a5b2ee6de55d198ca495ee1c0a1c0b2e0a8f26
-        -url windows/arm64=https://github.com/astral-sh/ruff/releases/download/0.5.5/ruff-aarch64-pc-windows-msvc.zip#sha256-f179ae5848892e940da3b27893bb5d0a9b1176a8228a55e099cd9bc7f16c0090
-        -archive-exe-path darwin/amd64=ruff-x86_64-apple-darwin/ruff
-        -archive-exe-path darwin/arm64=ruff-aarch64-apple-darwin/ruff
-        -archive-exe-path linux/386=ruff-i686-unknown-linux-musl/ruff
-        -archive-exe-path linux/amd64=ruff-x86_64-unknown-linux-musl/ruff
-        -archive-exe-path linux/arm64=ruff-aarch64-unknown-linux-musl/ruff
-        -archive-exe-path linux/arm=ruff-arm-unknown-linux-musleabihf/ruff
-        -archive-exe-path linux/ppc64=ruff-powerpc64-unknown-linux-gnu/ruff
-        -archive-exe-path linux/ppc64le=ruff-powerpc64le-unknown-linux-gnu/ruff
-        -archive-exe-path linux/s390x=ruff-s390x-unknown-linux-gnu/ruff
-        -archive-exe-path windows/*=ruff.exe
+        --url darwin/amd64=https://github.com/astral-sh/ruff/releases/download/0.5.5/ruff-x86_64-apple-darwin.tar.gz#sha256-86dccec7ca8d7295bb3fcbb81d35f7f9541cb565ca9483aa60d1b5a5f5394fe3
+        --url darwin/arm64=https://github.com/astral-sh/ruff/releases/download/0.5.5/ruff-aarch64-apple-darwin.tar.gz#sha256-452fd58f29471a923c6b2cbb54935c4552ff327096951d51593db9886f600628
+        --url linux/386=https://github.com/astral-sh/ruff/releases/download/0.5.5/ruff-i686-unknown-linux-musl.tar.gz#sha256-a94d61080b0e5a7de01d70979b3a2a047a17222303f73a209715a6dee76234cd
+        --url linux/amd64=https://github.com/astral-sh/ruff/releases/download/0.5.5/ruff-x86_64-unknown-linux-musl.tar.gz#sha256-ffbc7246df97ac56e76c9d87f4fb38d118657d2dd37511ba2b5afa983bb8c9e9
+        --url linux/arm=https://github.com/astral-sh/ruff/releases/download/0.5.5/ruff-arm-unknown-linux-musleabihf.tar.gz#sha256-75f5d1420580f8b1ffe6369110f6756c2bc8a8efef53de2e6a991f62985d0f75
+        --url linux/arm64=https://github.com/astral-sh/ruff/releases/download/0.5.5/ruff-aarch64-unknown-linux-musl.tar.gz#sha256-4f29e5958fe573ca746e601fe2f00dbe400e3b5dfe0b11be691341c61a70cd62
+        --url linux/ppc64=https://github.com/astral-sh/ruff/releases/download/0.5.5/ruff-powerpc64-unknown-linux-gnu.tar.gz#sha256-b63e223dfdebfe5341dfbfc5d806de321ac4e578d159a60ef6fe824bf6f65af1
+        --url linux/ppc64le=https://github.com/astral-sh/ruff/releases/download/0.5.5/ruff-powerpc64le-unknown-linux-gnu.tar.gz#sha256-37cb512811fcf5e9739b685b5650bde0ee59092dd5117ee7dd4ce7f922d57d13
+        --url linux/s390x=https://github.com/astral-sh/ruff/releases/download/0.5.5/ruff-s390x-unknown-linux-gnu.tar.gz#sha256-6e48b86a7f2deb032792deb3044142e77631c605028c7e94a53184b537d8a7a2
+        --url windows/386=https://github.com/astral-sh/ruff/releases/download/0.5.5/ruff-i686-pc-windows-msvc.zip#sha256-75a604d31e2ecc4890727b8ac55e63be7cb3151800be56e62c4aa70f67b6d3e2
+        --url windows/amd64=https://github.com/astral-sh/ruff/releases/download/0.5.5/ruff-x86_64-pc-windows-msvc.zip#sha256-161eb7ae4f38d8b54e46b153f0a5b2ee6de55d198ca495ee1c0a1c0b2e0a8f26
+        --url windows/arm64=https://github.com/astral-sh/ruff/releases/download/0.5.5/ruff-aarch64-pc-windows-msvc.zip#sha256-f179ae5848892e940da3b27893bb5d0a9b1176a8228a55e099cd9bc7f16c0090
+        --archive-exe-path darwin/amd64=ruff-x86_64-apple-darwin/ruff
+        --archive-exe-path darwin/arm64=ruff-aarch64-apple-darwin/ruff
+        --archive-exe-path linux/386=ruff-i686-unknown-linux-musl/ruff
+        --archive-exe-path linux/amd64=ruff-x86_64-unknown-linux-musl/ruff
+        --archive-exe-path linux/arm64=ruff-aarch64-unknown-linux-musl/ruff
+        --archive-exe-path linux/arm=ruff-arm-unknown-linux-musleabihf/ruff
+        --archive-exe-path linux/ppc64=ruff-powerpc64-unknown-linux-gnu/ruff
+        --archive-exe-path linux/ppc64le=ruff-powerpc64le-unknown-linux-gnu/ruff
+        --archive-exe-path linux/s390x=ruff-s390x-unknown-linux-gnu/ruff
+        --archive-exe-path windows/*=ruff.exe
         --
         format
         {staged_files}

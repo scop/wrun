@@ -54,7 +54,7 @@ def main() -> None:
         with urlopen(url) as f:
             digest = file_digest(f, "sha256")
 
-        print(f"-url {os_arch}={url}#sha256-{digest.hexdigest()}")
+        print(f"--url {os_arch}={url}#sha256-{digest.hexdigest()}")
 
 
 if __name__ == "__main__":

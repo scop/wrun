@@ -70,7 +70,7 @@ def main() -> None:
                 url = urljoin(base_url, filename)
                 check_hexdigest(hexdigest, "sha256", url if args.verify else None)
 
-                print(f"-url {os_arch}={url}#sha256-{hexdigest}")
+                print(f"--url {os_arch}={url}#sha256-{hexdigest}")
 
 
 if __name__ == "__main__":

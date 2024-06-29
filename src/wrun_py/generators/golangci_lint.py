@@ -75,10 +75,10 @@ def main() -> None:
             url = urljoin(base_url, filename)
             check_hexdigest(hexdigest, "sha256", url if args.verify else None)
 
-            print(f"-url {os}/{arch}={url}#sha256-{hexdigest}")
+            print(f"--url {os}/{arch}={url}#sha256-{hexdigest}")
             suffix = ".exe" if os == "windows" else ""
             archive_exe_paths.append(
-                f"-archive-exe-path {os}/{arch}={dirname}/golangci-lint{suffix}"
+                f"--archive-exe-path {os}/{arch}={dirname}/golangci-lint{suffix}"
             )
     for p in archive_exe_paths:
         print(p)

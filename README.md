@@ -4,17 +4,7 @@
 with the same one command for multiple OS/architectures.
 
 ```shellsession
-$ wrun -help
-Usage of wrun:
-  -archive-exe-path value
-    	[OS/arch=]path to executable within archive matcher (separator always /, implies archive processing)
-  -dry-run
-    	Dry run, skip execution (but do download/set up cache)
-  -http-timeout duration
-    	HTTP client timeout (default 5m0s)
-  -url value
-    	[OS/arch=]URL matcher (at least one required)
-
+$ wrun --help
 wrun downloads, caches, and runs executables.
 
 OS and architecture matcher arguments for URLs to download and (if applicable) executables within archives can be used to construct command lines that work across multiple operating systems and architectures.
@@ -35,6 +25,17 @@ Environment variables:
 - WRUN_CACHE_HOME: cache location, defaults to wrun subdir in the user's cache dir
 - WRUN_OS_ARCH: override OS/arch for matching
 - WRUN_VERBOSE: output verbosity, false decreases, true increases
+
+Usage:
+  wrun [flags] -- [executable arguments]
+
+Flags:
+  -p, --archive-exe-path strings   [OS/arch=]path to executable within archive matcher (separator always /, implies archive processing)
+  -n, --dry-run                    dry run, skip execution (but do download/set up cache)
+  -h, --help                       help for wrun
+  -t, --http-timeout duration      HTTP client timeout (default 5m0s)
+  -u, --url strings                [OS/arch=]URL matcher (at least one required)
+  -v, --version                    version for wrun
 ```
 
 ## Installation

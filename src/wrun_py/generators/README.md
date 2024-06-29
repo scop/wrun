@@ -1,8 +1,8 @@
 # wrun command line argument generators
 
 wrun generators are scripts to generate wrun command line arguments
-for various tools' releases. Generated arguments will contain `-url`s,
-and `-archive-exe-path`s if applicable.
+for various tools' releases. Generated arguments will contain `--url`s,
+and `--archive-exe-path`s if applicable.
 
 The scripts are not robust against all kinds of changes that might be
 occurring in upstream release assets, and may need tweaking at times.

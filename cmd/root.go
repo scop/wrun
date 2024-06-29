@@ -22,7 +22,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
-	"flag"
 	"fmt"
 	"hash"
 	"io"
@@ -39,6 +38,7 @@ import (
 	"time"
 
 	"github.com/mholt/archiver/v3"
+	"github.com/spf13/cobra"
 
 	wrun "github.com/scop/wrun/internal"
 )
@@ -97,6 +97,8 @@ func init() {
 	versionString = strings.Join(vs, "")
 }
 
+type exitStatus = int
+
 const (
 	cacheHomeEnvVar           = "WRUN_CACHE_HOME"
 	verboseEnvVar             = "WRUN_VERBOSE"
@@ -104,6 +106,10 @@ const (
 	cacheVersion              = "v2"
 	cacheDirDigestPlaceholder = "_"
 	defaultHTTPTimeout        = 5 * time.Minute
+
+	esSuccess exitStatus = 0
+	esError   exitStatus = 1
+	esUsage   exitStatus = 2
 )
 
 // urlDir gets the cache directory to use for a URL.
@@ -133,19 +139,15 @@ type archiveExePathMatch struct {
 }
 
 type config struct {
+	prog                  string
 	urlMatches            []urlMatch
 	archiveExePathMatches []archiveExePathMatch
 	httpTimeout           time.Duration
 	dryRun                bool
-	done                  bool
 }
 
-// parseFlags parses command line flags using the given flag set.
-// It returns the parsed config, or an error if any occurs.
-func parseFlags(set *flag.FlagSet, args []string) (config, error) {
-	cfg := config{}
-	cfg.urlMatches = make([]urlMatch, 0, len(args)/2+3)
-	set.Func("url", "[OS/arch=]URL matcher (at least one required)", func(s string) error {
+func parseFlags(cfg *config, urlArgs []string, exePathArgs []string) error {
+	for _, s := range urlArgs {
 		pattern, ur, found := strings.Cut(s, "=")
 		if found {
 			if strings.Contains(pattern, "://") {
@@ -162,10 +164,10 @@ func parseFlags(set *flag.FlagSet, args []string) (config, error) {
 			return err
 		} else {
 			cfg.urlMatches = append(cfg.urlMatches, urlMatch{pattern, u})
-			return nil
 		}
-	})
-	set.Func("archive-exe-path", "[OS/arch=]path to executable within archive matcher (separator always /, implies archive processing)", func(s string) error {
+	}
+
+	for _, s := range exePathArgs {
 		pattern, pth, found := strings.Cut(s, "=")
 		if found {
 			if pattern == "" {
@@ -179,27 +181,64 @@ func parseFlags(set *flag.FlagSet, args []string) (config, error) {
 			pattern = "*/*"
 		}
 		cfg.archiveExePathMatches = append(cfg.archiveExePathMatches, archiveExePathMatch{pattern, pth})
-		return nil
-	})
-	set.DurationVar(&cfg.httpTimeout, "http-timeout", defaultHTTPTimeout, "HTTP client timeout")
-	set.BoolFunc("version", "Output version and exit", func(_ string) error {
-		if _, err := fmt.Fprintln(set.Output(), versionString); err != nil {
-			return fmt.Errorf("write version: %w", err)
-		}
-		cfg.done = true
-		return nil
-	})
-	set.BoolVar(&cfg.dryRun, "dry-run", false, "Dry run, skip execution (but do download/set up cache)")
-	if err := set.Parse(args); err != nil {
-		return config{}, err
 	}
-	if !cfg.done && len(cfg.urlMatches) == 0 {
-		err := errors.New("flag must occur at least once: -url")
-		_, _ = fmt.Fprintln(set.Output(), err)
-		set.Usage()
-		return config{}, err
+
+	return nil
+}
+
+func Execute() {
+
+	var urlArgs, exePathArgs []string
+	cfg := config{prog: filepath.Base(os.Args[0])}
+	rc := esSuccess
+
+	rootCmd := &cobra.Command{
+		Use:   cfg.prog + " [flags] -- [executable arguments]",
+		Short: cfg.prog + " downloads, caches, and runs executables.",
+		Long: fmt.Sprintf(`%s downloads, caches, and runs executables.
+
+OS and architecture matcher arguments for URLs to download and (if applicable) executables within archives can be used to construct command lines that work across multiple operating systems and architectures.
+
+The OS and architecture wrun was built for are matched against the given matchers.
+OS and architecture parts of the matcher may be globs.
+Order of the matcher arguments is significant: the first match of each is chosen.
+
+As a special case, a matcher argument with no matcher part is treated as if it was given with the matcher */*.
+On Windows, .exe is automatically appended to any archive exe path resulting from a */ prefixed match.
+
+URL fragments, if present, are treated as hashAlgo-hexDigest strings, and downloads are checked against them.
+
+The first non-flag argument or -- terminates %s arguments.
+Remaining ones are passed to the downloaded one.
+
+Environment variables:
+- %s: cache location, defaults to wrun subdir in the user's cache dir
+- %s: override OS/arch for matching
+- %s: output verbosity, false decreases, true increases
+`, cfg.prog, cfg.prog, cacheHomeEnvVar, osArchEnvVar, verboseEnvVar),
+		Args:    cobra.ArbitraryArgs,
+		Version: versionString,
+		PreRunE: func(_ *cobra.Command, _ []string) error {
+			return parseFlags(&cfg, urlArgs, exePathArgs)
+		},
+		Run: func(_ *cobra.Command, args []string) {
+			rc = run(cfg, args)
+		},
 	}
-	return cfg, nil
+
+	fs := rootCmd.Flags()
+	fs.BoolVarP(&cfg.dryRun, "dry-run", "n", false, "dry run, skip execution (but do download/set up cache)")
+	fs.StringSliceVarP(&urlArgs, "url", "u", nil, "[OS/arch=]URL matcher (at least one required)")
+	if err := rootCmd.MarkFlagRequired("url"); err != nil {
+		panic(fmt.Sprintf("BUG: mark flag required: %v", err))
+	}
+	fs.StringSliceVarP(&exePathArgs, "archive-exe-path", "p", nil, "[OS/arch=]path to executable within archive matcher (separator always /, implies archive processing)")
+	fs.DurationVarP(&cfg.httpTimeout, "http-timeout", "t", defaultHTTPTimeout, "HTTP client timeout")
+
+	if rootCmd.Execute() != nil { // assuming error already printed by cobra
+		rc = esUsage
+	}
+	os.Exit(rc)
 }
 
 // selectURL selects a URL for a system from the given matches.
@@ -249,15 +288,7 @@ func resolveCacheDir() (string, error) {
 	return cacheDir, nil
 }
 
-func Execute() {
-	// Basics
-
-	rc := 0
-	defer func() {
-		os.Exit(rc)
-	}()
-	prog := filepath.Base(os.Args[0])
-
+func run(cfg config, args []string) exitStatus {
 	// Set up output
 
 	var verbose *bool
@@ -266,7 +297,7 @@ func Execute() {
 		verbose = &v
 	}
 	_out := func(w io.Writer, level, format string, a ...any) {
-		_, _ = fmt.Fprintf(w, prog+": "+level+": "+format+"\n", a...)
+		_, _ = fmt.Fprintf(w, cfg.prog+": "+level+": "+format+"\n", a...)
 	}
 	infoOut := func(format string, a ...any) {
 		if verbose != nil && *verbose {
@@ -282,46 +313,6 @@ func Execute() {
 		_out(os.Stderr, "ERROR", format, a...)
 	}
 
-	// Process flags
-
-	var (
-		err error
-		cfg config
-	)
-	flagSet := flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
-	if cfg, err = parseFlags(flagSet, os.Args[1:]); err != nil {
-		if errors.Is(err, flag.ErrHelp) {
-			fmt.Printf(`
-%s downloads, caches, and runs executables.
-
-OS and architecture matcher arguments for URLs to download and (if applicable) executables within archives can be used to construct command lines that work across multiple operating systems and architectures.
-
-The OS and architecture wrun was built for are matched against the given matchers.
-OS and architecture parts of the matcher may be globs.
-Order of the matcher arguments is significant: the first match of each is chosen.
-
-As a special case, a matcher argument with no matcher part is treated as if it was given with the matcher */*.
-On Windows, .exe is automatically appended to any archive exe path resulting from a */ prefixed match.
-
-URL fragments, if present, are treated as hashAlgo-hexDigest strings, and downloads are checked against them.
-
-The first non-flag argument or -- terminates %s arguments.
-Remaining ones are passed to the downloaded one.
-
-Environment variables:
-- %s: cache location, defaults to wrun subdir in the user's cache dir
-- %s: override OS/arch for matching
-- %s: output verbosity, false decreases, true increases
-`, prog, prog, cacheHomeEnvVar, osArchEnvVar, verboseEnvVar)
-		} else {
-			// Error already printed
-			rc = 2 // usage
-		}
-		return
-	} else if cfg.done {
-		// All done
-		return
-	}
 	infoOut("%s", versionString)
 
 	// Figure out download URL and exe path in archive
@@ -335,21 +326,18 @@ Environment variables:
 	ur, err := selectURL(osArch, cfg.urlMatches)
 	if err != nil {
 		errorOut("select URL: %v", err)
-		rc = 2 // usage, bad pattern
-		return
+		return esUsage // bad pattern
 	}
 	if ur == nil {
 		errorOut("no URL available for OS/architecture %s", osArch)
-		rc = 1
-		return
+		return esError
 	}
 	infoOut("URL: %s", ur)
 
 	archiveExePath, err := selectArchiveExePath(osArch, cfg.archiveExePathMatches)
 	if err != nil {
 		errorOut("select archive exe path: %v", err)
-		rc = 2 // usage, bad pattern
-		return
+		return esUsage // bad pattern
 	}
 
 	// Set up hashing
@@ -357,8 +345,7 @@ Environment variables:
 	hshType, expectedDigest, err := wrun.ParseHashFragment(ur.Fragment)
 	if err != nil {
 		errorOut("parse hash fragment: %v", err)
-		rc = 1
-		return
+		return esError
 	}
 
 	// Set up cache
@@ -367,8 +354,7 @@ Environment variables:
 	cacheDir, err = resolveCacheDir()
 	if err != nil {
 		errorOut("cache setup: %v", err)
-		rc = 1
-		return
+		return esError
 	}
 	// Here's hoping we don't hit path too long errors with this implementation anywhere
 	ps := make([]string, 0, strings.Count(archiveExePath, "/")+3)
@@ -380,17 +366,16 @@ Environment variables:
 	err = os.MkdirAll(filepath.Dir(exePath), 0o777)
 	if err != nil {
 		errorOut("cache setup: %v", err)
-		rc = 1
-		return
+		return esError
 	}
 	infoOut("path to executable: %s", exePath)
 
 	// exec from cache
 
 	exec := func(exe string) error {
-		args := make([]string, len(flagSet.Args())+1)
+		args := make([]string, len(args)+1)
 		args[0] = exe
-		copy(args[1:], flagSet.Args())
+		copy(args[1:], args)
 		if cfg.dryRun {
 			infoOut("exec (...not, stat due to dry-run): %v", args)
 			if fi, statErr := os.Stat(exe); statErr != nil {
@@ -411,7 +396,7 @@ Environment variables:
 			warnOut("exec cached: %v", err)
 		}
 	} else if cfg.dryRun {
-		return
+		return esSuccess
 	} else {
 		panic("BUG: unreachable; successful non-dry-run cache exec")
 	}
@@ -422,8 +407,7 @@ Environment variables:
 	tmpf, err := os.CreateTemp(filepath.Dir(dlPath), "tmp*-"+filepath.Base(dlPath))
 	if err != nil {
 		errorOut("set up tempfile: %v", err)
-		rc = 1
-		return
+		return esError
 	}
 	cleanUpTempFile := func() {
 		if closeErr := tmpf.Close(); closeErr != nil && !errors.Is(closeErr, os.ErrClosed) {
@@ -443,17 +427,15 @@ Environment variables:
 	req, err := http.NewRequest(http.MethodGet, ur.String(), nil)
 	if err != nil {
 		errorOut("prepare request: %v", err)
-		rc = 1
-		return
+		return esError
 	}
-	req.Header.Set("User-Agent", prog+"/"+version)
+	req.Header.Set("User-Agent", cfg.prog+"/"+version)
 	// TODO if no checksum, do conditional get: If-None-Match, If-Modified-Since?
 
 	resp, err := hc.Do(req)
 	if err != nil {
 		errorOut("get %s: %v", ur.String(), err)
-		rc = 1
-		return
+		return esError
 	}
 
 	var (
@@ -478,13 +460,11 @@ Environment variables:
 	}
 	if err != nil {
 		errorOut("download: %v", err)
-		rc = 1
-		return
+		return esError
 	}
 	if err = tmpf.Close(); err != nil {
 		errorOut("close tempfile: %v", err)
-		rc = 1
-		return
+		return esError
 	}
 	infoOut("downloaded %d bytes", n)
 
@@ -496,8 +476,7 @@ Environment variables:
 			infoOut("%s digest match: %s", hshType, hex.EncodeToString(expectedDigest))
 		} else {
 			errorOut("%s digest mismatch: got %s, expected %s", hex.EncodeToString(gotDigest), hex.EncodeToString(expectedDigest))
-			rc = 1
-			return
+			return esError
 		}
 	}
 
@@ -506,8 +485,7 @@ Environment variables:
 	if archiveExePath == "" {
 		if err = os.Rename(tmpf.Name(), exePath); err != nil {
 			errorOut("rename tempfile: %v", err)
-			rc = 1
-			return
+			return esError
 		}
 	} else {
 		var archiveName string
@@ -527,14 +505,12 @@ Environment variables:
 		}
 		if err != nil {
 			errorOut("unarchive: %v", err)
-			rc = 1
-			return
+			return esError
 		}
 	}
 	if err = wrun.MakeExecutable(exePath); err != nil {
 		errorOut("make executable: %v", err)
-		rc = 1
-		return
+		return esError
 	}
 
 	// Write metadata
@@ -551,8 +527,10 @@ Environment variables:
 	cleanUpTempFile() // Note: deferred cleanup does not happen if we exec successfully
 	if err = exec(exePath); err != nil {
 		errorOut("exec: %v", err)
-		rc = 1
+		return esError
 	} else if !cfg.dryRun {
 		panic("BUG: unreachable; successful non-dry-run exec")
 	}
+
+	return esSuccess
 }
