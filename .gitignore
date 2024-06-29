@@ -1,5 +1,6 @@
 /.mise.*.local.toml
 /.mise.local.toml
+/__debug_bin*
 /build/
 /dist/
 /src/*.egg-info/
