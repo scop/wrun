@@ -24,20 +24,31 @@ import (
 )
 
 var hashesByName = map[string]crypto.Hash{
-	HashName(crypto.MD4):       crypto.MD4,
-	HashName(crypto.MD5):       crypto.MD5,
-	HashName(crypto.SHA1):      crypto.SHA1,
-	HashName(crypto.SHA224):    crypto.SHA224,
-	HashName(crypto.SHA256):    crypto.SHA256,
-	HashName(crypto.SHA384):    crypto.SHA384,
-	HashName(crypto.SHA512):    crypto.SHA512,
-	HashName(crypto.RIPEMD160): crypto.RIPEMD160,
+	HashName(crypto.MD4):         crypto.MD4,
+	HashName(crypto.MD5):         crypto.MD5,
+	HashName(crypto.SHA1):        crypto.SHA1,
+	HashName(crypto.SHA224):      crypto.SHA224,
+	HashName(crypto.SHA256):      crypto.SHA256,
+	HashName(crypto.SHA384):      crypto.SHA384,
+	HashName(crypto.SHA512):      crypto.SHA512,
+	HashName(crypto.RIPEMD160):   crypto.RIPEMD160,
+	HashName(crypto.SHA3_224):    crypto.SHA3_224,
+	HashName(crypto.SHA3_256):    crypto.SHA3_256,
+	HashName(crypto.SHA3_384):    crypto.SHA3_384,
+	HashName(crypto.SHA3_512):    crypto.SHA3_512,
+	HashName(crypto.SHA512_224):  crypto.SHA512_224,
+	HashName(crypto.SHA512_256):  crypto.SHA512_256,
+	HashName(crypto.BLAKE2s_256): crypto.BLAKE2s_256,
+	HashName(crypto.BLAKE2b_256): crypto.BLAKE2b_256,
+	HashName(crypto.BLAKE2b_384): crypto.BLAKE2b_384,
+	HashName(crypto.BLAKE2b_512): crypto.BLAKE2b_512,
 }
 
 func HashName(h crypto.Hash) string {
 	hn := h.String()
 	hn = strings.ToLower(hn)
 	hn = strings.ReplaceAll(hn, "-", "")
+	hn = strings.ReplaceAll(hn, "/", "")
 	return hn
 }
 
