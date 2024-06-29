@@ -19,7 +19,7 @@ On Windows, .exe is automatically appended to any archive exe path resulting fro
 URL fragments, if present, are treated as hashAlgo-hexDigest strings, and downloads are checked against them.
 
 The first non-flag argument or -- terminates wrun arguments.
-Remaining ones are passed to the downloaded one.
+Remaining ones are passed to the downloaded executable.
 
 Environment variables:
 - WRUN_CACHE_HOME: cache location, defaults to wrun subdir in the user's cache dir

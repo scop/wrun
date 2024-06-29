@@ -209,7 +209,7 @@ On Windows, .exe is automatically appended to any archive exe path resulting fro
 URL fragments, if present, are treated as hashAlgo-hexDigest strings, and downloads are checked against them.
 
 The first non-flag argument or -- terminates %s arguments.
-Remaining ones are passed to the downloaded one.
+Remaining ones are passed to the downloaded executable.
 
 Environment variables:
 - %s: cache location, defaults to wrun subdir in the user's cache dir
@@ -310,7 +310,7 @@ func run(cfg config, args []string) exitStatus {
 		}
 	}
 	errorOut := func(format string, a ...any) {
-		_out(os.Stderr, "ERROR", format, a...)
+		_out(os.Stderr, " ERR", format, a...)
 	}
 
 	infoOut("%s", versionString)
@@ -377,7 +377,7 @@ func run(cfg config, args []string) exitStatus {
 		args[0] = exe
 		copy(args[1:], args)
 		if cfg.dryRun {
-			infoOut("exec (...not, stat due to dry-run): %v", args)
+			infoOut("exec (...not, but stat due to dry-run): %v", args)
 			if fi, statErr := os.Stat(exe); statErr != nil {
 				return statErr
 			} else if !fi.Mode().IsRegular() {
@@ -385,7 +385,7 @@ func run(cfg config, args []string) exitStatus {
 			}
 			return nil
 		}
-		infoOut("exec: %v", args)
+		infoOut("exec cached: %v", args)
 		return syscall.Exec(exe, args, os.Environ())
 	}
 
@@ -456,7 +456,7 @@ func run(cfg config, args []string) exitStatus {
 
 	n, err := io.Copy(w, resp.Body)
 	if closeErr := resp.Body.Close(); closeErr != nil {
-		warnOut("close http response: %v", closeErr)
+		warnOut("close HTTP response: %v", closeErr)
 	}
 	if err != nil {
 		errorOut("download: %v", err)
