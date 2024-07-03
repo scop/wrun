@@ -24,7 +24,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	wrun "github.com/scop/wrun/internal"
+	"github.com/scop/wrun/internal/hashes"
 )
 
 func mustParseURL(t *testing.T, s string) *url.URL {
@@ -44,7 +44,7 @@ func Test_parseFlags(t *testing.T) {
 		urld,
 	}
 	exePathArgs := []string{}
-	want := &config{
+	want := &rootCmdConfig{
 		urlMatches: []urlMatch{
 			{
 				pattern: "os1/arch1",
@@ -61,7 +61,7 @@ func Test_parseFlags(t *testing.T) {
 		},
 		archiveExePathMatches: nil,
 	}
-	cfg := &config{}
+	cfg := &rootCmdConfig{}
 	err := parseFlags(cfg, urlArgs, exePathArgs)
 	require.NoError(t, err)
 	assert.Equal(t, want, cfg)
@@ -250,7 +250,7 @@ func Test_urlDir(t *testing.T) {
 		t.Run(tt.url, func(t *testing.T) {
 			u, err := url.Parse(tt.url)
 			require.NoError(t, err)
-			h, digest, err := wrun.ParseHashFragment(u.Fragment)
+			h, digest, err := hashes.ParseHashFragment(u.Fragment)
 			require.NoError(t, err)
 			assert.Equal(t, tt.want, urlDir(u, h, digest))
 		})
@@ -286,7 +286,7 @@ func Test_prepareHash(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.fragment, func(t *testing.T) {
-			hash, _, err := wrun.ParseHashFragment(tt.fragment)
+			hash, _, err := hashes.ParseHashFragment(tt.fragment)
 			if tt.wantInErr == "" {
 				require.NoError(t, err)
 				assert.Equal(t, tt.wantHash, hash)
