@@ -44,7 +44,7 @@ func Test_parseFlags(t *testing.T) {
 		urld,
 	}
 	exePathArgs := []string{}
-	want := &config{
+	want := &rootCmdConfig{
 		urlMatches: []urlMatch{
 			{
 				pattern: "os1/arch1",
@@ -61,7 +61,7 @@ func Test_parseFlags(t *testing.T) {
 		},
 		archiveExePathMatches: nil,
 	}
-	cfg := &config{}
+	cfg := &rootCmdConfig{}
 	err := parseFlags(cfg, urlArgs, exePathArgs)
 	require.NoError(t, err)
 	assert.Equal(t, want, cfg)

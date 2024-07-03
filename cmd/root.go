@@ -17,14 +17,12 @@
 package cmd
 
 import (
-	"bytes"
 	"crypto"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"hash"
-	"io"
 	"net/http"
 	"net/url"
 	"os"
@@ -138,15 +136,13 @@ type archiveExePathMatch struct {
 	exePath string
 }
 
-type config struct {
-	prog                  string
+type rootCmdConfig struct {
 	urlMatches            []urlMatch
 	archiveExePathMatches []archiveExePathMatch
-	httpTimeout           time.Duration
 	dryRun                bool
 }
 
-func parseFlags(cfg *config, urlArgs []string, exePathArgs []string) error {
+func parseFlags(cfg *rootCmdConfig, urlArgs []string, exePathArgs []string) error {
 	for _, s := range urlArgs {
 		pattern, ur, found := strings.Cut(s, "=")
 		if found {
@@ -189,12 +185,14 @@ func parseFlags(cfg *config, urlArgs []string, exePathArgs []string) error {
 func Execute() {
 
 	var urlArgs, exePathArgs []string
-	cfg := config{prog: filepath.Base(os.Args[0])}
+	var httpTimeout time.Duration
+	w := NewWrun(filepath.Base(os.Args[0]))
+	cfg := &rootCmdConfig{}
 	rc := esSuccess
 
 	rootCmd := &cobra.Command{
-		Use:   cfg.prog + " [flags] -- [executable arguments]",
-		Short: cfg.prog + " downloads, caches, and runs executables.",
+		Use:   w.ProgName + " [flags] -- [executable arguments]",
+		Short: w.ProgName + " downloads, caches, and runs executables.",
 		Long: fmt.Sprintf(`%s downloads, caches, and runs executables.
 
 OS and architecture matcher arguments for URLs to download and (if applicable) executables within archives can be used to construct command lines that work across multiple operating systems and architectures.
@@ -215,14 +213,19 @@ Environment variables:
 - %s: cache location, defaults to wrun subdir in the user's cache dir
 - %s: override OS/arch for matching
 - %s: output verbosity, false decreases, true increases
-`, cfg.prog, cfg.prog, cacheHomeEnvVar, osArchEnvVar, verboseEnvVar),
+`, w.ProgName, w.ProgName, cacheHomeEnvVar, osArchEnvVar, verboseEnvVar),
 		Args:    cobra.ArbitraryArgs,
 		Version: versionString,
+		PersistentPreRun: func(_ *cobra.Command, args []string) {
+			w.httpClient = &http.Client{
+				Timeout: httpTimeout,
+			}
+		},
 		PreRunE: func(_ *cobra.Command, _ []string) error {
-			return parseFlags(&cfg, urlArgs, exePathArgs)
+			return parseFlags(cfg, urlArgs, exePathArgs)
 		},
 		Run: func(_ *cobra.Command, args []string) {
-			rc = run(cfg, args)
+			rc = runRoot(w, cfg, args)
 		},
 	}
 
@@ -230,10 +233,13 @@ Environment variables:
 	fs.BoolVarP(&cfg.dryRun, "dry-run", "n", false, "dry run, skip execution (but do download/set up cache)")
 	fs.StringSliceVarP(&urlArgs, "url", "u", nil, "[OS/arch=]URL matcher (at least one required)")
 	if err := rootCmd.MarkFlagRequired("url"); err != nil {
-		outputFn(cfg, levelBug)("mark flag required: %v", err)
+		w.LogBug("mark flag required: %v", err)
 	}
 	fs.StringSliceVarP(&exePathArgs, "archive-exe-path", "p", nil, "[OS/arch=]path to executable within archive matcher (separator always /, implies archive processing)")
-	fs.DurationVarP(&cfg.httpTimeout, "http-timeout", "t", defaultHTTPTimeout, "HTTP client timeout")
+	pfs := rootCmd.PersistentFlags()
+	pfs.DurationVarP(&httpTimeout, "http-timeout", "t", defaultHTTPTimeout, "HTTP client timeout")
+
+	rootCmd.AddCommand(generateCommand(w))
 
 	if rootCmd.Execute() != nil { // assuming error already printed by cobra
 		rc = esUsage
@@ -288,15 +294,8 @@ func resolveCacheDir() (string, error) {
 	return cacheDir, nil
 }
 
-func run(cfg config, args []string) exitStatus {
-	// Set up output
-
-	infoOut := outputFn(cfg, levelInfo)
-	warnOut := outputFn(cfg, levelWarn)
-	errorOut := outputFn(cfg, levelError)
-	bugOut := outputFn(cfg, levelBug)
-
-	infoOut("%s", versionString)
+func runRoot(w *Wrun, cfg *rootCmdConfig, args []string) exitStatus {
+	w.LogInfo("%s", versionString)
 
 	// Figure out download URL and exe path in archive
 
@@ -304,22 +303,22 @@ func run(cfg config, args []string) exitStatus {
 	if osArch == "" {
 		osArch = runtime.GOOS + "/" + runtime.GOARCH
 	}
-	infoOut("OS/arch: %s", osArch)
+	w.LogInfo("OS/arch: %s", osArch)
 
 	ur, err := selectURL(osArch, cfg.urlMatches)
 	if err != nil {
-		errorOut("select URL: %v", err)
+		w.LogError("select URL: %v", err)
 		return esUsage // bad pattern
 	}
 	if ur == nil {
-		errorOut("no URL available for OS/architecture %s", osArch)
+		w.LogError("no URL available for OS/architecture %s", osArch)
 		return esError
 	}
-	infoOut("URL: %s", ur)
+	w.LogInfo("URL: %s", ur)
 
 	archiveExePath, err := selectArchiveExePath(osArch, cfg.archiveExePathMatches)
 	if err != nil {
-		errorOut("select archive exe path: %v", err)
+		w.LogError("select archive exe path: %v", err)
 		return esUsage // bad pattern
 	}
 
@@ -327,7 +326,7 @@ func run(cfg config, args []string) exitStatus {
 
 	hshType, expectedDigest, err := wrun.ParseHashFragment(ur.Fragment)
 	if err != nil {
-		errorOut("parse hash fragment: %v", err)
+		w.LogError("parse hash fragment: %v", err)
 		return esError
 	}
 
@@ -336,7 +335,7 @@ func run(cfg config, args []string) exitStatus {
 	var cacheDir string
 	cacheDir, err = resolveCacheDir()
 	if err != nil {
-		errorOut("cache setup: %v", err)
+		w.LogError("cache setup: %v", err)
 		return esError
 	}
 	// Here's hoping we don't hit path too long errors with this implementation anywhere
@@ -348,10 +347,10 @@ func run(cfg config, args []string) exitStatus {
 	exePath := filepath.Join(ps...)
 	err = os.MkdirAll(filepath.Dir(exePath), 0o777)
 	if err != nil {
-		errorOut("cache setup: %v", err)
+		w.LogError("cache setup: %v", err)
 		return esError
 	}
-	infoOut("path to executable: %s", exePath)
+	w.LogInfo("path to executable: %s", exePath)
 
 	// exec from cache
 
@@ -360,7 +359,7 @@ func run(cfg config, args []string) exitStatus {
 		args[0] = exe
 		copy(args[1:], args)
 		if cfg.dryRun {
-			infoOut("exec (...not, but stat due to dry-run): %v", args)
+			w.LogInfo("exec (...not, but stat due to dry-run): %v", args)
 			if fi, statErr := os.Stat(exe); statErr != nil {
 				return statErr
 			} else if !fi.Mode().IsRegular() {
@@ -368,20 +367,20 @@ func run(cfg config, args []string) exitStatus {
 			}
 			return nil
 		}
-		infoOut("exec cached: %v", args)
+		w.LogInfo("exec cached: %v", args)
 		return syscall.Exec(exe, args, os.Environ())
 	}
 
 	if err = exec(exePath); err != nil {
 		if errors.Is(err, os.ErrNotExist) {
-			infoOut("exec cached: %v", err)
+			w.LogInfo("exec cached: %v", err)
 		} else {
-			warnOut("exec cached: %v", err)
+			w.LogWarn("exec cached: %v", err)
 		}
 	} else if cfg.dryRun {
 		return esSuccess
 	} else {
-		bugOut("unreachable; successful non-dry-run cache exec")
+		w.LogBug("unreachable; successful non-dry-run cache exec")
 	}
 
 	// Set up tempfile for download
@@ -389,47 +388,25 @@ func run(cfg config, args []string) exitStatus {
 	// Use temp filename _prefix_, archiver recognizes by filename extension
 	tmpf, err := os.CreateTemp(filepath.Dir(dlPath), "tmp*-"+filepath.Base(dlPath))
 	if err != nil {
-		errorOut("set up tempfile: %v", err)
+		w.LogError("set up tempfile: %v", err)
 		return esError
 	}
 	cleanUpTempFile := func() {
 		if closeErr := tmpf.Close(); closeErr != nil && !errors.Is(closeErr, os.ErrClosed) {
-			warnOut("close tempfile: %v", closeErr)
+			w.LogWarn("close tempfile: %v", closeErr)
 		}
 		if rmErr := os.Remove(tmpf.Name()); rmErr != nil && !errors.Is(rmErr, os.ErrNotExist) {
-			warnOut("remove tempfile: %v", rmErr)
+			w.LogWarn("remove tempfile: %v", rmErr)
 		}
 	}
-	defer cleanUpTempFile() // Note: does not happen if we exec successfully
+	defer cleanUpTempFile() // Note: defer does not happen if we exec successfully
 
-	// Download
+	// Download and check digest
 
-	hc := http.Client{
-		Timeout: cfg.httpTimeout,
-	}
-	req, err := http.NewRequest(http.MethodGet, ur.String(), nil)
+	resp, err := w.HTTPGet(ur.String())
 	if err != nil {
-		errorOut("prepare request: %v", err)
+		w.LogError("download: %v", err)
 		return esError
-	}
-	req.Header.Set("User-Agent", cfg.prog+"/"+version)
-	// TODO if no checksum, do conditional get: If-None-Match, If-Modified-Since?
-
-	resp, err := hc.Do(req)
-	if err != nil {
-		errorOut("get %s: %v", ur.String(), err)
-		return esError
-	}
-
-	var (
-		hsh hash.Hash
-		w   io.Writer
-	)
-	if hshType == 0 {
-		w = tmpf
-	} else {
-		hsh = hshType.New()
-		w = io.MultiWriter(hsh, tmpf)
 	}
 
 	meta := make(map[string]string)
@@ -437,37 +414,20 @@ func run(cfg config, args []string) exitStatus {
 		meta[key] = resp.Header.Get(key)
 	}
 
-	n, err := io.Copy(w, resp.Body)
-	if closeErr := resp.Body.Close(); closeErr != nil {
-		warnOut("close HTTP response: %v", closeErr)
+	var hsh hash.Hash
+	if hshType != 0 {
+		hsh = hshType.New()
 	}
-	if err != nil {
-		errorOut("download: %v", err)
+	if err = w.Download(resp, tmpf, hshType, hsh, expectedDigest); err != nil {
+		w.LogError("download: %v", err)
 		return esError
-	}
-	if err = tmpf.Close(); err != nil {
-		errorOut("close tempfile: %v", err)
-		return esError
-	}
-	infoOut("downloaded %d bytes", n)
-
-	// Check digest
-
-	if hsh != nil {
-		gotDigest := hsh.Sum(nil)
-		if bytes.Equal(gotDigest, expectedDigest) {
-			infoOut("%s digest match: %s", hshType, hex.EncodeToString(expectedDigest))
-		} else {
-			errorOut("%s digest mismatch: got %s, expected %s", hex.EncodeToString(gotDigest), hex.EncodeToString(expectedDigest))
-			return esError
-		}
 	}
 
 	// Move to final location, make executable
 
 	if archiveExePath == "" {
 		if err = os.Rename(tmpf.Name(), exePath); err != nil {
-			errorOut("rename tempfile: %v", err)
+			w.LogError("rename tempfile: %v", err)
 			return esError
 		}
 	} else {
@@ -475,7 +435,7 @@ func run(cfg config, args []string) exitStatus {
 		if strings.HasSuffix(tmpf.Name(), ".whl") { // Need to rename to .zip for archiver
 			archiveName = strings.TrimSuffix(tmpf.Name(), ".whl") + ".zip"
 			if err = os.Symlink(filepath.Base(tmpf.Name()), archiveName); err != nil { // Failure if new name exists is desirable
-				errorOut("symlink tempfile: %v", err)
+				w.LogError("symlink tempfile: %v", err)
 			}
 		} else {
 			archiveName = tmpf.Name()
@@ -483,16 +443,16 @@ func run(cfg config, args []string) exitStatus {
 		err = archiver.Unarchive(archiveName, dlPath)
 		if archiveName != tmpf.Name() {
 			if rmErr := os.Remove(archiveName); rmErr != nil {
-				warnOut("remove tempfile symlink: %v", rmErr)
+				w.LogWarn("remove tempfile symlink: %v", rmErr)
 			}
 		}
 		if err != nil {
-			errorOut("unarchive: %v", err)
+			w.LogError("unarchive: %v", err)
 			return esError
 		}
 	}
 	if err = wrun.MakeExecutable(exePath); err != nil {
-		errorOut("make executable: %v", err)
+		w.LogError("make executable: %v", err)
 		return esError
 	}
 
@@ -500,19 +460,19 @@ func run(cfg config, args []string) exitStatus {
 
 	data, err := json.Marshal(meta)
 	if err != nil {
-		warnOut("encode metadata: %v", err)
+		w.LogWarn("encode metadata: %v", err)
 	} else if err = os.WriteFile(dlPath+"-metadata.json", data, 0o666); err != nil {
-		warnOut("write metadata: %v", err)
+		w.LogWarn("write metadata: %v", err)
 	}
 
 	// Execute
 
 	cleanUpTempFile() // Note: deferred cleanup does not happen if we exec successfully
 	if err = exec(exePath); err != nil {
-		errorOut("exec: %v", err)
+		w.LogError("exec: %v", err)
 		return esError
 	} else if !cfg.dryRun {
-		bugOut("unreachable; successful non-dry-run exec")
+		w.LogBug("unreachable; successful non-dry-run exec")
 	}
 
 	return esSuccess
