@@ -20,6 +20,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func generateCommittedCommand(w *Wrun) *cobra.Command {
-	return generatePyPIProjectCommand(w, "committed", "committed")
+func generateHadolintCommand(w *Wrun) *cobra.Command {
+	return generateGitHubProjectCommand(w, "hadolint", "hadolint", "hadolint")
 }

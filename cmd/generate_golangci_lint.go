@@ -20,6 +20,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func generateCommittedCommand(w *Wrun) *cobra.Command {
-	return generatePyPIProjectCommand(w, "committed", "committed")
+func generateGolangciLintCommand(w *Wrun) *cobra.Command {
+	return generateGitHubProjectCommand(w, "golangci", "golangci-lint", "golangci-lint")
 }

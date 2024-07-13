@@ -42,11 +42,17 @@ func generateCommand(w *Wrun) *cobra.Command {
 		Short: "generate wrun command line arguments for various tools",
 		Args:  cobra.NoArgs,
 	}
-	// TODO expose generic GH, PyPI generator commands
 	genCmd.AddCommand(
+		generateArbitraryGitHubProjectCommand(w),
+		generateArbitraryPyPIProjectCommand(w),
 		generateBlackCommand(w),
 		generateCommittedCommand(w),
+		generateGolangciLintCommand(w),
+		generateHadolintCommand(w),
 		generateRuffCommand(w),
+		generateShfmtCommand(w),
+		generateTflintCommand(w),
+		generateTrivyommand(w),
 		generateTyposCommand(w),
 		generateVacuumCommand(w),
 	)
@@ -152,13 +158,13 @@ func releaseFromGitHubAPI(w *Wrun, owner, project, version string) (github.Relea
 	return rel, nil
 }
 
-func generatePyPIProjectCommand(w *Wrun, projectName string) *cobra.Command {
+func generatePyPIProjectCommand(w *Wrun, project, tool string) *cobra.Command {
 	genCmd := &cobra.Command{
-		Use:   projectName + " [VERSION]",
-		Short: "generate wrun command line arguments for " + projectName,
-		Args:  cobra.NoArgs,
+		Use:   tool + " [VERSION]",
+		Short: "generate wrun command line arguments for " + tool,
+		Args:  cobra.MaximumNArgs(1),
 		Run: func(_ *cobra.Command, args []string) {
-			if err := runGeneratePyPIProject(w, projectName, args); err != nil {
+			if err := runGeneratePyPIProject(w, project, tool, args); err != nil {
 				w.LogError("%s", err)
 				os.Exit(1)
 			}
@@ -168,23 +174,23 @@ func generatePyPIProjectCommand(w *Wrun, projectName string) *cobra.Command {
 	return genCmd
 }
 
-func runGeneratePyPIProject(w *Wrun, projectName string, args []string) error {
+func runGeneratePyPIProject(w *Wrun, project, tool string, args []string) error {
 	var version string
 	if len(args) != 0 {
 		version = args[0]
 	} else {
-		vs, err := versionsFromRSS2(w, fmt.Sprintf("https://pypi.org/rss/project/%s/releases.xml", url.PathEscape(projectName)))
+		vs, err := versionsFromRSS2(w, fmt.Sprintf("https://pypi.org/rss/project/%s/releases.xml", url.PathEscape(project)))
 		if err != nil {
-			return fmt.Errorf("get %s versions: %s", projectName, err)
+			return fmt.Errorf("get %s versions: %s", project, err)
 		}
 		version = vs[0]
 	}
 	version = strings.TrimPrefix(version, "v")
 
-	url := fmt.Sprintf("https://pypi.org/pypi/%s/%s/json", url.PathEscape(projectName), url.PathEscape(version))
+	url := fmt.Sprintf("https://pypi.org/pypi/%s/%s/json", url.PathEscape(project), url.PathEscape(version))
 	resp, err := w.HTTPGet(url)
 	if err != nil {
-		return fmt.Errorf("get %s release info: %w", projectName, err)
+		return fmt.Errorf("get %s release info: %w", project, err)
 	}
 
 	var rel pypi.Release
@@ -193,7 +199,7 @@ func runGeneratePyPIProject(w *Wrun, projectName string, args []string) error {
 		w.LogWarn("close %s body: %v", url, cErr)
 	}
 	if err != nil {
-		return fmt.Errorf("decode %s release info: %w", projectName, err)
+		return fmt.Errorf("decode %s release info: %w", project, err)
 	}
 
 	osArchURLs, urlMisses := rel.PreferredOsArchReleaseURLs()
@@ -208,6 +214,8 @@ func runGeneratePyPIProject(w *Wrun, projectName string, args []string) error {
 		osArchs = append(osArchs, osArch)
 	}
 	slices.Sort(osArchs)
+
+	// TODO generate exe paths by locating the tool arg within archives
 
 	hshType := crypto.SHA256
 	hsh := hshType.New()
@@ -240,7 +248,7 @@ func runGeneratePyPIProject(w *Wrun, projectName string, args []string) error {
 		if strings.HasPrefix(osArch, "windows/") {
 			ext = ".exe"
 		}
-		exePaths = append(exePaths, fmt.Sprintf("--archive-exe-path %s=%s-%s.data/scripts/%s%s", osArch, projectName, version, projectName, ext))
+		exePaths = append(exePaths, fmt.Sprintf("--archive-exe-path %s=%s-%s.data/scripts/%s%s", osArch, project, version, project, ext))
 	}
 	for _, ep := range exePaths {
 		fmt.Println(ep)
@@ -249,13 +257,13 @@ func runGeneratePyPIProject(w *Wrun, projectName string, args []string) error {
 	return nil
 }
 
-func generateGitHubProjectCommand(w *Wrun, owner, project string) *cobra.Command {
+func generateGitHubProjectCommand(w *Wrun, owner, project, tool string) *cobra.Command {
 	genCmd := &cobra.Command{
-		Use:   project + " [VERSION]",
-		Short: "generate wrun command line arguments for " + project,
-		Args:  cobra.NoArgs,
+		Use:   tool + " [VERSION]",
+		Short: "generate wrun command line arguments for " + tool,
+		Args:  cobra.MaximumNArgs(1),
 		Run: func(_ *cobra.Command, args []string) {
-			if err := runGenerateGitHubProject(w, owner, project, args); err != nil {
+			if err := runGenerateGitHubProject(w, owner, project, tool, args); err != nil {
 				w.LogError("%s", err)
 				os.Exit(1)
 			}
@@ -265,7 +273,7 @@ func generateGitHubProjectCommand(w *Wrun, owner, project string) *cobra.Command
 	return genCmd
 }
 
-func runGenerateGitHubProject(w *Wrun, owner, project string, args []string) error {
+func runGenerateGitHubProject(w *Wrun, owner, project, tool string, args []string) error {
 	var rel github.Release
 	var err error
 	if len(args) != 0 {
@@ -279,6 +287,7 @@ func runGenerateGitHubProject(w *Wrun, owner, project string, args []string) err
 		if err != nil {
 			return fmt.Errorf("get %s/%s releases: %w", owner, project, err)
 		}
+		// TODO: loop through releases until we find one having some os/arch mapped assets. E.g. hadolint used to have latest release with none
 		rel = rels[0]
 	}
 
@@ -307,6 +316,8 @@ func runGenerateGitHubProject(w *Wrun, owner, project string, args []string) err
 		osArchs = append(osArchs, osArch)
 	}
 	slices.Sort(osArchs)
+
+	// TODO generate exe paths by locating the tool arg within archives
 
 	hshType := crypto.SHA256
 	hsh := hshType.New()

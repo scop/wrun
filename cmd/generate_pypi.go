@@ -1,4 +1,4 @@
-// Copyright 2023 Ville Skyttä
+// Copyright 2024 Ville Skyttä
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,9 +17,23 @@
 package cmd
 
 import (
+	"os"
+
 	"github.com/spf13/cobra"
 )
 
-func generateCommittedCommand(w *Wrun) *cobra.Command {
-	return generatePyPIProjectCommand(w, "committed", "committed")
+func generateArbitraryPyPIProjectCommand(w *Wrun) *cobra.Command {
+	genCmd := &cobra.Command{
+		Use:   "pypi PROJECT TOOL [VERSION]",
+		Short: "generate wrun command line arguments for a PyPI project",
+		Args:  cobra.RangeArgs(2, 3),
+		Run: func(_ *cobra.Command, args []string) {
+			if err := runGeneratePyPIProject(w, args[0], args[1], args[2:]); err != nil {
+				w.LogError("%s", err)
+				os.Exit(1)
+			}
+		},
+	}
+
+	return genCmd
 }

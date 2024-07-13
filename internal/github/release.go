@@ -2,6 +2,7 @@ package github
 
 import (
 	"regexp"
+	"strings"
 )
 
 type Release struct {
@@ -26,7 +27,7 @@ type ReleaseAsset struct {
 }
 
 // osPart is mostly generated with `generate_os_arch_regexps.py`
-const osPart = `[-_](aix|android|darwin|dragonfly|freebsd|illumos|ios|js|linux|netbsd|openbsd|plan9|solaris|wasip1|windows)`
+const osPart = `[-_](aix|android|darwin|dragonfly|freebsd|illumos|ios|js|linux|macos|netbsd|openbsd|plan9|solaris|wasip1|windows)`
 const extPart = `(?:\.(?:exe|tar\.[gx]z|zip))?$`
 
 var osArchArchiveREs = []*regexp.Regexp{
@@ -34,12 +35,12 @@ var osArchArchiveREs = []*regexp.Regexp{
 		// this list of archs is generated with `generate_os_arch_regexps.py`
 		osPart + `[_-](386|amd64|arm|arm64|loong64|mips|mips64|mips64le|mipsle|ppc64|ppc64le|riscv64|s390x|wasm)` + extPart),
 	regexp.MustCompile(
-		osPart + `[_-](aarch64|armv7|i386|x86_64)` + extPart),
+		osPart + `[_-](32bit|64bit|aarch64|armv7|i386|x86_64)` + extPart),
 	regexp.MustCompile(
 		osPart + `[_-](armv6|armv6hf)` + extPart),
 }
 
-var checksumsRE = regexp.MustCompile(`(?i)/(?:(?:(?:check|sha256)sums)\.txt|[^/]+\.sha256)$`)
+var checksumsRE = regexp.MustCompile(`(?i)/[^/]*(?:(?:(?:check|sha256)sums)\.txt|[^/]\.sha256)$`)
 
 func (r Release) PreferredOsArchReleaseAssets() (hits map[string]ReleaseAsset, misses []ReleaseAsset, checksums []ReleaseAsset) {
 	hits = make(map[string]ReleaseAsset, len(r.Assets))
@@ -51,19 +52,24 @@ func (r Release) PreferredOsArchReleaseAssets() (hits map[string]ReleaseAsset, m
 	for _, re := range osArchArchiveREs {
 		misses = make([]ReleaseAsset, 0, len(work))
 		for _, asset := range work {
-			if m := re.FindStringSubmatch(asset.BrowserDownloadURL); m != nil {
+			if m := re.FindStringSubmatch(strings.ToLower(asset.BrowserDownloadURL)); m != nil {
+				os := m[1]
+				switch os {
+				case "macos":
+					os = "darwin"
+				}
 				arch := m[2]
 				switch arch {
+				case "32bit", "i386":
+					arch = "386"
+				case "64bit", "x86_64":
+					arch = "amd64"
 				case "aarch64":
 					arch = "arm64"
 				case "armv6", "armv6hf", "armv7":
 					arch = "arm"
-				case "i386":
-					arch = "386"
-				case "x86_64":
-					arch = "amd64"
 				}
-				osArch := m[1] + "/" + arch
+				osArch := os + "/" + arch
 				if _, found := hits[osArch]; !found {
 					hits[osArch] = asset
 				}

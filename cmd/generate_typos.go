@@ -21,5 +21,5 @@ import (
 )
 
 func generateTyposCommand(w *Wrun) *cobra.Command {
-	return generatePyPIProjectCommand(w, "typos")
+	return generatePyPIProjectCommand(w, "typos", "typos")
 }

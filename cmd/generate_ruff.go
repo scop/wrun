@@ -21,5 +21,5 @@ import (
 )
 
 func generateRuffCommand(w *Wrun) *cobra.Command {
-	return generatePyPIProjectCommand(w, "ruff")
+	return generatePyPIProjectCommand(w, "ruff", "ruff")
 }
