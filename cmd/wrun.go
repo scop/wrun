@@ -18,8 +18,6 @@ package cmd
 
 import (
 	"bytes"
-	"crypto"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"hash"
@@ -27,6 +25,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 )
 
 type Wrun struct {
@@ -83,12 +82,24 @@ func (w *Wrun) LogBug(format string, args ...any) {
 	panic(w.logFormat(levelBug, format, args...))
 }
 
-func (w *Wrun) HTTPGet(url string) (*http.Response, error) {
-	req, err := http.NewRequest(http.MethodGet, url, nil)
+// HTTPGet sends an HTTP GET request to url with headers.
+// It returns the HTTP response and any encountered error.
+// headers are colon separated name:value strings.
+func (w *Wrun) HTTPGet(url string, headers ...string) (*http.Response, error) {
+	const method = http.MethodGet
+	w.LogInfo("%s %s", method, url)
+	req, err := http.NewRequest(method, url, nil)
 	if err != nil {
-		return nil, fmt.Errorf("prepare %s %s request: %w", http.MethodGet, url, err)
+		return nil, fmt.Errorf("%s %s new request: %w", method, url, err)
 	}
 	req.Header.Set("User-Agent", w.ProgName+"/"+version)
+	for _, h := range headers {
+		if k, v, found := strings.Cut(h, ":"); found {
+			req.Header.Set(k, v)
+		} else {
+			return nil, fmt.Errorf("%s %s set request headers: no colon in header: %q", req.Method, url, h)
+		}
+	}
 	// TODO if no checksum, do conditional get: If-None-Match, If-Modified-Since?
 
 	resp, err := w.httpClient.Do(req)
@@ -98,7 +109,7 @@ func (w *Wrun) HTTPGet(url string) (*http.Response, error) {
 	return resp, nil
 }
 
-func (w *Wrun) Download(resp *http.Response, dest io.Writer, hshType crypto.Hash, hsh hash.Hash, expectedDigest []byte) error {
+func (w *Wrun) Download(resp *http.Response, dest io.Writer, hsh hash.Hash, expectedDigest []byte) error {
 	var wr io.Writer
 	switch {
 	case dest == nil && hsh == nil:
@@ -118,16 +129,20 @@ func (w *Wrun) Download(resp *http.Response, dest io.Writer, hshType crypto.Hash
 	if err != nil {
 		return fmt.Errorf("copy stream: %w", err)
 	}
-	w.LogInfo("downloaded %d bytes", n)
+	var gotDigest []byte
+	if hsh == nil {
+		w.LogInfo("got %d bytes", n)
+	} else {
+		gotDigest = hsh.Sum(nil)
+		w.LogInfo("got %d bytes, digest %x", n, gotDigest)
+	}
 
 	var digestErr error
 	if expectedDigest != nil {
-		gotDigest := hsh.Sum(nil)
-		expectedHex := hex.EncodeToString(expectedDigest)
 		if bytes.Equal(gotDigest, expectedDigest) {
-			w.LogInfo("%s digest match: %s", hshType, expectedHex)
+			w.LogInfo("digest match: %x", gotDigest)
 		} else {
-			digestErr = fmt.Errorf("%s digest mismatch: expected %s, got %s", hshType, expectedHex, hex.EncodeToString(gotDigest))
+			digestErr = fmt.Errorf("digest mismatch: expected %x, got %x", expectedDigest, gotDigest)
 		}
 
 	}

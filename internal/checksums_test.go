@@ -10,14 +10,14 @@ import (
 func TestChecksums_UnmarshalText(t *testing.T) {
 	cases := []struct {
 		name        string
-		input       string
-		expected    *util.Checksums
+		input       []string
+		expected    util.Checksums
 		errExpected bool
 	}{
 		{
 			name:  "various",
-			input: "ff01  filename.txt\nff02 *binfile.bin\n\nff03 one space\n# This is a comment\nThis is an invalid line\nff04 \t various spaces, trailing preserved \nAnother invalid line",
-			expected: &util.Checksums{
+			input: []string{"ff01  filename.txt\nff02 *binfile.bin\n\nff03 one space\n# This is a comment\n", "This is an invalid line\nff04 \t various spaces, trailing preserved \nAnother invalid line"},
+			expected: util.Checksums{
 				InvalidLines: 2,
 				Entries: []util.ChecksumEntry{
 					{Digest: []byte{0xff, 0x01}, BinaryMode: false, Filename: "filename.txt"},
@@ -29,8 +29,8 @@ func TestChecksums_UnmarshalText(t *testing.T) {
 		},
 		{
 			name:  "empty",
-			input: "",
-			expected: &util.Checksums{
+			input: []string{""},
+			expected: util.Checksums{
 				InvalidLines: 0,
 				Entries:      nil,
 			},
@@ -38,8 +38,8 @@ func TestChecksums_UnmarshalText(t *testing.T) {
 		},
 		{
 			name:  "no filename",
-			input: "deadbeef",
-			expected: &util.Checksums{
+			input: []string{"deadbeef"},
+			expected: util.Checksums{
 				InvalidLines: 1,
 				Entries:      nil,
 			},
@@ -47,8 +47,8 @@ func TestChecksums_UnmarshalText(t *testing.T) {
 		},
 		{
 			name:  "no filename, space",
-			input: "deadbeef ",
-			expected: &util.Checksums{
+			input: []string{"deadbeef "},
+			expected: util.Checksums{
 				InvalidLines: 1,
 				Entries:      nil,
 			},
@@ -58,12 +58,14 @@ func TestChecksums_UnmarshalText(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			cs := &util.Checksums{}
-			err := cs.UnmarshalText([]byte(c.input))
-			if c.errExpected {
-				assert.Error(t, err)
-			} else {
-				assert.NoError(t, err)
+			cs := util.Checksums{}
+			for _, input := range c.input {
+				err := cs.UnmarshalText([]byte(input))
+				if c.errExpected {
+					assert.Error(t, err)
+				} else {
+					assert.NoError(t, err)
+				}
 			}
 			assert.Equal(t, c.expected, cs)
 		})

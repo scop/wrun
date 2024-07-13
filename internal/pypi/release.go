@@ -1,19 +1,19 @@
-package util
+package pypi
 
 import "path/filepath"
 
-type PyPIRelease struct {
-	URLs []PyPIReleaseURL `json:"urls"`
+type Release struct {
+	URLs []ReleaseURL `json:"urls"`
 }
 
-type PyPIReleaseURL struct {
-	PackageType string                `json:"packagetype"`
-	Filename    string                `json:"filename"`
-	URL         string                `json:"url"`
-	Digests     PyPIReleaseURLDigests `json:"digests"`
+type ReleaseURL struct {
+	PackageType string            `json:"packagetype"`
+	Filename    string            `json:"filename"`
+	URL         string            `json:"url"`
+	Digests     ReleaseURLDigests `json:"digests"`
 }
 
-type PyPIReleaseURLDigests struct {
+type ReleaseURLDigests struct {
 	SHA256 string `json:"sha256"`
 }
 
@@ -42,9 +42,9 @@ var osArchSecondaryWheels = map[string]string{
 	"linux/s390x":   "*-manylinux_*_s390x.manylinux*_s390x.whl",
 }
 
-func (r PyPIRelease) PreferredOsArchReleaseURLs() (map[string]PyPIReleaseURL, []PyPIReleaseURL) {
-	hits := make(map[string]PyPIReleaseURL, len(r.URLs))
-	misses := []PyPIReleaseURL{}
+func (r Release) PreferredOsArchReleaseURLs() (map[string]ReleaseURL, []ReleaseURL) {
+	hits := make(map[string]ReleaseURL, len(r.URLs))
+	misses := []ReleaseURL{}
 urls:
 	for _, url := range r.URLs {
 		if url.PackageType != "bdist_wheel" {

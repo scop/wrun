@@ -79,3 +79,28 @@ func (c *Checksums) UnmarshalText(text []byte) error {
 	}
 	return nil
 }
+
+func (c *Checksums) MarshalText() ([]byte, error) {
+	var buf bytes.Buffer
+	for _, entry := range c.Entries {
+		_, _ = buf.WriteString(hex.EncodeToString(entry.Digest))
+		if entry.BinaryMode {
+			_, _ = buf.WriteString(" *")
+		} else {
+			_, _ = buf.WriteString("  ")
+		}
+		_, _ = buf.WriteString(entry.Filename)
+		_ = buf.WriteByte('\n')
+	}
+	return buf.Bytes(), nil
+}
+
+func (c *Checksums) Get(filename string) []ChecksumEntry {
+	var got []ChecksumEntry
+	for _, entry := range c.Entries {
+		if filename == entry.Filename {
+			got = append(got, entry)
+		}
+	}
+	return got
+}

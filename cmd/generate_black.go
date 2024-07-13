@@ -18,10 +18,10 @@ package cmd
 
 import (
 	"crypto"
-	"encoding/hex"
 	"fmt"
 	"net/url"
 	"os"
+	"slices"
 
 	"github.com/spf13/cobra"
 
@@ -44,6 +44,7 @@ func generateBlackCommand(w *Wrun) *cobra.Command {
 	return genCmd
 }
 
+// TODO adapt GH downloader so it's able to do this, use it
 func runGenerateBlack(w *Wrun, args []string) error {
 	var version string
 	if len(args) != 0 {
@@ -57,10 +58,15 @@ func runGenerateBlack(w *Wrun, args []string) error {
 	}
 
 	files := map[string]string{
-		"black_linux":       "linux/amd64",
-		"black_macos":       "darwin/amd64",
-		"black_windows.exe": "windows/amd64",
+		"darwin/amd64":  "black_macos",
+		"linux/amd64":   "black_linux",
+		"windows/amd64": "black_windows.exe",
 	}
+	osArchs := make([]string, 0, len(files))
+	for osArch := range files {
+		osArchs = append(osArchs, osArch)
+	}
+	slices.Sort(osArchs)
 
 	baseURL := "https://github.com/psf/black/releases/download/" + url.PathEscape(version)
 
@@ -69,19 +75,20 @@ func runGenerateBlack(w *Wrun, args []string) error {
 		return err
 	}
 	hsh := hn.New()
-	for fn, osArch := range files {
+	for _, osArch := range osArchs {
+		fn := files[osArch]
 		u := fmt.Sprintf("%s/%s", baseURL, url.PathEscape(fn))
 		resp, err := w.HTTPGet(u)
 		if err != nil {
 			return err
 		}
-		if err = w.Download(resp, nil, hn, hsh, nil); err != nil {
+		if err = w.Download(resp, nil, hsh, nil); err != nil {
 			return err
 		}
 		digest := hsh.Sum(nil)
 		hsh.Reset()
 
-		fmt.Printf("--url %s=%s#sha256-%s\n", osArch, u, hex.EncodeToString(digest))
+		fmt.Printf("--url %s=%s#sha256-%x\n", osArch, u, digest)
 	}
 
 	return nil

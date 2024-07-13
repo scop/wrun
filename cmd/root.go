@@ -418,7 +418,7 @@ func runRoot(w *Wrun, cfg *rootCmdConfig, args []string) exitStatus {
 	if hshType != 0 {
 		hsh = hshType.New()
 	}
-	if err = w.Download(resp, tmpf, hshType, hsh, expectedDigest); err != nil {
+	if err = w.Download(resp, tmpf, hsh, expectedDigest); err != nil {
 		w.LogError("download: %v", err)
 		return esError
 	}
