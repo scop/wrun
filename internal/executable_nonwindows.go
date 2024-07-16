@@ -1,4 +1,4 @@
-// Copyright 2024 Ville Skyttä
+// Copyright 2023 Ville Skyttä
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,12 +14,17 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
+//go:build !windows
+
 package util
 
 import (
 	"os"
+	"syscall"
 )
 
-func HasExecutablePerms(fi os.FileInfo) bool {
-	return fi.Mode().Perm()&0111 != 0
+func MakeExecutable(path string) error {
+	umask := syscall.Umask(0)
+	syscall.Umask(umask)
+	return os.Chmod(path, os.FileMode(0o777 & ^umask))
 }

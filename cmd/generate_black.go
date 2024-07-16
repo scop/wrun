@@ -50,11 +50,13 @@ func runGenerateBlack(w *Wrun, args []string) error {
 	if len(args) != 0 {
 		version = args[0]
 	} else {
-		vs, err := versionsFromAtom(w, "https://github.com/psf/black/releases.atom")
+		owner, project := "psf", "black"
+		rels, err := releasesFromGitHubAPI(w, owner, project)
 		if err != nil {
-			return fmt.Errorf("get black versions: %s", err)
+			return fmt.Errorf("get %s/%s releases: %w", owner, project, err)
 		}
-		version = vs[0]
+		// TODO: loop through releases until we find one having some os/arch mapped assets. E.g. hadolint used to have latest release with none
+		version = rels[0].TagName
 	}
 
 	files := map[string]string{

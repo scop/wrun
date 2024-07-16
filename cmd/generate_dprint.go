@@ -20,26 +20,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func generateCommand(w *Wrun) *cobra.Command {
-	genCmd := &cobra.Command{
-		Use:   "generate",
-		Short: "generate wrun command line arguments for various tools",
-		Args:  cobra.NoArgs,
-	}
-	genCmd.AddCommand(
-		generateArbitraryGitHubProjectCommand(w),
-		generateArbitraryPyPIProjectCommand(w),
-		generateBlackCommand(w),
-		generateCommittedCommand(w),
-		generateDprintCommand(w),
-		generateGolangciLintCommand(w),
-		generateHadolintCommand(w),
-		generateRuffCommand(w),
-		generateShfmtCommand(w),
-		generateTflintCommand(w),
-		generateTrivyommand(w),
-		generateTyposCommand(w),
-		generateVacuumCommand(w),
-	)
-	return genCmd
+func generateDprintCommand(w *Wrun) *cobra.Command {
+	return generateGitHubProjectCommand(w, "dprint", "dprint", "dprint")
 }

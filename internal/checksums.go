@@ -35,6 +35,8 @@ type ChecksumEntry struct {
 	Filename   string
 }
 
+// UnmarshalText reads checksums from data.
+// Existing data in c is appended to, not overwritten.
 func (c *Checksums) UnmarshalText(text []byte) error {
 	s := bufio.NewScanner(bytes.NewReader(text))
 	const separators = " \t" // TODO more whitespace like \f, nbsp, etc?

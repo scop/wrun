@@ -26,21 +26,37 @@ type ReleaseAsset struct {
 	// Hence ignore it altogether here, so we are forced to be consistent and use BrowserDownloadURL for both above mentioned purposes.
 }
 
-// osPart is mostly generated with `generate_os_arch_regexps.py`
-const osPart = `[-_](aix|android|darwin|dragonfly|freebsd|illumos|ios|js|linux|macos|netbsd|openbsd|plan9|solaris|wasip1|windows)`
-const extPart = `(?:\.(?:exe|tar\.[gx]z|zip))?$`
+var osArchArchiveREs []*regexp.Regexp
 
-var osArchArchiveREs = []*regexp.Regexp{
-	regexp.MustCompile(
-		// this list of archs is generated with `generate_os_arch_regexps.py`
-		osPart + `[_-](386|amd64|arm|arm64|loong64|mips|mips64|mips64le|mipsle|ppc64|ppc64le|riscv64|s390x|wasm)` + extPart),
-	regexp.MustCompile(
-		osPart + `[_-](32bit|64bit|aarch64|armv7|i386|x86_64)` + extPart),
-	regexp.MustCompile(
-		osPart + `[_-](armv6|armv6hf)` + extPart),
+func init() {
+	// OS and arch parts slices are patterns to match in decreasing order of preference.
+	// For example, we want to match musl linuxes before gnu ones for portability reasons, and similarly armv7 for arm before armv6 etc.
+
+	osParts := []string{
+		`(?P<os>aix|android|(?:apple-)?darwin|dragonfly|freebsd|illumos|ios|js|linux|macos|netbsd|openbsd|pc-windows-msvc|plan9|solaris|unknown-linux-musl|wasip1|windows)`,
+		`(?P<os>unknown-linux-gnu)`,
+	}
+	archParts := []string{
+		`(?P<arch>i?386|amd64|arm|arm64|loong64|mips|mips64|mips64le|mipsle|ppc64|ppc64le|riscv64|s390x|wasm|x86_64)`,
+		`(?P<arch>32bit|64bit|aarch64|armv7)`,
+		`(?P<arch>armv6|armv6hf)`,
+	}
+	const extPart = `(?:\.(?:exe|tar\.[gx]z|zip))?$`
+
+	for _, osPart := range osParts {
+		for _, archPart := range archParts {
+			osArchArchiveREs = append(osArchArchiveREs,
+				regexp.MustCompile("[_-]"+osPart+"[_-]"+archPart+extPart),
+				regexp.MustCompile("[_-]"+archPart+"[_-]"+osPart+extPart),
+			)
+		}
+	}
 }
 
-var checksumsRE = regexp.MustCompile(`(?i)/[^/]*(?:(?:(?:check|sha256)sums)\.txt|[^/]\.sha256)$`)
+var checksumsRE = regexp.MustCompile(`(?i)/[^/]*(?:` +
+	`sums[^/]*\.txt|` +
+	`[^/]\.sha256` +
+	`)$`)
 
 func (r Release) PreferredOsArchReleaseAssets() (hits map[string]ReleaseAsset, misses []ReleaseAsset, checksums []ReleaseAsset) {
 	hits = make(map[string]ReleaseAsset, len(r.Assets))
@@ -53,12 +69,27 @@ func (r Release) PreferredOsArchReleaseAssets() (hits map[string]ReleaseAsset, m
 		misses = make([]ReleaseAsset, 0, len(work))
 		for _, asset := range work {
 			if m := re.FindStringSubmatch(strings.ToLower(asset.BrowserDownloadURL)); m != nil {
-				os := m[1]
-				switch os {
-				case "macos":
-					os = "darwin"
+				var os, arch string
+				for i, name := range re.SubexpNames() {
+					switch name {
+					case "":
+						// whole expression
+					case "os":
+						os = m[i]
+					case "arch":
+						arch = m[i]
+					default:
+						panic("unhandled subexpression name: " + name)
+					}
 				}
-				arch := m[2]
+				switch os {
+				case "apple-darwin", "macos":
+					os = "darwin"
+				case "pc-windows-msvc":
+					os = "windows"
+				case "unknown-linux-gnu", "unknown-linux-musl":
+					os = "linux"
+				}
 				switch arch {
 				case "32bit", "i386":
 					arch = "386"
