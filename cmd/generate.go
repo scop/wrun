@@ -36,6 +36,7 @@ func generateCommand(w *Wrun) *cobra.Command {
 		generateHadolintCommand(w),
 		generateRuffCommand(w),
 		generateShfmtCommand(w),
+		generateTerraformCommand(w),
 		generateTflintCommand(w),
 		generateTrivyommand(w),
 		generateTyposCommand(w),

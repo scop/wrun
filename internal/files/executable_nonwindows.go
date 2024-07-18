@@ -16,7 +16,7 @@
 
 //go:build !windows
 
-package util
+package files
 
 import (
 	"os"

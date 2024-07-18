@@ -25,17 +25,17 @@ func TestPreferredOsArchReleaseAssets_Basic(t *testing.T) {
 		"linux/arm":     {BrowserDownloadURL: "https://github.com/scop/wrun/releases/v1.0.0/example-1.0.0-linux-armv7.tar.gz"},
 		"windows/amd64": {BrowserDownloadURL: "https://github.com/scop/wrun/releases/v1.0.0/example-1.0.0-windows-amd64.zip"},
 	}
-	expectedMisses := []github.ReleaseAsset{
-		{BrowserDownloadURL: "https://github.com/scop/wrun/releases/v1.0.0/example-1.0.0-linux-amd64.deb"},
-	}
 	expectedSums := []github.ReleaseAsset{
 		{BrowserDownloadURL: "https://github.com/scop/wrun/releases/v1.0.0/checksums.txt"},
 	}
+	expectedUnknown := []github.ReleaseAsset{
+		{BrowserDownloadURL: "https://github.com/scop/wrun/releases/v1.0.0/example-1.0.0-linux-amd64.deb"},
+	}
 
-	hits, misses, sums := release.PreferredOsArchReleaseAssets()
+	hits, sums, unknown := release.PreferredOsArchReleaseAssets()
 	assert.Equal(t, expectedHits, hits)
-	assert.ElementsMatch(t, expectedMisses, misses)
 	assert.ElementsMatch(t, expectedSums, sums)
+	assert.ElementsMatch(t, expectedUnknown, unknown)
 }
 
 func TestPreferredOsArchReleaseAssets_NonArchive(t *testing.T) {
@@ -62,13 +62,13 @@ func TestPreferredOsArchReleaseAssets_NonArchive(t *testing.T) {
 		"windows/386":   {BrowserDownloadURL: "https://github.com/mvdan/sh/releases/download/v3.8.0/shfmt_v3.8.0_windows_386.exe"},
 		"windows/amd64": {BrowserDownloadURL: "https://github.com/mvdan/sh/releases/download/v3.8.0/shfmt_v3.8.0_windows_amd64.exe"},
 	}
-	expectedMisses := []github.ReleaseAsset{}
 	expectedSums := []github.ReleaseAsset{
 		{BrowserDownloadURL: "https://github.com/mvdan/sh/releases/download/v3.8.0/sha256sums.txt"},
 	}
+	expectedUnknown := []github.ReleaseAsset{}
 
-	hits, misses, sums := release.PreferredOsArchReleaseAssets()
+	hits, sums, unknown := release.PreferredOsArchReleaseAssets()
 	assert.Equal(t, expectedHits, hits)
-	assert.ElementsMatch(t, expectedMisses, misses)
 	assert.ElementsMatch(t, expectedSums, sums)
+	assert.ElementsMatch(t, expectedUnknown, unknown)
 }

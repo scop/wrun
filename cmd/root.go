@@ -39,6 +39,7 @@ import (
 	"github.com/spf13/cobra"
 
 	wrun "github.com/scop/wrun/internal"
+	"github.com/scop/wrun/internal/files"
 )
 
 var (
@@ -451,7 +452,7 @@ func runRoot(w *Wrun, cfg *rootCmdConfig, args []string) exitStatus {
 			return esError
 		}
 	}
-	if err = wrun.MakeExecutable(exePath); err != nil {
+	if err = files.MakeExecutable(exePath); err != nil {
 		w.LogError("make executable: %v", err)
 		return esError
 	}

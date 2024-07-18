@@ -32,6 +32,7 @@ import (
 	"github.com/klauspost/compress/zip"
 	"github.com/mholt/archiver/v3"
 	util "github.com/scop/wrun/internal"
+	"github.com/scop/wrun/internal/files"
 	"github.com/scop/wrun/internal/github"
 	"github.com/spf13/cobra"
 )
@@ -117,12 +118,21 @@ func runGenerateGitHubProject(w *Wrun, owner, project, tool string, args []strin
 		if err != nil {
 			return fmt.Errorf("get %s/%s releases: %w", owner, project, err)
 		}
+		relFound := false
 		// TODO: loop through releases until we find one having some os/arch mapped assets. E.g. hadolint used to have latest release with none
-		rel = rels[0]
+		for _, rel = range rels {
+			if !rel.Draft && !rel.Prerelease {
+				relFound = true
+				break
+			}
+		}
+		if !relFound {
+			rel = rels[0]
+		}
 	}
 
-	osArchAssets, assetMisses, sumsAssets := rel.PreferredOsArchReleaseAssets()
-	for _, asset := range assetMisses {
+	osArchAssets, sumsAssets, unknownAssets := rel.PreferredOsArchReleaseAssets()
+	for _, asset := range unknownAssets {
 		w.LogWarn("no matching pattern for %q, ignoring", asset.BrowserDownloadURL)
 	}
 	var checksums util.Checksums
@@ -208,7 +218,7 @@ func runGenerateGitHubProject(w *Wrun, owner, project, tool string, args []strin
 					return nil
 				}
 				// Prefer executables over others
-				if util.HasExecutablePerms(f) {
+				if files.HasExecutablePerms(f) {
 					exePaths[osArch] = path
 				} else if _, found := exePaths[osArch]; !found {
 					exePaths[osArch] = path
@@ -223,6 +233,7 @@ func runGenerateGitHubProject(w *Wrun, owner, project, tool string, args []strin
 			}
 		}
 
+		// TODO refactor this for general reuse, e.g. in generate_terraform
 		if haveChecksums {
 			u, err := url.Parse(asset.BrowserDownloadURL)
 			if err != nil {
@@ -248,9 +259,9 @@ func runGenerateGitHubProject(w *Wrun, owner, project, tool string, args []strin
 				}
 			}
 			if !candidateFound {
-				w.LogWarn("no upstream checksum for %q", asset.BrowserDownloadURL)
+				w.LogWarn("no upstream digest for %q", asset.BrowserDownloadURL)
 			} else if !matchFound {
-				return fmt.Errorf("")
+				return fmt.Errorf("no digest match for %q", asset.BrowserDownloadURL)
 			}
 		}
 
