@@ -56,15 +56,7 @@ func runGenerateTerraform(w *Wrun, args []string) error {
 		if err != nil {
 			return fmt.Errorf("get %s/%s releases: %w", owner, project, err)
 		}
-		// TODO should we check drafts altogether?
-		for _, rel := range rels {
-			if !rel.Draft && !rel.Prerelease {
-				version = rels[0].TagName
-			}
-		}
-		if version == "" {
-			version = rels[0].TagName
-		}
+		version = preferredRelease(rels).TagName
 	}
 	version = strings.TrimPrefix(version, "v")
 

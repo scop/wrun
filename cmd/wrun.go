@@ -24,6 +24,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"path"
 	"strconv"
 	"strings"
 )
@@ -154,4 +155,26 @@ func (w *Wrun) Download(resp *http.Response, dest io.Writer, hsh hash.Hash, expe
 	}
 
 	return errors.Join(digestErr, closeErr)
+}
+
+func (w *Wrun) SetUpTempfile(url, dir string) (f *os.File, cleanup func(), err error) {
+	// Use temp filename _prefix_, archiver recognizes by filename extension
+	tmpName := strings.ToLower(path.Base(url))
+	if strings.HasSuffix(tmpName, ".whl") {
+		tmpName = strings.TrimSuffix(tmpName, ".whl") + ".zip" // Make archiver recognize it
+	}
+	f, err = os.CreateTemp(dir, "wrun*-"+tmpName)
+	if err != nil {
+		return nil, nil, fmt.Errorf("set up tempfile: %w", err)
+	}
+	cleanup = func() {
+		if closeErr := f.Close(); closeErr != nil && !errors.Is(closeErr, os.ErrClosed) {
+			w.LogWarn("close tempfile: %v", closeErr)
+		}
+		if rmErr := os.Remove(f.Name()); rmErr != nil && !errors.Is(rmErr, os.ErrNotExist) {
+			w.LogWarn("remove tempfile: %v", rmErr)
+		}
+	}
+	return
+
 }

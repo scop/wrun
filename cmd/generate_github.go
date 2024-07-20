@@ -17,11 +17,9 @@
 package cmd
 
 import (
-	"archive/tar"
 	"bytes"
 	"crypto"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/url"
 	"os"
@@ -29,20 +27,20 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/klauspost/compress/zip"
-	"github.com/mholt/archiver/v3"
 	util "github.com/scop/wrun/internal"
-	"github.com/scop/wrun/internal/files"
 	"github.com/scop/wrun/internal/github"
 	"github.com/spf13/cobra"
 )
 
 func generateArbitraryGitHubProjectCommand(w *Wrun) *cobra.Command {
 	genCmd := &cobra.Command{
-		Use:   "github OWNER PROJECT TOOL [VERSION]",
+		Use:   "github OWNER PROJECT [TOOL [VERSION]]",
 		Short: "generate wrun command line arguments for a GitHub project",
-		Args:  cobra.RangeArgs(3, 4),
+		Args:  cobra.RangeArgs(2, 4),
 		Run: func(_ *cobra.Command, args []string) {
+			if len(args) == 2 { // Default tool = project
+				args = append(args, args[1])
+			}
 			if err := runGenerateGitHubProject(w, args[0], args[1], args[2], args[3:]); err != nil {
 				w.LogError("%s", err)
 				os.Exit(1)
@@ -104,6 +102,33 @@ func generateGitHubProjectCommand(w *Wrun, owner, project, tool string) *cobra.C
 	return genCmd
 }
 
+func preferredRelease(rels []github.Release) github.Release {
+	// TODO: we may want to check that the release contains some usable assets, too; not all do
+
+	// Prefer first non-draft non-prerelease, followed by the first non-draft prerelease
+	var rel github.Release
+	relFound := false
+	for _, r := range rels {
+		if r.Draft {
+			continue
+		}
+		if !r.Prerelease {
+			relFound = true
+			rel = r
+			break
+		}
+		if !relFound { // Keep earlier seen prerelease
+			relFound = true
+			rel = r
+		}
+	}
+	if !relFound {
+		// Fall back to first
+		rel = rels[0]
+	}
+	return rel
+}
+
 func runGenerateGitHubProject(w *Wrun, owner, project, tool string, args []string) error {
 	var rel github.Release
 	var err error
@@ -118,17 +143,7 @@ func runGenerateGitHubProject(w *Wrun, owner, project, tool string, args []strin
 		if err != nil {
 			return fmt.Errorf("get %s/%s releases: %w", owner, project, err)
 		}
-		relFound := false
-		// TODO: loop through releases until we find one having some os/arch mapped assets. E.g. hadolint used to have latest release with none
-		for _, rel = range rels {
-			if !rel.Draft && !rel.Prerelease {
-				relFound = true
-				break
-			}
-		}
-		if !relFound {
-			rel = rels[0]
-		}
+		rel = preferredRelease(rels)
 	}
 
 	osArchAssets, sumsAssets, unknownAssets := rel.PreferredOsArchReleaseAssets()
@@ -173,22 +188,9 @@ func runGenerateGitHubProject(w *Wrun, owner, project, tool string, args []strin
 			return err
 		}
 
-		// Use temp filename _prefix_, archiver recognizes by filename extension
-		tmpName := strings.ToLower(path.Base(asset.BrowserDownloadURL))
-		if strings.HasSuffix(tmpName, ".whl") {
-			tmpName += ".zip" // Make archiver recognize it
-		}
-		tmpf, err := os.CreateTemp("", "wrun*-"+tmpName)
+		tmpf, cleanUpTempFile, err := w.SetUpTempfile(asset.BrowserDownloadURL, "")
 		if err != nil {
 			return fmt.Errorf("set up tempfile: %w", err) // TODO think this through
-		}
-		cleanUpTempFile := func() {
-			if closeErr := tmpf.Close(); closeErr != nil && !errors.Is(closeErr, os.ErrClosed) {
-				w.LogWarn("close tempfile: %v", closeErr)
-			}
-			if rmErr := os.Remove(tmpf.Name()); rmErr != nil && !errors.Is(rmErr, os.ErrNotExist) {
-				w.LogWarn("remove tempfile: %v", rmErr)
-			}
 		}
 
 		if err = w.Download(resp, tmpf, hsh, nil); err != nil {
@@ -198,39 +200,18 @@ func runGenerateGitHubProject(w *Wrun, owner, project, tool string, args []strin
 		digest := hsh.Sum(nil)
 		hsh.Reset()
 
-		// TODO maybe if there's just one file in the archive, use it despite of tool name match?
-		err = archiver.Walk(tmpf.Name(), func(f archiver.File) error {
-			toolExe := tool
-			if strings.HasPrefix(osArch, "windows/") {
-				toolExe += ".exe"
-			}
-			if !f.IsDir() && f.Name() == toolExe {
-				// Need to look in the archive type specific Header for the full path
-				var path string
-				switch fh := f.Header.(type) {
-				case *tar.Header:
-					path = fh.Name
-				case zip.FileHeader:
-					path = fh.Name
-				default:
-					// TODO think this through, should we emit an URL nevertheless, with a warnng etc?
-					w.LogWarn("unsupported archive type for %q: %T", asset.BrowserDownloadURL, f.Header)
-					return nil
-				}
-				// Prefer executables over others
-				if files.HasExecutablePerms(f) {
-					exePaths[osArch] = path
-				} else if _, found := exePaths[osArch]; !found {
-					exePaths[osArch] = path
-				}
-			}
-			return nil
-		})
+		toolExe := tool
+		if strings.HasPrefix(osArch, "windows/") {
+			toolExe += ".exe"
+		}
+		exePath, err := findToolInArchive(tmpf.Name(), toolExe)
 		cleanUpTempFile()
 		if err != nil {
 			if !strings.Contains(err.Error(), "format unrecognized by filename") { // No better way as of archiver 3.5.1
-				w.LogError("%v", err) // TODO think this through, continue or fail?
+				w.LogError("find tool in archive: %v", err) // TODO think this through, continue or fail?
 			}
+		} else {
+			exePaths[osArch] = exePath
 		}
 
 		// TODO refactor this for general reuse, e.g. in generate_terraform
@@ -268,33 +249,8 @@ func runGenerateGitHubProject(w *Wrun, owner, project, tool string, args []strin
 		fmt.Printf("--url %s=%s#sha256-%x\n", osArch, asset.BrowserDownloadURL, digest)
 	}
 
-	if len(exePaths) != 0 {
-		// Simplify output if path is the same in all archives (and if the tool was found in all of them).
-		// If a tool was not found in some of the archives, warn about it and ignore but proceed. Output the url arg though in the warning so it can be fixed up manually by the user.
-		var prevExePath string
-		sameExePath := true
-		for osArch, exePath := range exePaths {
-			if strings.HasPrefix(osArch, "windows/") {
-				// TODO trim case insensitive .exe
-				exePath = strings.TrimSuffix(exePath, ".exe")
-			}
-			if prevExePath != "" {
-				if prevExePath != exePath {
-					sameExePath = false
-					break
-				}
-			}
-			prevExePath = exePath
-		}
-		if sameExePath {
-			fmt.Printf("--archive-exe-path %s\n", prevExePath)
-		} else {
-			for _, osArch := range osArchs {
-				if exePath, found := exePaths[osArch]; found {
-					fmt.Printf("--archive-exe-path %s=%s\n", osArch, exePath)
-				} // TODO else?
-			}
-		}
+	for _, ep := range generateExePathArgs(exePaths) {
+		fmt.Printf("--archive-exe-path %s\n", ep)
 	}
 
 	return nil

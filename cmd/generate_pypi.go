@@ -26,16 +26,20 @@ import (
 	"slices"
 	"strings"
 
+	pep440 "github.com/aquasecurity/go-pep440-version"
 	"github.com/scop/wrun/internal/pypi"
 	"github.com/spf13/cobra"
 )
 
 func generateArbitraryPyPIProjectCommand(w *Wrun) *cobra.Command {
 	genCmd := &cobra.Command{
-		Use:   "pypi PROJECT TOOL [VERSION]",
+		Use:   "pypi PROJECT [TOOL [VERSION]]",
 		Short: "generate wrun command line arguments for a PyPI project",
-		Args:  cobra.RangeArgs(2, 3),
+		Args:  cobra.RangeArgs(1, 3),
 		Run: func(_ *cobra.Command, args []string) {
+			if len(args) == 1 { // Default tool = project
+				args = append(args, args[0])
+			}
 			if err := runGeneratePyPIProject(w, args[0], args[1], args[2:]); err != nil {
 				w.LogError("%s", err)
 				os.Exit(1)
@@ -62,6 +66,25 @@ func generatePyPIProjectCommand(w *Wrun, project, tool string) *cobra.Command {
 	return genCmd
 }
 
+func preferredVersion(p pypi.SimpleProject) string {
+	if len(p.Files) == 0 {
+		return ""
+	}
+	versions := p.Versions()
+	versionFound := false
+	var v pep440.Version
+	for _, v = range versions {
+		// TODO check for yanked files with this version, skip if there are any
+		if !v.IsPreRelease() {
+			break
+		}
+	}
+	if !versionFound {
+		v = versions[0]
+	}
+	return v.String()
+}
+
 func runGeneratePyPIProject(w *Wrun, project, tool string, args []string) error {
 	url := fmt.Sprintf("https://pypi.org/simple/%s/", url.PathEscape(project))
 	resp, err := w.HTTPGet(url, "Accept:application/vnd.pypi.simple.v1+json")
@@ -81,16 +104,14 @@ func runGeneratePyPIProject(w *Wrun, project, tool string, args []string) error 
 	if len(args) != 0 {
 		version = strings.TrimPrefix(args[0], "v")
 	} else {
-		// TODO handle no versions
-		vs := p.Versions()
-		version = vs[0]
+		version = preferredVersion(p)
 	}
 
 	osArchFiles, fileMisses := p.PreferredOsArchSimpleFiles(version)
 	for _, file := range fileMisses {
 		w.LogWarn("no matching pattern for %q, ignoring", file.Filename)
 	}
-	exePaths := make([]string, 0, len(osArchFiles))
+	exePaths := make(map[string]string, len(osArchFiles))
 
 	// Process os/arch assets sorted by os/arch for stable output
 	osArchs := make([]string, 0, len(osArchFiles))
@@ -98,8 +119,6 @@ func runGeneratePyPIProject(w *Wrun, project, tool string, args []string) error 
 		osArchs = append(osArchs, osArch)
 	}
 	slices.Sort(osArchs)
-
-	// TODO generate exe paths by locating the tool arg within archives, simplify like for "github" things
 
 	hshType := crypto.SHA256
 	hsh := hshType.New()
@@ -122,20 +141,35 @@ func runGeneratePyPIProject(w *Wrun, project, tool string, args []string) error 
 		if resp, err = w.HTTPGet(pf.URL); err != nil {
 			return err
 		}
-		if err = w.Download(resp, nil, hsh, expectedDigest); err != nil {
+
+		tmpf, cleanupTempfile, err := w.SetUpTempfile(pf.URL, "")
+		if err != nil {
+			return fmt.Errorf("set up tempfile: %w", err) // TODO think this through
+		}
+		if err = w.Download(resp, tmpf, hsh, expectedDigest); err != nil {
+			cleanupTempfile()
 			return fmt.Errorf("download: %w", err)
+		}
+
+		toolExe := tool
+		if strings.HasPrefix(osArch, "windows/") {
+			toolExe += ".exe"
+		}
+		exePath, err := findToolInArchive(tmpf.Name(), toolExe)
+		cleanupTempfile()
+		if err != nil {
+			if !strings.Contains(err.Error(), "format unrecognized by filename") { // No better way as of archiver 3.5.1
+				w.LogError("find tool in archive: %v", err) // TODO think this through, continue or fail?
+			}
+		} else {
+			exePaths[osArch] = exePath
 		}
 		hsh.Reset()
 
 		fmt.Printf("--url %s=%s#sha256-%s\n", osArch, pf.URL, pf.Hashes.SHA256)
-		ext := ""
-		if strings.HasPrefix(osArch, "windows/") {
-			ext = ".exe"
-		}
-		exePaths = append(exePaths, fmt.Sprintf("--archive-exe-path %s=%s-%s.data/scripts/%s%s", osArch, project, version, project, ext))
 	}
-	for _, ep := range exePaths {
-		fmt.Println(ep)
+	for _, ep := range generateExePathArgs(exePaths) {
+		fmt.Printf("--archive-exe-path %s\n", ep)
 	}
 
 	return nil

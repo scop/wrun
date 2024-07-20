@@ -17,22 +17,53 @@
 package pypi
 
 import (
+	"encoding/json"
 	"errors"
+	"fmt"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strings"
+
+	pep440 "github.com/aquasecurity/go-pep440-version"
 )
+
+// https://packaging.python.org/en/latest/specifications/simple-repository-api/#json-based-simple-api-for-python-package-indexes
 
 type SimpleProject struct {
 	Name  string       `json:"name"`
 	Files []SimpleFile `json:"files"`
 }
 
+type Yanked string
+
+func (y *Yanked) UnmarshalJSON(data []byte) error {
+	var raw any
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+	if r, ok := raw.(bool); ok {
+		if r {
+			// Should not happen per the spec, but just in case
+			*y = "wrun: no yanked reason"
+		} else {
+			*y = ""
+		}
+	} else if r, ok := raw.(string); ok {
+		*y = Yanked(r)
+	} else {
+		return fmt.Errorf("invalid type: %T", raw)
+	}
+	return nil
+}
+
 type SimpleFile struct {
-	Filename     string            `json:"filename"`
-	URL          string            `json:"url"`
-	Hashes       SimpleFileHashes  `json:"hashes"`
-	Yanked       bool              `json:"yanked"`
+	Filename string           `json:"filename"`
+	URL      string           `json:"url"`
+	Hashes   SimpleFileHashes `json:"hashes"`
+	// Yanked is the reason for yanking, or empty if not yanked.
+	// This deviates from the PyPI simple API where the reason is a non-empty string when yanked, and boolean false when not.
+	Yanked       Yanked            `json:"yanked"`
 	FilenameInfo WheelFilenameInfo `json:"-"`
 }
 
@@ -52,7 +83,7 @@ var wheelFilenameRE = regexp.MustCompile(`^` +
 
 type WheelFilenameInfo struct {
 	Distribution string
-	Version      string
+	Version      pep440.Version
 	BuildTag     string
 	PythonTags   []string
 	ABITags      []string
@@ -74,7 +105,10 @@ func (w *WheelFilenameInfo) UnmarshalText(data []byte) error {
 			case "distribution":
 				info.Distribution = m[i]
 			case "version":
-				info.Version = m[i]
+				var err error
+				if info.Version, err = pep440.Parse(m[i]); err != nil {
+					return err
+				}
 			case "build_tag":
 				info.BuildTag = m[i]
 			case "python_tag":
@@ -93,22 +127,26 @@ func (w *WheelFilenameInfo) UnmarshalText(data []byte) error {
 	return errors.New("unparseable wheel filename")
 }
 
-func (p SimpleProject) Versions() []string {
-	versions := make(map[string]any, len(p.Files)/2)
+// Versions returns versions of the project, sorted in newest to oldest order.
+// Non-PEP-440 versions are ignored.
+func (p SimpleProject) Versions() []pep440.Version {
+	pvMap := make(map[string]pep440.Version, len(p.Files)/2)
 	for _, file := range p.Files {
 		// TODO make this happen on JSON unmarshal or smth
 		if err := file.FilenameInfo.UnmarshalText([]byte(file.Filename)); err != nil {
 			continue
 		}
-		versions[file.FilenameInfo.Version] = struct{}{}
+		version := file.FilenameInfo.Version
+		pvMap[version.String()] = version
 	}
-	result := make([]string, 0, len(versions))
-	for k := range versions {
-		result = append(result, k)
+	pepVersions := make([]pep440.Version, 0, len(pvMap))
+	for _, pv := range pvMap {
+		pepVersions = append(pepVersions, pv)
 	}
-	// TODO PEP 440 sort descending, https://github.com/aquasecurity/go-pep440-version
-
-	return result
+	slices.SortFunc(pepVersions, func(a, b pep440.Version) int {
+		return -a.Compare(b)
+	})
+	return pepVersions
 }
 
 var osArchPlatformTags = map[string]string{
@@ -141,7 +179,7 @@ files:
 		if err := file.FilenameInfo.UnmarshalText([]byte(file.Filename)); err != nil {
 			continue
 		}
-		if file.Yanked || file.FilenameInfo.Version != version {
+		if file.Yanked != "" || file.FilenameInfo.Version.String() != version {
 			continue
 		}
 

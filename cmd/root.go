@@ -386,19 +386,10 @@ func runRoot(w *Wrun, cfg *rootCmdConfig, args []string) exitStatus {
 
 	// Set up tempfile for download
 
-	// Use temp filename _prefix_, archiver recognizes by filename extension
-	tmpf, err := os.CreateTemp(filepath.Dir(dlPath), "tmp*-"+filepath.Base(dlPath))
+	tmpf, cleanUpTempFile, err := w.SetUpTempfile(filepath.Base(dlPath), filepath.Dir(dlPath))
 	if err != nil {
 		w.LogError("set up tempfile: %v", err)
 		return esError
-	}
-	cleanUpTempFile := func() {
-		if closeErr := tmpf.Close(); closeErr != nil && !errors.Is(closeErr, os.ErrClosed) {
-			w.LogWarn("close tempfile: %v", closeErr)
-		}
-		if rmErr := os.Remove(tmpf.Name()); rmErr != nil && !errors.Is(rmErr, os.ErrNotExist) {
-			w.LogWarn("remove tempfile: %v", rmErr)
-		}
 	}
 	defer cleanUpTempFile() // Note: defer does not happen if we exec successfully
 
@@ -432,22 +423,7 @@ func runRoot(w *Wrun, cfg *rootCmdConfig, args []string) exitStatus {
 			return esError
 		}
 	} else {
-		var archiveName string
-		if strings.HasSuffix(tmpf.Name(), ".whl") { // Need to rename to .zip for archiver
-			archiveName = strings.TrimSuffix(tmpf.Name(), ".whl") + ".zip"
-			if err = os.Symlink(filepath.Base(tmpf.Name()), archiveName); err != nil { // Failure if new name exists is desirable
-				w.LogError("symlink tempfile: %v", err)
-			}
-		} else {
-			archiveName = tmpf.Name()
-		}
-		err = archiver.Unarchive(archiveName, dlPath)
-		if archiveName != tmpf.Name() {
-			if rmErr := os.Remove(archiveName); rmErr != nil {
-				w.LogWarn("remove tempfile symlink: %v", rmErr)
-			}
-		}
-		if err != nil {
+		if err = archiver.Unarchive(tmpf.Name(), dlPath); err != nil {
 			w.LogError("unarchive: %v", err)
 			return esError
 		}
