@@ -1,4 +1,4 @@
-// Copyright 2023 Ville Skyttä
+// Copyright 2024 Ville Skyttä
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,9 +17,14 @@
 package cmd
 
 import (
+	"regexp"
+
 	"github.com/spf13/cobra"
 )
 
-func generateTrivyommand(w *Wrun) *cobra.Command {
-	return generateGitHubProjectCommand(w, "aquasecurity", "trivy", "trivy", nil)
+func generateShellcheckCommand(w *Wrun) *cobra.Command {
+	osArchOverrideREs := map[string]*regexp.Regexp{
+		"windows/amd64": regexp.MustCompile(`/shellcheck-v[0-9.]+\.zip$`),
+	}
+	return generateGitHubProjectCommand(w, "koalaman", "shellcheck", "shellcheck", osArchOverrideREs)
 }

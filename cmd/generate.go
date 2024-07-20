@@ -42,6 +42,7 @@ func generateCommand(w *Wrun) *cobra.Command {
 		generateGolangciLintCommand(w),
 		generateHadolintCommand(w),
 		generateRuffCommand(w),
+		generateShellcheckCommand(w),
 		generateShfmtCommand(w),
 		generateTerraformCommand(w),
 		generateTflintCommand(w),

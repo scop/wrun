@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-func Categorize[T any](fileAssets map[string]T) (osArchPreferred map[string]T, checksums []T, unknown []T) {
+func Categorize[T any](fileAssets map[string]T, osArchOverrideREs map[string]*regexp.Regexp) (osArchPreferred map[string]T, checksums []T, unknown []T) {
 
 	// OS and arch parts slices are patterns to match in decreasing order of preference.
 	// For example, we want to match musl linuxes before gnu ones for portability reasons, and similarly armv7 for arm before armv6 etc.
@@ -29,8 +29,8 @@ func Categorize[T any](fileAssets map[string]T) (osArchPreferred map[string]T, c
 		for _, archPart := range archParts {
 			osArchFileREs = append(osArchFileREs,
 				// We want lowercase matches for these, so don't do case insensitive but match against lowercased
-				regexp.MustCompile("[_-]"+osPart+"[_-]"+archPart+extPart),
-				regexp.MustCompile("[_-]"+archPart+"[_-]"+osPart+extPart),
+				regexp.MustCompile("[_.-]"+osPart+"[_.-]"+archPart+extPart),
+				regexp.MustCompile("[_.-]"+archPart+"[_.-]"+osPart+extPart),
 			)
 		}
 	}
@@ -44,6 +44,18 @@ func Categorize[T any](fileAssets map[string]T) (osArchPreferred map[string]T, c
 	work := make([]string, 0, len(fileAssets))
 	for k := range fileAssets {
 		work = append(work, k)
+	}
+
+	for osArch, re := range osArchOverrideREs {
+		unknownFiles := make([]string, 0, len(work))
+		for _, name := range work {
+			if re.MatchString(name) {
+				osArchPreferred[osArch] = fileAssets[name]
+			} else {
+				unknownFiles = append(unknownFiles, name)
+			}
+		}
+		work = unknownFiles
 	}
 
 	for _, re := range osArchFileREs {

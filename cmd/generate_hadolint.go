@@ -21,5 +21,5 @@ import (
 )
 
 func generateHadolintCommand(w *Wrun) *cobra.Command {
-	return generateGitHubProjectCommand(w, "hadolint", "hadolint", "hadolint")
+	return generateGitHubProjectCommand(w, "hadolint", "hadolint", "hadolint", nil)
 }

@@ -32,7 +32,9 @@ func TestPreferredOsArchReleaseAssets_Basic(t *testing.T) {
 		{BrowserDownloadURL: "https://github.com/scop/wrun/releases/v1.0.0/example-1.0.0-linux-amd64.deb"},
 	}
 
-	hits, sums, unknown := release.PreferredOsArchReleaseAssets()
+	// TODO some override tests
+
+	hits, sums, unknown := release.PreferredOsArchReleaseAssets(nil)
 	assert.Equal(t, expectedHits, hits)
 	assert.ElementsMatch(t, expectedSums, sums)
 	assert.ElementsMatch(t, expectedUnknown, unknown)
@@ -67,7 +69,9 @@ func TestPreferredOsArchReleaseAssets_NonArchive(t *testing.T) {
 	}
 	expectedUnknown := []github.ReleaseAsset{}
 
-	hits, sums, unknown := release.PreferredOsArchReleaseAssets()
+	// TODO some override tests
+
+	hits, sums, unknown := release.PreferredOsArchReleaseAssets(nil)
 	assert.Equal(t, expectedHits, hits)
 	assert.ElementsMatch(t, expectedSums, sums)
 	assert.ElementsMatch(t, expectedUnknown, unknown)

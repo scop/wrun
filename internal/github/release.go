@@ -1,6 +1,8 @@
 package github
 
 import (
+	"regexp"
+
 	"github.com/scop/wrun/internal/files"
 )
 
@@ -27,12 +29,12 @@ type ReleaseAsset struct {
 	// Hence ignore it altogether here, so we are forced to be consistent and use BrowserDownloadURL for both above mentioned purposes.
 }
 
-func (r Release) PreferredOsArchReleaseAssets() (osArchAssets map[string]ReleaseAsset, checksumAssets []ReleaseAsset, unknownAssets []ReleaseAsset) {
+func (r Release) PreferredOsArchReleaseAssets(osArchOverrideREs map[string]*regexp.Regexp) (osArchAssets map[string]ReleaseAsset, checksumAssets []ReleaseAsset, unknownAssets []ReleaseAsset) {
 	urlAssets := make(map[string]ReleaseAsset, len(r.Assets))
 	for _, asset := range r.Assets {
 		urlAssets[asset.BrowserDownloadURL] = asset
 	}
 
-	osArchAssets, checksumAssets, unknownAssets = files.Categorize(urlAssets)
+	osArchAssets, checksumAssets, unknownAssets = files.Categorize(urlAssets, osArchOverrideREs)
 	return
 }

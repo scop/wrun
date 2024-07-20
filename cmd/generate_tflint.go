@@ -21,5 +21,5 @@ import (
 )
 
 func generateTflintCommand(w *Wrun) *cobra.Command {
-	return generateGitHubProjectCommand(w, "terraform-linters", "tflint", "tflint")
+	return generateGitHubProjectCommand(w, "terraform-linters", "tflint", "tflint", nil)
 }

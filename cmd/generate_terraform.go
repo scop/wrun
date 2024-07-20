@@ -82,7 +82,7 @@ func runGenerateTerraform(w *Wrun, args []string) error {
 			fileEntries[ce.Filename] = []util.ChecksumEntry{ce}
 		}
 	}
-	osArchEntries, unknownEntries, _ := files.Categorize(fileEntries)
+	osArchEntries, unknownEntries, _ := files.Categorize(fileEntries, nil)
 	for _, ce := range unknownEntries {
 		w.LogWarn("no matching pattern for %q, ignoring", ce)
 	}

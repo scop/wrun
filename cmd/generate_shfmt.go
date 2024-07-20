@@ -21,5 +21,5 @@ import (
 )
 
 func generateShfmtCommand(w *Wrun) *cobra.Command {
-	return generateGitHubProjectCommand(w, "mvdan", "sh", "shfmt")
+	return generateGitHubProjectCommand(w, "mvdan", "sh", "shfmt", nil)
 }

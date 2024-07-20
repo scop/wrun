@@ -21,5 +21,5 @@ import (
 )
 
 func generateGolangciLintCommand(w *Wrun) *cobra.Command {
-	return generateGitHubProjectCommand(w, "golangci", "golangci-lint", "golangci-lint")
+	return generateGitHubProjectCommand(w, "golangci", "golangci-lint", "golangci-lint", nil)
 }

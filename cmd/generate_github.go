@@ -24,6 +24,7 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"regexp"
 	"slices"
 	"strings"
 
@@ -41,7 +42,7 @@ func generateArbitraryGitHubProjectCommand(w *Wrun) *cobra.Command {
 			if len(args) == 2 { // Default tool = project
 				args = append(args, args[1])
 			}
-			if err := runGenerateGitHubProject(w, args[0], args[1], args[2], args[3:]); err != nil {
+			if err := runGenerateGitHubProject(w, args[0], args[1], args[2], args[3:], nil); err != nil {
 				w.LogError("%s", err)
 				os.Exit(1)
 			}
@@ -86,13 +87,13 @@ func releaseFromGitHubAPI(w *Wrun, owner, project, version string) (github.Relea
 	return rel, nil
 }
 
-func generateGitHubProjectCommand(w *Wrun, owner, project, tool string) *cobra.Command {
+func generateGitHubProjectCommand(w *Wrun, owner, project, tool string, osArchOverrideREs map[string]*regexp.Regexp) *cobra.Command {
 	genCmd := &cobra.Command{
 		Use:   tool + " [VERSION]",
 		Short: "generate wrun command line arguments for " + tool,
 		Args:  cobra.MaximumNArgs(1),
 		Run: func(_ *cobra.Command, args []string) {
-			if err := runGenerateGitHubProject(w, owner, project, tool, args); err != nil {
+			if err := runGenerateGitHubProject(w, owner, project, tool, args, osArchOverrideREs); err != nil {
 				w.LogError("%s", err)
 				os.Exit(1)
 			}
@@ -129,7 +130,7 @@ func preferredRelease(rels []github.Release) github.Release {
 	return rel
 }
 
-func runGenerateGitHubProject(w *Wrun, owner, project, tool string, args []string) error {
+func runGenerateGitHubProject(w *Wrun, owner, project, tool string, args []string, osArchOvrrideREs map[string]*regexp.Regexp) error {
 	var rel github.Release
 	var err error
 	if len(args) != 0 {
@@ -146,7 +147,7 @@ func runGenerateGitHubProject(w *Wrun, owner, project, tool string, args []strin
 		rel = preferredRelease(rels)
 	}
 
-	osArchAssets, sumsAssets, unknownAssets := rel.PreferredOsArchReleaseAssets()
+	osArchAssets, sumsAssets, unknownAssets := rel.PreferredOsArchReleaseAssets(osArchOvrrideREs)
 	for _, asset := range unknownAssets {
 		w.LogWarn("no matching pattern for %q, ignoring", asset.BrowserDownloadURL)
 	}

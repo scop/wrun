@@ -21,5 +21,5 @@ import (
 )
 
 func generateDprintCommand(w *Wrun) *cobra.Command {
-	return generateGitHubProjectCommand(w, "dprint", "dprint", "dprint")
+	return generateGitHubProjectCommand(w, "dprint", "dprint", "dprint", nil)
 }

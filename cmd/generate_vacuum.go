@@ -21,5 +21,5 @@ import (
 )
 
 func generateVacuumCommand(w *Wrun) *cobra.Command {
-	return generateGitHubProjectCommand(w, "daveshanley", "vacuum", "vacuum")
+	return generateGitHubProjectCommand(w, "daveshanley", "vacuum", "vacuum", nil)
 }

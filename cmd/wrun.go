@@ -85,6 +85,7 @@ func (w *Wrun) LogBug(format string, args ...any) {
 
 // HTTPGet sends an HTTP GET request to url with headers.
 // It returns the HTTP response and any encountered error.
+// An error is also returned on responses having status other than 200.
 // headers are colon separated name:value strings.
 func (w *Wrun) HTTPGet(url string, headers ...string) (*http.Response, error) {
 	const method = http.MethodGet
@@ -106,6 +107,12 @@ func (w *Wrun) HTTPGet(url string, headers ...string) (*http.Response, error) {
 	resp, err := w.httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("%s %s: %w", req.Method, url, err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		if err = resp.Body.Close(); err != nil {
+			w.LogWarn("close HTTP response: %v", err)
+		}
+		return nil, fmt.Errorf("%s %s: HTTP status %s", req.Method, url, resp.Status)
 	}
 	return resp, nil
 }
