@@ -130,7 +130,7 @@ func preferredRelease(rels []github.Release) github.Release {
 	return rel
 }
 
-func runGenerateGitHubProject(w *Wrun, owner, project, tool string, args []string, osArchOvrrideREs map[string]*regexp.Regexp) error {
+func runGenerateGitHubProject(w *Wrun, owner, project, tool string, args []string, osArchOverrideREs map[string]*regexp.Regexp) error {
 	var rel github.Release
 	var err error
 	if len(args) != 0 {
@@ -147,7 +147,7 @@ func runGenerateGitHubProject(w *Wrun, owner, project, tool string, args []strin
 		rel = preferredRelease(rels)
 	}
 
-	osArchAssets, sumsAssets, unknownAssets := rel.PreferredOsArchReleaseAssets(osArchOvrrideREs)
+	osArchAssets, sumsAssets, unknownAssets := rel.PreferredOsArchReleaseAssets(osArchOverrideREs)
 	for _, asset := range unknownAssets {
 		w.LogWarn("no matching pattern for %q, ignoring", asset.BrowserDownloadURL)
 	}

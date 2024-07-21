@@ -5,7 +5,18 @@ import (
 	"strings"
 )
 
-func Categorize[T any](fileAssets map[string]T, osArchOverrideREs map[string]*regexp.Regexp) (osArchPreferred map[string]T, checksums []T, unknown []T) {
+// Categorize files assets to preferred ones for different operating systems and architectures, checksums, and other kinds.
+//
+// The fileAssets argument is a map with filenames as keys and assets as values.
+//
+// The overrides argument has OS/arch strings as keys,
+// and regular expressions applied against filenames in fileAssets as values that are processed before the default categorization rules.
+// If an override regular expression matches an asset filename, it will cause the asset to be treated as the preferred one for the OS/arch in the override.
+//
+// The returned osArchPreferred is has OS/arch strings as keys, and the corresponding assets as values.
+// All given assets are present in at most one of the return values.
+// The only ones that are not in any are ones that apply to an OS/architecture combination, but for which a more preferred one was found.
+func Categorize[T any](fileAssets map[string]T, overrides map[string]*regexp.Regexp) (osArchPreferred map[string]T, checksums []T, others []T) {
 
 	// OS and arch parts slices are patterns to match in decreasing order of preference.
 	// For example, we want to match musl linuxes before gnu ones for portability reasons, and similarly armv7 for arm before armv6 etc.
@@ -35,9 +46,9 @@ func Categorize[T any](fileAssets map[string]T, osArchOverrideREs map[string]*re
 		}
 	}
 
-	checksumsRE := regexp.MustCompile(`(?i)/[^/]*(?:` +
+	checksumsRE := regexp.MustCompile(`(?i)(?:^|/)[^/]*(?:` +
 		`sums[^/]*\.txt|` +
-		`[^/]\.sha256` +
+		`[^/]\.(?:md5|sha(?:1|224|256|384|512))` +
 		`)$`)
 
 	osArchPreferred = make(map[string]T, len(fileAssets))
@@ -46,7 +57,7 @@ func Categorize[T any](fileAssets map[string]T, osArchOverrideREs map[string]*re
 		work = append(work, k)
 	}
 
-	for osArch, re := range osArchOverrideREs {
+	for osArch, re := range overrides {
 		unknownFiles := make([]string, 0, len(work))
 		for _, name := range work {
 			if re.MatchString(name) {
@@ -105,12 +116,12 @@ func Categorize[T any](fileAssets map[string]T, osArchOverrideREs map[string]*re
 		work = unknownFiles
 	}
 
-	unknown = make([]T, 0, len(work))
+	others = make([]T, 0, len(work))
 	for _, name := range work {
 		if checksumsRE.MatchString(name) {
 			checksums = append(checksums, fileAssets[name])
 		} else {
-			unknown = append(unknown, fileAssets[name])
+			others = append(others, fileAssets[name])
 		}
 	}
 
