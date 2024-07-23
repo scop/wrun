@@ -107,8 +107,8 @@ func runGeneratePyPIProject(w *Wrun, project, tool string, args []string) error 
 		version = preferredVersion(p)
 	}
 
-	osArchFiles, fileMisses := p.PreferredOsArchSimpleFiles(version)
-	for _, file := range fileMisses {
+	osArchFiles, otherFiles := p.PreferredOsArchSimpleFiles(version)
+	for _, file := range otherFiles {
 		w.LogWarn("no matching pattern for %q, ignoring", file.Filename)
 	}
 	exePaths := make(map[string]string, len(osArchFiles))

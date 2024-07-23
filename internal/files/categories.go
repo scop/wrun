@@ -84,7 +84,7 @@ func Categorize[T any](fileAssets map[string]T, overrides map[string]*regexp.Reg
 					case "arch":
 						arch = m[i]
 					default:
-						panic("unhandled subexpression name: " + name)
+						panic("wrun: BUG : unhandled subexpression name: " + name)
 					}
 				}
 				switch os {

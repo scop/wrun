@@ -62,7 +62,7 @@ func TestUnmarshalText(t *testing.T) {
 		{
 			input:    "",
 			expected: pypi.WheelFilenameInfo{},
-			errorMsg: "",
+			errorMsg: "unparseable wheel filename",
 		},
 	}
 
@@ -85,6 +85,7 @@ func TestVersions(t *testing.T) {
 		Name: "test",
 	}
 	// https://packaging.python.org/en/latest/specifications/version-specifiers/#summary-of-permitted-suffixes-and-relative-ordering
+	// Note: oldest to latest order expected here
 	versions := []string{
 		"1.dev0",
 		"1.0.dev456",
@@ -112,15 +113,11 @@ func TestVersions(t *testing.T) {
 	}
 	for _, s := range versions {
 		fn := fmt.Sprintf("%s-%s-py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", project.Name, s)
-		wni := pypi.WheelFilenameInfo{}
-		if err := wni.UnmarshalText([]byte(fn)); err != nil {
-			panic(err)
-		}
 		project.Files = append(project.Files, pypi.SimpleFile{
-			Filename:     fn,
-			FilenameInfo: wni,
+			Filename: fn,
 		})
 	}
+	project.PopulateFilenameInfos()
 
 	expected := make([]pep440.Version, 0, len(versions))
 	for _, s := range versions {
@@ -128,4 +125,44 @@ func TestVersions(t *testing.T) {
 	}
 	slices.Reverse(expected)
 	assert.Equal(t, expected, project.Versions())
+}
+
+func TestPreferredOsArchSimpleFiles(t *testing.T) {
+	p := pypi.SimpleProject{
+		Name: "test",
+	}
+	version := "1.1.1"
+	expectedPreferred := map[string]pypi.SimpleFile{
+		"darwin/amd64":  {Filename: fmt.Sprintf("%s-%s-py3-none-macosx_10_9_universal2.whl", p.Name, version)},
+		"darwin/arm64":  {Filename: fmt.Sprintf("%s-%s-py3-none-macosx_10_9_universal2.whl", p.Name, version)},
+		"linux/386":     {Filename: fmt.Sprintf("%s-%s-py3-none-manylinux_2_17_i686.manylinux2014_i686.whl", p.Name, version)},
+		"linux/amd64":   {Filename: fmt.Sprintf("%s-%s-py3-none-musllinux_1_2_x86_64.whl", p.Name, version)},
+		"linux/arm64":   {Filename: fmt.Sprintf("%s-%s-py3-none-musllinux_1_2_aarch64.whl", p.Name, version)},
+		"windows/386":   {Filename: fmt.Sprintf("%s-%s-py3-none-win32.whl", p.Name, version)},
+		"windows/amd64": {Filename: fmt.Sprintf("%s-%s-py3-none-win_amd64.whl", p.Name, version)},
+	}
+	expectedIgnored := []pypi.SimpleFile{
+		{Filename: fmt.Sprintf("%s-%s-py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", p.Name, version)},
+		{Filename: fmt.Sprintf("%s-%s-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", p.Name, version)},
+	}
+
+	for k, sf := range expectedPreferred {
+		if err := sf.FilenameInfo.UnmarshalText([]byte(sf.Filename)); err != nil {
+			panic(err)
+		}
+		expectedPreferred[k] = sf
+		p.Files = append(p.Files, sf)
+	}
+	for i, sf := range expectedIgnored {
+		if err := sf.FilenameInfo.UnmarshalText([]byte(sf.Filename)); err != nil {
+			panic(err)
+		}
+		expectedIgnored[i] = sf
+		p.Files = append(p.Files, sf)
+	}
+
+	osArchPreferred, others := p.PreferredOsArchSimpleFiles(version)
+
+	assert.Equal(t, expectedPreferred, osArchPreferred)
+	assert.Empty(t, others) // expectedIgnored NOT to be included here, but silently skipped
 }

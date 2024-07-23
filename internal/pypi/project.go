@@ -18,7 +18,6 @@ package pypi
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"path/filepath"
 	"regexp"
@@ -33,6 +32,11 @@ import (
 type SimpleProject struct {
 	Name  string       `json:"name"`
 	Files []SimpleFile `json:"files"`
+
+	// There is a "versions" array in version 1.1 of the API responses that contains only the version strings.
+	// However, we need to parse filenames of all files anyway to determine files belonging to each version,
+	// so we do not have need for the separately available ones.
+	// If we sometimes do, check the status of https://github.com/aquasecurity/go-pep440-version/pull/3
 }
 
 type Yanked string
@@ -63,7 +67,8 @@ type SimpleFile struct {
 	Hashes   SimpleFileHashes `json:"hashes"`
 	// Yanked is the reason for yanking, or empty if not yanked.
 	// This deviates from the PyPI simple API where the reason is a non-empty string when yanked, and boolean false when not.
-	Yanked       Yanked            `json:"yanked"`
+	Yanked Yanked `json:"yanked"`
+
 	FilenameInfo WheelFilenameInfo `json:"-"`
 }
 
@@ -76,9 +81,9 @@ var wheelFilenameRE = regexp.MustCompile(`^` +
 	`(?P<distribution>[^-]+)` +
 	`-(?P<version>[^-]+)` +
 	`(?:-(?P<build_tag>[0-9][^-]*))?` +
-	`-(?P<python_tag>[^.-]+(?:\.[^.-]+)*)` +
-	`-(?P<abi_tag>[^.-]+(?:\.[^.-]+)*)` +
-	`-(?P<platform_tag>[^.-]+(?:\.[^.-]+)*)` +
+	`-(?P<python_tags>[^.-]+(?:\.[^.-]+)*)` +
+	`-(?P<abi_tags>[^.-]+(?:\.[^.-]+)*)` +
+	`-(?P<platform_tags>[^.-]+(?:\.[^.-]+)*)` +
 	`\.whl$`)
 
 type WheelFilenameInfo struct {
@@ -92,10 +97,6 @@ type WheelFilenameInfo struct {
 }
 
 func (w *WheelFilenameInfo) UnmarshalText(data []byte) error {
-	if len(data) == 0 {
-		*w = WheelFilenameInfo{}
-		return nil
-	}
 	if m := wheelFilenameRE.FindStringSubmatch(string(data)); m != nil {
 		info := WheelFilenameInfo{}
 		for i, name := range wheelFilenameRE.SubexpNames() {
@@ -111,20 +112,26 @@ func (w *WheelFilenameInfo) UnmarshalText(data []byte) error {
 				}
 			case "build_tag":
 				info.BuildTag = m[i]
-			case "python_tag":
+			case "python_tags":
 				info.PythonTags = strings.Split(m[i], ".")
-			case "abi_tag":
+			case "abi_tags":
 				info.ABITags = strings.Split(m[i], ".")
-			case "platform_tag":
+			case "platform_tags":
 				info.PlatformTags = strings.Split(m[i], ".")
 			default:
-				panic("unhandled subexpression name: " + name)
+				panic("wrun: BUG : unhandled subexpression name: " + name)
 			}
 		}
 		*w = info
 		return nil
 	}
-	return errors.New("unparseable wheel filename")
+	return fmt.Errorf("unparseable wheel filename: %q", string(data))
+}
+
+func (p *SimpleProject) PopulateFilenameInfos() {
+	for i := range p.Files {
+		_ = p.Files[i].FilenameInfo.UnmarshalText([]byte(p.Files[i].Filename))
+	}
 }
 
 // Versions returns versions of the project, sorted in newest to oldest order.
@@ -149,60 +156,63 @@ func (p SimpleProject) Versions() []pep440.Version {
 	return pepVersions
 }
 
-var osArchPlatformTags = map[string]string{
-	"darwin/amd64":  "macosx_*_x86_64",
-	"darwin/arm64":  "macosx_*_arm64",
-	"linux/386":     "musllinux_*_i686",
-	"linux/amd64":   "musllinux_*_x86_64",
-	"linux/arm":     "musllinux_*_armv7l",
-	"linux/arm64":   "musllinux_*_aarch64",
-	"windows/386":   "win32",
-	"windows/amd64": "win_amd64",
-	"windows/arm64": "win_arm64",
+var osArchPlatformTags = []map[string]string{
+	{
+		"darwin/amd64":  "macosx_*_x86_64",
+		"darwin/arm64":  "macosx_*_arm64",
+		"linux/386":     "musllinux_*_i686",
+		"linux/amd64":   "musllinux_*_x86_64",
+		"linux/arm":     "musllinux_*_armv7l",
+		"linux/arm64":   "musllinux_*_aarch64",
+		"windows/386":   "win32",
+		"windows/amd64": "win_amd64",
+		"windows/arm64": "win_arm64",
+	},
+	{
+		"darwin/amd64":  "macosx_*_universal2",
+		"darwin/arm64":  "macosx_*_universal2",
+		"linux/386":     "manylinux*_i686",
+		"linux/amd64":   "manylinux*_x86_64",
+		"linux/arm":     "manylinux*_armv7l",
+		"linux/arm64":   "manylinux*_aarch64",
+		"linux/ppc64":   "manylinux*_ppc64",
+		"linux/ppc64le": "manylinux*_ppc64le",
+		"linux/s390x":   "manylinux*_s390x",
+	},
 }
 
-var osArchSecondaryPlatformTags = map[string]string{
-	"linux/386":     "manylinux*_i686",
-	"linux/amd64":   "manylinux*_x86_64",
-	"linux/arm":     "manylinux*_armv7l",
-	"linux/arm64":   "manylinux*_aarch64",
-	"linux/ppc64":   "manylinux*_ppc64",
-	"linux/ppc64le": "manylinux*_ppc64le",
-	"linux/s390x":   "manylinux*_s390x",
-}
-
-func (p SimpleProject) PreferredOsArchSimpleFiles(version string) (hits map[string]SimpleFile, misses []SimpleFile) {
-	hits = make(map[string]SimpleFile, len(p.Files))
-files:
+func (p SimpleProject) PreferredOsArchSimpleFiles(version string) (osArchPreferred map[string]SimpleFile, others []SimpleFile) {
+	osArchPreferred = make(map[string]SimpleFile, len(p.Files))
 	for _, file := range p.Files {
+		if file.Yanked != "" {
+			continue
+		}
+
 		// TODO make this happen on JSON unmarshal or smth
 		if err := file.FilenameInfo.UnmarshalText([]byte(file.Filename)); err != nil {
 			continue
 		}
-		if file.Yanked != "" || file.FilenameInfo.Version.String() != version {
+		if file.FilenameInfo.Version.String() != version {
 			continue
 		}
 
-		for osArch, pattern := range osArchPlatformTags {
-			for _, pt := range file.FilenameInfo.PlatformTags {
-				if m, err := filepath.Match(pattern, pt); err == nil && m {
-					hits[osArch] = file
-					continue files
-				}
-			}
-		}
-		for osArch, pattern := range osArchSecondaryPlatformTags {
-			// Try match first before existing osArch lookup for proper tracking of misses
-			for _, pt := range file.FilenameInfo.PlatformTags {
-				if m, err := filepath.Match(pattern, pt); err == nil && m {
-					if _, found := hits[osArch]; !found {
-						hits[osArch] = file
+		gotMatch := false
+		for _, oapt := range osArchPlatformTags {
+			for osArch, pattern := range oapt {
+				for _, pt := range file.FilenameInfo.PlatformTags {
+					// Try match first before existing osArch lookup for proper tracking of others
+					if m, err := filepath.Match(pattern, pt); err == nil && m {
+						if _, found := osArchPreferred[osArch]; !found {
+							osArchPreferred[osArch] = file
+						}
+						gotMatch = true
 					}
-					continue files
 				}
 			}
 		}
-		misses = append(misses, file)
+		if !gotMatch {
+			others = append(others, file)
+		}
 	}
-	return hits, misses
+	return osArchPreferred, others
 }

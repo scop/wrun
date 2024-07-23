@@ -56,7 +56,7 @@ const (
 	levelInfo  level = "INFO"
 )
 
-var levelFormat = fmt.Sprintf("%%%ds", len(levelInfo))
+var levelFormat = fmt.Sprintf("-%%%ds", len(levelInfo))
 
 func (w *Wrun) logFormat(lvl level, format string, args ...any) string {
 	s := fmt.Sprintf(w.ProgName+": "+fmt.Sprintf(levelFormat, lvl)+": "+format, args...)
