@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"slices"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -87,48 +88,50 @@ func runGenerateTerraform(w *Wrun, args []string) error {
 		w.LogWarn("no matching pattern for %q, ignoring", ce)
 	}
 
+	// Process os/arch entries sorted by os/arch for stable output between runs
+	osArchs := make([]string, 0, len(osArchEntries))
+	for osArch := range osArchEntries {
+		osArchs = append(osArchs, osArch)
+	}
+	slices.Sort(osArchs)
+
+	exePaths := make(map[string]string, len(osArchs))
+
 	hn, err := util.HashByName(util.HashName(crypto.SHA256))
 	if err != nil {
 		return err
 	}
 	hsh := hn.New()
-	for osArch, ces := range osArchEntries {
-		candidateFound := false
-		matchFound := false
-		// We should not have any empty slices, and the filename is the same for all "ces" entries
-		u := baseURL + "/" + url.PathEscape(ces[0].Filename)
-		for _, ce := range ces {
-			if len(ce.Digest) != hsh.Size() {
-				w.LogInfo("digest candidate for %q skipped due to length mismatch: %x, have %x", u, ce.Digest, hsh.Size())
-			} else {
-				candidateFound = true
-				resp, err := w.HTTPGet(u)
-				if err != nil {
-					return err
-				}
-				if err = w.Download(resp, nil, hsh, nil); err != nil {
-					return err
-				}
-				digest := hsh.Sum(nil)
-				hsh.Reset()
-				if bytes.Equal(digest, ce.Digest) {
-					w.LogInfo("digest match for %q: %x", u, ce.Digest)
-					matchFound = true
-					fmt.Printf("--url %s=%s#sha256-%x\n", osArch, u, digest)
-					break
-				} else {
-					w.LogInfo("digest candidate for %q mismatch: expected %x, have %x", u, ce.Digest, digest)
-				}
-			}
+
+	const tool = "terraform"
+	for _, osArch := range osArchs {
+		var toolExe string
+		if strings.HasPrefix(osArch, "windows/") {
+			toolExe = tool + ".exe"
+		} else {
+			toolExe = tool
 		}
-		if !candidateFound {
-			w.LogWarn("no upstream digest for %q", u)
-		} else if !matchFound {
-			return fmt.Errorf("no digest match for %q", u)
+
+		entries := osArchEntries[osArch]
+		for _, e := range entries {
+			u := baseURL + "/" + url.PathEscape(e.Filename)
+
+			var digest []byte
+			var exePath string
+			if digest, exePath, err = processGenerateAsset(w, u, toolExe, hsh, checksums); err != nil {
+				return err
+			}
+
+			if exePath != "" {
+				exePaths[osArch] = exePath
+			}
+			fmt.Printf("--url %s=%s#sha256-%x\n", osArch, u, digest)
 		}
 	}
 
-	// TODO archive exe stuff
+	for _, ep := range generateExePathArgs(exePaths) {
+		fmt.Printf("--archive-exe-path %s\n", ep)
+	}
 
 	return nil
 }

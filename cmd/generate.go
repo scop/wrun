@@ -18,11 +18,16 @@ package cmd
 
 import (
 	"archive/tar"
+	"bytes"
 	"fmt"
+	"hash"
+	"net/url"
+	"path"
 	"strings"
 
 	"github.com/klauspost/compress/zip"
 	"github.com/mholt/archiver/v3"
+	util "github.com/scop/wrun/internal"
 	"github.com/scop/wrun/internal/files"
 	"github.com/spf13/cobra"
 )
@@ -51,6 +56,66 @@ func generateCommand(w *Wrun) *cobra.Command {
 		generateVacuumCommand(w),
 	)
 	return genCmd
+}
+
+func processGenerateAsset(w *Wrun, ur, tool string, hsh hash.Hash, checksums util.Checksums) (digest []byte, exePath string, err error) {
+	resp, err := w.HTTPGet(ur)
+	if err != nil {
+		return nil, "", err
+	}
+
+	tmpf, cleanUpTempFile, err := w.SetUpTempfile(ur, "")
+	if err != nil {
+		return nil, "", fmt.Errorf("set up tempfile: %w", err) // TODO think this through
+	}
+
+	if err = w.Download(resp, tmpf, hsh, nil); err != nil {
+		cleanUpTempFile()
+		return nil, "", fmt.Errorf("download: %w", err)
+	}
+	digest = hsh.Sum(nil)
+	hsh.Reset()
+
+	exePath, err = findToolInArchive(tmpf.Name(), tool)
+	cleanUpTempFile()
+	if err != nil {
+		if !strings.Contains(err.Error(), "format unrecognized by filename") { // No better way as of archiver 3.5.1
+			w.LogError("find tool in archive: %v", err) // TODO think this through, continue or fail?
+		}
+	}
+
+	if len(checksums.Entries) != 0 {
+		u, err := url.Parse(ur)
+		if err != nil {
+			return nil, "", fmt.Errorf("parse download URL %q for digest verification: %w", ur, err)
+		}
+		fn := path.Base(u.Path)
+		candidateFound := false
+		matchFound := false
+		if cs := checksums.Get(fn); cs != nil {
+			for _, ce := range cs {
+				if len(ce.Digest) == len(digest) {
+					candidateFound = true
+					if bytes.Equal(ce.Digest, digest) {
+						w.LogInfo("digest match for %q: %x", ur, ce.Digest)
+						matchFound = true
+						break
+					} else {
+						w.LogInfo("digest candidate for %q mismatch: expected %x, have %x", ur, ce.Digest, digest)
+					}
+				} else {
+					w.LogInfo("digest candidate for %q skipped due to length mismatch: %x, have %x", ur, ce.Digest, digest)
+				}
+			}
+		}
+		if !candidateFound {
+			w.LogWarn("no upstream digest for %q", ur)
+		} else if !matchFound {
+			return nil, "", fmt.Errorf("no digest match for %q", ur)
+		}
+	}
+
+	return digest, exePath, nil
 }
 
 func findToolInArchive(filename, toolExe string) (path string, err error) {

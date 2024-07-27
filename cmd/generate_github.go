@@ -23,7 +23,6 @@ import (
 	"fmt"
 	"net/url"
 	"os"
-	"path"
 	"regexp"
 	"slices"
 	"strings"
@@ -164,9 +163,8 @@ func runGenerateGitHubProject(w *Wrun, owner, project, tool string, args []strin
 		}
 		buf.Reset()
 	}
-	haveChecksums := len(checksums.Entries) != 0
 
-	// Process os/arch assets sorted by os/arch for stable output
+	// Process os/arch assets sorted by os/arch for stable output between runs
 	osArchs := make([]string, 0, len(osArchAssets))
 	for osArch := range osArchAssets {
 		osArchs = append(osArchs, osArch)
@@ -184,69 +182,21 @@ func runGenerateGitHubProject(w *Wrun, owner, project, tool string, args []strin
 			return fmt.Errorf("asset with download URL %q state %q, expected %q", asset.BrowserDownloadURL, asset.State, github.ReleaseAssetStateUploaded)
 		}
 
-		resp, err := w.HTTPGet(asset.BrowserDownloadURL)
-		if err != nil {
+		var digest []byte
+		var exePath string
+		var toolExe string
+		if strings.HasPrefix(osArch, "windows/") {
+			toolExe = tool + ".exe"
+		} else {
+			toolExe = tool
+		}
+		if digest, exePath, err = processGenerateAsset(w, asset.BrowserDownloadURL, toolExe, hsh, checksums); err != nil {
 			return err
 		}
 
-		tmpf, cleanUpTempFile, err := w.SetUpTempfile(asset.BrowserDownloadURL, "")
-		if err != nil {
-			return fmt.Errorf("set up tempfile: %w", err) // TODO think this through
-		}
-
-		if err = w.Download(resp, tmpf, hsh, nil); err != nil {
-			cleanUpTempFile()
-			return fmt.Errorf("download: %w", err)
-		}
-		digest := hsh.Sum(nil)
-		hsh.Reset()
-
-		toolExe := tool
-		if strings.HasPrefix(osArch, "windows/") {
-			toolExe += ".exe"
-		}
-		exePath, err := findToolInArchive(tmpf.Name(), toolExe)
-		cleanUpTempFile()
-		if err != nil {
-			if !strings.Contains(err.Error(), "format unrecognized by filename") { // No better way as of archiver 3.5.1
-				w.LogError("find tool in archive: %v", err) // TODO think this through, continue or fail?
-			}
-		} else {
+		if exePath != "" {
 			exePaths[osArch] = exePath
 		}
-
-		// TODO refactor this for general reuse, e.g. in generate_terraform
-		if haveChecksums {
-			u, err := url.Parse(asset.BrowserDownloadURL)
-			if err != nil {
-				return fmt.Errorf("parse asset download URL %q for digest verification: %w", asset.BrowserDownloadURL, err)
-			}
-			fn := path.Base(u.Path)
-			candidateFound := false
-			matchFound := false
-			if cs := checksums.Get(fn); cs != nil {
-				for _, ce := range cs {
-					if len(ce.Digest) == len(digest) {
-						candidateFound = true
-						if bytes.Equal(ce.Digest, digest) {
-							w.LogInfo("digest match for %q: %x", asset.BrowserDownloadURL, ce.Digest)
-							matchFound = true
-							break
-						} else {
-							w.LogInfo("digest candidate for %q mismatch: expected %x, have %x", asset.BrowserDownloadURL, ce.Digest, digest)
-						}
-					} else {
-						w.LogInfo("digest candidate for %q skipped due to length mismatch: %x, have %x", asset.BrowserDownloadURL, ce.Digest, digest)
-					}
-				}
-			}
-			if !candidateFound {
-				w.LogWarn("no upstream digest for %q", asset.BrowserDownloadURL)
-			} else if !matchFound {
-				return fmt.Errorf("no digest match for %q", asset.BrowserDownloadURL)
-			}
-		}
-
 		fmt.Printf("--url %s=%s#sha256-%x\n", osArch, asset.BrowserDownloadURL, digest)
 	}
 
