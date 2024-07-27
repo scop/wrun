@@ -132,7 +132,7 @@ func TestVersions(t *testing.T) {
 		expected = append(expected, pep440.MustParse(s))
 	}
 	slices.Reverse(expected)
-	assert.Equal(t, expected, project.Versions())
+	assert.Equal(t, expected, project.ValidVersions())
 }
 
 func TestPreferredOsArchSimpleFiles(t *testing.T) {

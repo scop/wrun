@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"path/filepath"
+	"reflect"
 	"regexp"
 	"slices"
 	"strings"
@@ -176,13 +177,18 @@ func (f *FilenameInfo) UnmarshalText(data []byte) error {
 	return fmt.Errorf("unparseable filename: %q", string(data))
 }
 
-// Versions returns versions of the project, sorted in newest to oldest order.
-// Non-PEP-440 versions are ignored.
-func (p SimpleProject) Versions() []pep440.Version {
+// ValidVersions returns versions of the project, sorted in newest to oldest order.
+// Non-PEP-440 versions are ignored, as are ones containing no files or yanked files only.
+func (p SimpleProject) ValidVersions() []pep440.Version {
 	pvMap := make(map[string]pep440.Version, len(p.Files)/2)
 	for _, file := range p.Files {
+		if file.Yanked == "" {
+			continue
+		}
 		version := file.Filename.Info.Version
-		pvMap[version.String()] = version
+		if !reflect.ValueOf(version).IsZero() { // https://github.com/aquasecurity/go-pep440-version/pull/4
+			pvMap[version.String()] = version
+		}
 	}
 	pepVersions := make([]pep440.Version, 0, len(pvMap))
 	for _, pv := range pvMap {
