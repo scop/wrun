@@ -1,9 +1,25 @@
-package util_test
+// Copyright 2024 Ville Skyttä
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+// SPDX-License-Identifier: Apache-2.0
+
+package checksums_test
 
 import (
 	"testing"
 
-	util "github.com/scop/wrun/internal"
+	util "github.com/scop/wrun/internal/checksums"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -19,7 +35,7 @@ func TestChecksums_UnmarshalText(t *testing.T) {
 			input: []string{"ff01  filename.txt\nff02 *binfile.bin\n\nff03 one space\n# This is a comment\n", "This is an invalid line\nff04 \t various spaces, trailing preserved \nAnother invalid line"},
 			expected: util.Checksums{
 				InvalidLines: 2,
-				Entries: []util.ChecksumEntry{
+				Entries: []util.Entry{
 					{Digest: []byte{0xff, 0x01}, BinaryMode: false, Filename: "filename.txt"},
 					{Digest: []byte{0xff, 0x02}, BinaryMode: true, Filename: "binfile.bin"},
 					{Digest: []byte{0xff, 0x03}, BinaryMode: false, Filename: "one space"},

@@ -27,7 +27,7 @@ import (
 
 	"github.com/klauspost/compress/zip"
 	"github.com/mholt/archiver/v3"
-	util "github.com/scop/wrun/internal"
+	"github.com/scop/wrun/internal/checksums"
 	"github.com/scop/wrun/internal/files"
 	"github.com/spf13/cobra"
 )
@@ -58,7 +58,7 @@ func generateCommand(w *Wrun) *cobra.Command {
 	return genCmd
 }
 
-func processGenerateAsset(w *Wrun, ur, tool string, hsh hash.Hash, checksums util.Checksums) (digest []byte, exePath string, err error) {
+func processGenerateAsset(w *Wrun, ur, tool string, hsh hash.Hash, csums checksums.Checksums) (digest []byte, exePath string, err error) {
 	resp, err := w.HTTPGet(ur)
 	if err != nil {
 		return nil, "", err
@@ -84,7 +84,7 @@ func processGenerateAsset(w *Wrun, ur, tool string, hsh hash.Hash, checksums uti
 		}
 	}
 
-	if len(checksums.Entries) != 0 {
+	if len(csums.Entries) != 0 {
 		u, err := url.Parse(ur)
 		if err != nil {
 			return nil, "", fmt.Errorf("parse download URL %q for digest verification: %w", ur, err)
@@ -92,7 +92,7 @@ func processGenerateAsset(w *Wrun, ur, tool string, hsh hash.Hash, checksums uti
 		fn := path.Base(u.Path)
 		candidateFound := false
 		matchFound := false
-		if cs := checksums.Get(fn); cs != nil {
+		if cs := csums.Get(fn); cs != nil {
 			for _, ce := range cs {
 				if len(ce.Digest) == len(digest) {
 					candidateFound = true

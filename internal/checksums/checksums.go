@@ -14,7 +14,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-package util
+package checksums
 
 import (
 	"bufio"
@@ -25,11 +25,11 @@ import (
 )
 
 type Checksums struct {
-	Entries      []ChecksumEntry
+	Entries      []Entry
 	InvalidLines uint
 }
 
-type ChecksumEntry struct {
+type Entry struct {
 	Digest     []byte
 	BinaryMode bool
 	Filename   string
@@ -60,7 +60,7 @@ func (c *Checksums) UnmarshalText(text []byte) error {
 			c.InvalidLines++
 			continue
 		}
-		entry := ChecksumEntry{
+		entry := Entry{
 			Digest: digest,
 		}
 		filename := strings.TrimLeft(line[ix:], separators)
@@ -97,8 +97,8 @@ func (c *Checksums) MarshalText() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func (c *Checksums) Get(filename string) []ChecksumEntry {
-	var got []ChecksumEntry
+func (c *Checksums) Get(filename string) []Entry {
+	var got []Entry
 	for _, entry := range c.Entries {
 		if filename == entry.Filename {
 			got = append(got, entry)

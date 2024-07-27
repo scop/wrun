@@ -27,7 +27,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	util "github.com/scop/wrun/internal"
+	"github.com/scop/wrun/internal/checksums"
 	"github.com/scop/wrun/internal/files"
 )
 
@@ -63,7 +63,7 @@ func runGenerateTerraform(w *Wrun, args []string) error {
 
 	baseURL := "https://releases.hashicorp.com/terraform/" + url.PathEscape(version)
 
-	var checksums util.Checksums
+	var csums checksums.Checksums
 	var buf bytes.Buffer
 	csURL := baseURL + "/terraform_" + url.PathEscape(version) + "_SHA256SUMS"
 	if resp, err := w.HTTPGet(csURL); err != nil {
@@ -71,16 +71,16 @@ func runGenerateTerraform(w *Wrun, args []string) error {
 	} else if err := w.Download(resp, &buf, nil, nil); err != nil {
 		return fmt.Errorf("download: %w", err)
 	}
-	if err := checksums.UnmarshalText(buf.Bytes()); err != nil {
+	if err := csums.UnmarshalText(buf.Bytes()); err != nil {
 		w.LogWarn("unmarshal checksums from %q: %v", csURL, err)
 	}
 
-	fileEntries := make(map[string][]util.ChecksumEntry, len(checksums.Entries))
-	for _, ce := range checksums.Entries {
+	fileEntries := make(map[string][]checksums.Entry, len(csums.Entries))
+	for _, ce := range csums.Entries {
 		if ces, found := fileEntries[ce.Filename]; found {
 			fileEntries[ce.Filename] = append(ces, ce)
 		} else {
-			fileEntries[ce.Filename] = []util.ChecksumEntry{ce}
+			fileEntries[ce.Filename] = []checksums.Entry{ce}
 		}
 	}
 	osArchEntries, _, otherEntries := files.Categorize(fileEntries, nil)
@@ -97,13 +97,9 @@ func runGenerateTerraform(w *Wrun, args []string) error {
 
 	exePaths := make(map[string]string, len(osArchs))
 
-	hn, err := util.HashByName(util.HashName(crypto.SHA256))
-	if err != nil {
-		return err
-	}
-	hsh := hn.New()
-
 	const tool = "terraform"
+	hsh := crypto.SHA256.New()
+
 	for _, osArch := range osArchs {
 		var toolExe string
 		if strings.HasPrefix(osArch, "windows/") {
@@ -118,7 +114,8 @@ func runGenerateTerraform(w *Wrun, args []string) error {
 
 			var digest []byte
 			var exePath string
-			if digest, exePath, err = processGenerateAsset(w, u, toolExe, hsh, checksums); err != nil {
+			var err error
+			if digest, exePath, err = processGenerateAsset(w, u, toolExe, hsh, csums); err != nil {
 				return err
 			}
 

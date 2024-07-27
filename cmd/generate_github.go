@@ -27,7 +27,7 @@ import (
 	"slices"
 	"strings"
 
-	util "github.com/scop/wrun/internal"
+	"github.com/scop/wrun/internal/checksums"
 	"github.com/scop/wrun/internal/github"
 	"github.com/spf13/cobra"
 )
@@ -150,7 +150,7 @@ func runGenerateGitHubProject(w *Wrun, owner, project, tool string, args []strin
 	for _, asset := range unknownAssets {
 		w.LogWarn("no matching pattern for %q, ignoring", asset.BrowserDownloadURL)
 	}
-	var checksums util.Checksums
+	var csums checksums.Checksums
 	var buf bytes.Buffer
 	for _, asset := range sumsAssets {
 		if resp, err := w.HTTPGet(asset.BrowserDownloadURL); err != nil {
@@ -158,7 +158,7 @@ func runGenerateGitHubProject(w *Wrun, owner, project, tool string, args []strin
 		} else if err := w.Download(resp, &buf, nil, nil); err != nil {
 			return fmt.Errorf("download: %w", err)
 		}
-		if err = checksums.UnmarshalText(buf.Bytes()); err != nil {
+		if err = csums.UnmarshalText(buf.Bytes()); err != nil {
 			w.LogWarn("unmarshal checksums from %q: %v", asset.BrowserDownloadURL, err)
 		}
 		buf.Reset()
@@ -173,8 +173,7 @@ func runGenerateGitHubProject(w *Wrun, owner, project, tool string, args []strin
 
 	exePaths := make(map[string]string, len(osArchs))
 
-	hshType := crypto.SHA256
-	hsh := hshType.New()
+	hsh := crypto.SHA256.New()
 	for _, osArch := range osArchs {
 		asset := osArchAssets[osArch]
 		if asset.State != github.ReleaseAssetStateUploaded {
@@ -190,7 +189,7 @@ func runGenerateGitHubProject(w *Wrun, owner, project, tool string, args []strin
 		} else {
 			toolExe = tool
 		}
-		if digest, exePath, err = processGenerateAsset(w, asset.BrowserDownloadURL, toolExe, hsh, checksums); err != nil {
+		if digest, exePath, err = processGenerateAsset(w, asset.BrowserDownloadURL, toolExe, hsh, csums); err != nil {
 			return err
 		}
 

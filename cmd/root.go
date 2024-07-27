@@ -38,8 +38,8 @@ import (
 	"github.com/mholt/archiver/v3"
 	"github.com/spf13/cobra"
 
-	wrun "github.com/scop/wrun/internal"
 	"github.com/scop/wrun/internal/files"
+	"github.com/scop/wrun/internal/hashes"
 )
 
 var (
@@ -122,7 +122,7 @@ func urlDir(u *url.URL, h crypto.Hash, digest []byte) string {
 	if h == 0 {
 		segs = append(segs, cacheDirDigestPlaceholder)
 	} else {
-		segs = append(segs, wrun.HashName(h)+"-"+hex.EncodeToString(digest))
+		segs = append(segs, hashes.HashName(h)+"-"+hex.EncodeToString(digest))
 	}
 	return filepath.Join(segs...)
 }
@@ -325,7 +325,7 @@ func runRoot(w *Wrun, cfg *rootCmdConfig, args []string) exitStatus {
 
 	// Set up hashing
 
-	hshType, expectedDigest, err := wrun.ParseHashFragment(ur.Fragment)
+	hshType, expectedDigest, err := hashes.ParseHashFragment(ur.Fragment)
 	if err != nil {
 		w.LogError("parse hash fragment: %v", err)
 		return esError

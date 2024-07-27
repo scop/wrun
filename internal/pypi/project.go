@@ -182,7 +182,7 @@ func (f *FilenameInfo) UnmarshalText(data []byte) error {
 func (p SimpleProject) ValidVersions() []pep440.Version {
 	pvMap := make(map[string]pep440.Version, len(p.Files)/2)
 	for _, file := range p.Files {
-		if file.Yanked == "" {
+		if file.Yanked != "" {
 			continue
 		}
 		version := file.Filename.Info.Version
