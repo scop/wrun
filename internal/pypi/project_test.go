@@ -29,46 +29,57 @@ import (
 func TestUnmarshalText(t *testing.T) {
 	tests := []struct {
 		input    string
-		expected pypi.WheelFilenameInfo
+		expected pypi.FilenameInfo
 		errorMsg string
 	}{
 		{
 			input: "committed-1.0.20-py3-none-win32.whl",
-			expected: pypi.WheelFilenameInfo{
-				Distribution: "committed",
-				Version:      pep440.MustParse("1.0.20"),
-				PythonTags:   []string{"py3"},
-				ABITags:      []string{"none"},
-				PlatformTags: []string{"win32"},
+			expected: pypi.FilenameInfo{
+				Distribution:         "committed",
+				Version:              pep440.MustParse("1.0.20"),
+				PythonTags:           []string{"py3"},
+				ABITags:              []string{"none"},
+				PlatformTags:         []string{"win32"},
+				IsBinaryDistribution: true,
 			},
 			errorMsg: "",
 		},
 		{
 			input: "shellcheck_py-0.10.0.1-py2.py3-none-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
-			expected: pypi.WheelFilenameInfo{
-				Distribution: "shellcheck_py",
-				Version:      pep440.MustParse("0.10.0.1"),
-				PythonTags:   []string{"py2", "py3"},
-				ABITags:      []string{"none"},
-				PlatformTags: []string{"manylinux_2_5_x86_64", "manylinux1_x86_64", "manylinux_2_17_x86_64", "manylinux2014_x86_64"},
+			expected: pypi.FilenameInfo{
+				Distribution:         "shellcheck_py",
+				Version:              pep440.MustParse("0.10.0.1"),
+				PythonTags:           []string{"py2", "py3"},
+				ABITags:              []string{"none"},
+				PlatformTags:         []string{"manylinux_2_5_x86_64", "manylinux1_x86_64", "manylinux_2_17_x86_64", "manylinux2014_x86_64"},
+				IsBinaryDistribution: true,
 			},
 			errorMsg: "",
 		},
 		{
 			input:    "invalid-filename.whl",
-			expected: pypi.WheelFilenameInfo{},
-			errorMsg: "unparseable wheel filename",
+			expected: pypi.FilenameInfo{},
+			errorMsg: "unparseable filename",
+		},
+		{
+			input: "distro-1.42.42.tar.gz",
+			expected: pypi.FilenameInfo{
+				Distribution:         "distro",
+				Version:              pep440.MustParse("1.42.42"),
+				IsBinaryDistribution: false,
+			},
+			errorMsg: "",
 		},
 		{
 			input:    "",
-			expected: pypi.WheelFilenameInfo{},
-			errorMsg: "unparseable wheel filename",
+			expected: pypi.FilenameInfo{},
+			errorMsg: "unparseable filename",
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.input, func(t *testing.T) {
-			w := pypi.WheelFilenameInfo{}
+			w := pypi.FilenameInfo{}
 			err := w.UnmarshalText([]byte(test.input))
 			if test.errorMsg == "" {
 				assert.NoError(t, err)
@@ -113,11 +124,8 @@ func TestVersions(t *testing.T) {
 	}
 	for _, s := range versions {
 		fn := fmt.Sprintf("%s-%s-py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", project.Name, s)
-		project.Files = append(project.Files, pypi.SimpleFile{
-			Filename: fn,
-		})
+		project.Files = append(project.Files, pypi.SimpleFile{Filename: pypi.NewFilename(fn)})
 	}
-	project.PopulateFilenameInfos()
 
 	expected := make([]pep440.Version, 0, len(versions))
 	for _, s := range versions {
@@ -133,33 +141,23 @@ func TestPreferredOsArchSimpleFiles(t *testing.T) {
 	}
 	version := "1.1.1"
 	expectedPreferred := map[string]pypi.SimpleFile{
-		"darwin/amd64":  {Filename: fmt.Sprintf("%s-%s-py3-none-macosx_10_9_universal2.whl", p.Name, version)},
-		"darwin/arm64":  {Filename: fmt.Sprintf("%s-%s-py3-none-macosx_10_9_universal2.whl", p.Name, version)},
-		"linux/386":     {Filename: fmt.Sprintf("%s-%s-py3-none-manylinux_2_17_i686.manylinux2014_i686.whl", p.Name, version)},
-		"linux/amd64":   {Filename: fmt.Sprintf("%s-%s-py3-none-musllinux_1_2_x86_64.whl", p.Name, version)},
-		"linux/arm64":   {Filename: fmt.Sprintf("%s-%s-py3-none-musllinux_1_2_aarch64.whl", p.Name, version)},
-		"windows/386":   {Filename: fmt.Sprintf("%s-%s-py3-none-win32.whl", p.Name, version)},
-		"windows/amd64": {Filename: fmt.Sprintf("%s-%s-py3-none-win_amd64.whl", p.Name, version)},
+		"darwin/amd64":  {Filename: pypi.NewFilename(fmt.Sprintf("%s-%s-py3-none-macosx_10_9_universal2.whl", p.Name, version))},
+		"darwin/arm64":  {Filename: pypi.NewFilename(fmt.Sprintf("%s-%s-py3-none-macosx_10_9_universal2.whl", p.Name, version))},
+		"linux/386":     {Filename: pypi.NewFilename(fmt.Sprintf("%s-%s-py3-none-manylinux_2_17_i686.manylinux2014_i686.whl", p.Name, version))},
+		"linux/amd64":   {Filename: pypi.NewFilename(fmt.Sprintf("%s-%s-py3-none-musllinux_1_2_x86_64.whl", p.Name, version))},
+		"linux/arm64":   {Filename: pypi.NewFilename(fmt.Sprintf("%s-%s-py3-none-musllinux_1_2_aarch64.whl", p.Name, version))},
+		"windows/386":   {Filename: pypi.NewFilename(fmt.Sprintf("%s-%s-py3-none-win32.whl", p.Name, version))},
+		"windows/amd64": {Filename: pypi.NewFilename(fmt.Sprintf("%s-%s-py3-none-win_amd64.whl", p.Name, version))},
 	}
 	expectedIgnored := []pypi.SimpleFile{
-		{Filename: fmt.Sprintf("%s-%s-py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", p.Name, version)},
-		{Filename: fmt.Sprintf("%s-%s-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", p.Name, version)},
+		{Filename: pypi.NewFilename(fmt.Sprintf("%s-%s-py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", p.Name, version))},
+		{Filename: pypi.NewFilename(fmt.Sprintf("%s-%s-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", p.Name, version))},
 	}
 
-	for k, sf := range expectedPreferred {
-		if err := sf.FilenameInfo.UnmarshalText([]byte(sf.Filename)); err != nil {
-			panic(err)
-		}
-		expectedPreferred[k] = sf
+	for _, sf := range expectedPreferred {
 		p.Files = append(p.Files, sf)
 	}
-	for i, sf := range expectedIgnored {
-		if err := sf.FilenameInfo.UnmarshalText([]byte(sf.Filename)); err != nil {
-			panic(err)
-		}
-		expectedIgnored[i] = sf
-		p.Files = append(p.Files, sf)
-	}
+	p.Files = append(p.Files, expectedIgnored...)
 
 	osArchPreferred, others := p.PreferredOsArchSimpleFiles(version)
 

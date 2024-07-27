@@ -74,7 +74,8 @@ func preferredVersion(p pypi.SimpleProject) string {
 	versionFound := false
 	var v pep440.Version
 	for _, v = range versions {
-		// TODO check for yanked files with this version, skip if there are any
+		// TODO check for yanked files with this version, skip if there are any ... or if all are?
+		// TODO check that this version has binary distributions
 		if !v.IsPreRelease() {
 			break
 		}

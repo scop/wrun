@@ -61,15 +61,33 @@ func (y *Yanked) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+type Filename struct {
+	string
+	Info FilenameInfo
+}
+
+func NewFilename(filename string) Filename {
+	f := Filename{string: filename}
+	_ = f.Info.UnmarshalText([]byte(filename))
+	return f
+}
+
+func (f *Filename) UnmarshalJSON(data []byte) error {
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		return err
+	}
+	*f = NewFilename(s)
+	return nil
+}
+
 type SimpleFile struct {
-	Filename string           `json:"filename"`
+	Filename Filename         `json:"filename"`
 	URL      string           `json:"url"`
 	Hashes   SimpleFileHashes `json:"hashes"`
 	// Yanked is the reason for yanking, or empty if not yanked.
 	// This deviates from the PyPI simple API where the reason is a non-empty string when yanked, and boolean false when not.
 	Yanked Yanked `json:"yanked"`
-
-	FilenameInfo WheelFilenameInfo `json:"-"`
 }
 
 type SimpleFileHashes struct {
@@ -86,19 +104,29 @@ var wheelFilenameRE = regexp.MustCompile(`^` +
 	`-(?P<platform_tags>[^.-]+(?:\.[^.-]+)*)` +
 	`\.whl$`)
 
-type WheelFilenameInfo struct {
+// https://packaging.python.org/en/latest/specifications/source-distribution-format/#source-distribution-file-name
+var sdistFilenameRE = regexp.MustCompile(`^` +
+	`(?P<distribution>[^-]+)` +
+	`-(?P<version>[^-]+)` +
+	// Formats other than .tar.gz are obsolete,
+	// and I'm (scop) not sure offhand if they can be or could ever have been uploaded to PyPI in the first place,
+	// but just in case as this does not seem prone to false positives, https://docs.python.org/3.11/distutils/sourcedist.html
+	`\.(?:tar(?:\.(?:bz2|[gx]z|Z))?|zip)$`)
+
+type FilenameInfo struct {
 	Distribution string
 	Version      pep440.Version
 	BuildTag     string
 	PythonTags   []string
 	ABITags      []string
 	// https://packaging.python.org/en/latest/specifications/platform-compatibility-tags/#platform-tag
-	PlatformTags []string
+	PlatformTags         []string
+	IsBinaryDistribution bool
 }
 
-func (w *WheelFilenameInfo) UnmarshalText(data []byte) error {
+func (f *FilenameInfo) UnmarshalText(data []byte) error {
 	if m := wheelFilenameRE.FindStringSubmatch(string(data)); m != nil {
-		info := WheelFilenameInfo{}
+		info := FilenameInfo{IsBinaryDistribution: true}
 		for i, name := range wheelFilenameRE.SubexpNames() {
 			switch name {
 			case "":
@@ -119,19 +147,33 @@ func (w *WheelFilenameInfo) UnmarshalText(data []byte) error {
 			case "platform_tags":
 				info.PlatformTags = strings.Split(m[i], ".")
 			default:
-				panic("wrun: BUG : unhandled subexpression name: " + name)
+				panic("wrun: BUG : unhandled wheel subexpression name: " + name)
 			}
 		}
-		*w = info
+		*f = info
 		return nil
 	}
-	return fmt.Errorf("unparseable wheel filename: %q", string(data))
-}
-
-func (p *SimpleProject) PopulateFilenameInfos() {
-	for i := range p.Files {
-		_ = p.Files[i].FilenameInfo.UnmarshalText([]byte(p.Files[i].Filename))
+	if m := sdistFilenameRE.FindStringSubmatch(string(data)); m != nil {
+		info := FilenameInfo{IsBinaryDistribution: false}
+		for i, name := range sdistFilenameRE.SubexpNames() {
+			switch name {
+			case "":
+				// whole expression
+			case "distribution":
+				info.Distribution = m[i]
+			case "version":
+				var err error
+				if info.Version, err = pep440.Parse(m[i]); err != nil {
+					return err
+				}
+			default:
+				panic("wrun: BUG : unhandled sdist subexpression name: " + name)
+			}
+		}
+		*f = info
+		return nil
 	}
+	return fmt.Errorf("unparseable filename: %q", string(data))
 }
 
 // Versions returns versions of the project, sorted in newest to oldest order.
@@ -139,11 +181,7 @@ func (p *SimpleProject) PopulateFilenameInfos() {
 func (p SimpleProject) Versions() []pep440.Version {
 	pvMap := make(map[string]pep440.Version, len(p.Files)/2)
 	for _, file := range p.Files {
-		// TODO make this happen on JSON unmarshal or smth
-		if err := file.FilenameInfo.UnmarshalText([]byte(file.Filename)); err != nil {
-			continue
-		}
-		version := file.FilenameInfo.Version
+		version := file.Filename.Info.Version
 		pvMap[version.String()] = version
 	}
 	pepVersions := make([]pep440.Version, 0, len(pvMap))
@@ -184,22 +222,17 @@ var osArchPlatformTags = []map[string]string{
 func (p SimpleProject) PreferredOsArchSimpleFiles(version string) (osArchPreferred map[string]SimpleFile, others []SimpleFile) {
 	osArchPreferred = make(map[string]SimpleFile, len(p.Files))
 	for _, file := range p.Files {
-		if file.Yanked != "" {
+		if !file.Filename.Info.IsBinaryDistribution || file.Yanked != "" {
 			continue
 		}
-
-		// TODO make this happen on JSON unmarshal or smth
-		if err := file.FilenameInfo.UnmarshalText([]byte(file.Filename)); err != nil {
-			continue
-		}
-		if file.FilenameInfo.Version.String() != version {
+		if file.Filename.Info.Version.String() != version {
 			continue
 		}
 
 		gotMatch := false
 		for _, oapt := range osArchPlatformTags {
 			for osArch, pattern := range oapt {
-				for _, pt := range file.FilenameInfo.PlatformTags {
+				for _, pt := range file.Filename.Info.PlatformTags {
 					// Try match first before existing osArch lookup for proper tracking of others
 					if m, err := filepath.Match(pattern, pt); err == nil && m {
 						if _, found := osArchPreferred[osArch]; !found {
