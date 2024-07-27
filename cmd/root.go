@@ -239,6 +239,9 @@ Environment variables:
 	fs.StringSliceVarP(&exePathArgs, "archive-exe-path", "p", nil, "[OS/arch=]path to executable within archive matcher (separator always /, implies archive processing)")
 	pfs := rootCmd.PersistentFlags()
 	pfs.DurationVarP(&httpTimeout, "http-timeout", "t", defaultHTTPTimeout, "HTTP client timeout")
+	if err := rootCmd.RegisterFlagCompletionFunc("http-timeout", cobra.NoFileCompletions); err != nil {
+		w.LogBug("register --http-timeout completion", err)
+	}
 
 	rootCmd.AddCommand(generateCommand(w))
 

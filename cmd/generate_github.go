@@ -33,15 +33,59 @@ import (
 )
 
 func generateArbitraryGitHubProjectCommand(w *Wrun) *cobra.Command {
+	var tool string
 	genCmd := &cobra.Command{
-		Use:   "github OWNER PROJECT [TOOL [VERSION]]",
-		Short: "generate wrun command line arguments for a GitHub project",
-		Args:  cobra.RangeArgs(2, 4),
-		Run: func(_ *cobra.Command, args []string) {
-			if len(args) == 2 { // Default tool = project
-				args = append(args, args[1])
+		Use:   "github OWNER [PROJECT]",
+		Short: "generate wrun command line arguments for tool in GitHub project asset",
+		Example: strings.TrimSpace("" +
+			w.ProgName + " generate github dprint\n" +
+			w.ProgName + " generate github golangci golangci-lint\n" +
+			w.ProgName + " generate github hadolint\n" +
+			w.ProgName + " generate github mvdan sh --tool shfmt\n" +
+			w.ProgName + " generate github aquasecurity trivy\n" +
+			w.ProgName + " generate github daveshanley vacuum\n" +
+			""),
+		ValidArgsFunction: cobra.NoFileCompletions,
+		Args:              cobra.RangeArgs(1, 2),
+		Run: func(cmd *cobra.Command, args []string) {
+			if len(args) == 1 { // Default project = owner
+				args = append(args, args[0])
 			}
-			if err := runGenerateGitHubProject(w, args[0], args[1], args[2], args[3:], nil); err != nil {
+			if tool == "" {
+				tool = args[1] // Default tool = project
+			}
+			release, err := cmd.Flags().GetString("release")
+			if err != nil {
+				w.LogError("%s", err)
+				os.Exit(1)
+			}
+			if err := runGenerateGitHubProject(w, args[0], args[1], tool, release, nil); err != nil {
+				w.LogError("%s", err)
+				os.Exit(1)
+			}
+		},
+	}
+	genCmd.Flags().StringVarP(&tool, "tool", "T", "", "tool name to search within archive, defaults to project name")
+	if err := genCmd.RegisterFlagCompletionFunc("tool", cobra.NoFileCompletions); err != nil {
+		w.LogBug("register --tool completion", err)
+	}
+
+	return genCmd
+}
+
+func generateGitHubProjectCommand(w *Wrun, owner, project, tool string, osArchOverrideREs map[string]*regexp.Regexp) *cobra.Command {
+	genCmd := &cobra.Command{
+		Use:               tool,
+		Short:             "generate wrun command line arguments for " + tool,
+		ValidArgsFunction: cobra.NoFileCompletions,
+		Args:              cobra.NoArgs,
+		Run: func(cmd *cobra.Command, args []string) {
+			release, err := cmd.Flags().GetString("release")
+			if err != nil {
+				w.LogError("%s", err)
+				os.Exit(1)
+			}
+			if err := runGenerateGitHubProject(w, owner, project, tool, release, osArchOverrideREs); err != nil {
 				w.LogError("%s", err)
 				os.Exit(1)
 			}
@@ -86,22 +130,6 @@ func releaseFromGitHubAPI(w *Wrun, owner, project, version string) (github.Relea
 	return rel, nil
 }
 
-func generateGitHubProjectCommand(w *Wrun, owner, project, tool string, osArchOverrideREs map[string]*regexp.Regexp) *cobra.Command {
-	genCmd := &cobra.Command{
-		Use:   tool + " [VERSION]",
-		Short: "generate wrun command line arguments for " + tool,
-		Args:  cobra.MaximumNArgs(1),
-		Run: func(_ *cobra.Command, args []string) {
-			if err := runGenerateGitHubProject(w, owner, project, tool, args, osArchOverrideREs); err != nil {
-				w.LogError("%s", err)
-				os.Exit(1)
-			}
-		},
-	}
-
-	return genCmd
-}
-
 func preferredRelease(rels []github.Release) github.Release {
 	// TODO: we may want to check that the release contains some usable assets, too; not all do
 
@@ -129,21 +157,20 @@ func preferredRelease(rels []github.Release) github.Release {
 	return rel
 }
 
-func runGenerateGitHubProject(w *Wrun, owner, project, tool string, args []string, osArchOverrideREs map[string]*regexp.Regexp) error {
+func runGenerateGitHubProject(w *Wrun, owner, project, tool, version string, osArchOverrideREs map[string]*regexp.Regexp) error {
 	var rel github.Release
 	var err error
-	if len(args) != 0 {
-		version = args[0]
-		rel, err = releaseFromGitHubAPI(w, owner, project, version)
-		if err != nil {
-			return fmt.Errorf("get %s/%s release %s: %w", owner, project, version, err)
-		}
-	} else {
+	if version == "" {
 		rels, err := releasesFromGitHubAPI(w, owner, project)
 		if err != nil {
 			return fmt.Errorf("get %s/%s releases: %w", owner, project, err)
 		}
 		rel = preferredRelease(rels)
+	} else {
+		rel, err = releaseFromGitHubAPI(w, owner, project, version)
+		if err != nil {
+			return fmt.Errorf("get %s/%s release %s: %w", owner, project, version, err)
+		}
 	}
 
 	osArchAssets, sumsAssets, unknownAssets := rel.PreferredOsArchReleaseAssets(osArchOverrideREs)

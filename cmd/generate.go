@@ -42,19 +42,13 @@ func generateCommand(w *Wrun) *cobra.Command {
 		generateArbitraryGitHubProjectCommand(w),
 		generateArbitraryPyPIProjectCommand(w),
 		generateBlackCommand(w),
-		generateCommittedCommand(w),
-		generateDprintCommand(w),
-		generateGolangciLintCommand(w),
-		generateHadolintCommand(w),
-		generateRuffCommand(w),
 		generateShellcheckCommand(w),
-		generateShfmtCommand(w),
 		generateTerraformCommand(w),
-		generateTflintCommand(w),
-		generateTrivyommand(w),
-		generateTyposCommand(w),
-		generateVacuumCommand(w),
 	)
+	_ = genCmd.PersistentFlags().StringP("release", "r", "", "project release version, defaults to automatically selected")
+	if err := genCmd.RegisterFlagCompletionFunc("release", cobra.NoFileCompletions); err != nil {
+		w.LogBug("register --release completion", err)
+	}
 	return genCmd
 }
 

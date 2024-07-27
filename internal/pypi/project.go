@@ -223,6 +223,9 @@ var osArchPlatformTags = []map[string]string{
 		"linux/ppc64le": "manylinux*_ppc64le",
 		"linux/s390x":   "manylinux*_s390x",
 	},
+	{
+		"linux/arm": "linux_armv6l",
+	},
 }
 
 func (p SimpleProject) PreferredOsArchSimpleFiles(version string) (osArchPreferred map[string]SimpleFile, others []SimpleFile) {

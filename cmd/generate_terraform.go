@@ -33,11 +33,17 @@ import (
 
 func generateTerraformCommand(w *Wrun) *cobra.Command {
 	genCmd := &cobra.Command{
-		Use:   "terraform [VERSION]",
-		Short: "generate wrun command line arguments for terraform",
-		Args:  cobra.MaximumNArgs(1),
-		Run: func(_ *cobra.Command, args []string) {
-			if err := runGenerateTerraform(w, args); err != nil {
+		Use:               "terraform",
+		Short:             "generate wrun command line arguments for terraform",
+		ValidArgsFunction: cobra.NoFileCompletions,
+		Args:              cobra.NoArgs,
+		Run: func(cmd *cobra.Command, args []string) {
+			release, err := cmd.Flags().GetString("release")
+			if err != nil {
+				w.LogError("%s", err)
+				os.Exit(1)
+			}
+			if err := runGenerateTerraform(w, release); err != nil {
 				w.LogError("%s", err)
 				os.Exit(1)
 			}
@@ -47,11 +53,8 @@ func generateTerraformCommand(w *Wrun) *cobra.Command {
 	return genCmd
 }
 
-func runGenerateTerraform(w *Wrun, args []string) error {
-	var version string
-	if len(args) != 0 {
-		version = args[0]
-	} else {
+func runGenerateTerraform(w *Wrun, version string) error {
+	if version == "" {
 		owner, project := "hashicorp", "terraform"
 		rels, err := releasesFromGitHubAPI(w, owner, project)
 		if err != nil {

@@ -32,35 +32,35 @@ import (
 )
 
 func generateArbitraryPyPIProjectCommand(w *Wrun) *cobra.Command {
+	var tool string
 	genCmd := &cobra.Command{
-		Use:   "pypi PROJECT [TOOL [VERSION]]",
-		Short: "generate wrun command line arguments for a PyPI project",
-		Args:  cobra.RangeArgs(1, 3),
-		Run: func(_ *cobra.Command, args []string) {
-			if len(args) == 1 { // Default tool = project
-				args = append(args, args[0])
+		Use:   "pypi PROJECT",
+		Short: "generate wrun command line arguments for tool in PyPI project wrapper wheel",
+		Example: strings.TrimSpace("" +
+			w.ProgName + " generate pypi committed\n" +
+			w.ProgName + " generate pypi ruff\n" +
+			w.ProgName + " generate pypi typos\n" +
+			""),
+		ValidArgsFunction: cobra.NoFileCompletions,
+		Args:              cobra.ExactArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			if tool == "" {
+				tool = args[0] // Default tool = project name
 			}
-			if err := runGeneratePyPIProject(w, args[0], args[1], args[2:]); err != nil {
+			release, err := cmd.Flags().GetString("release")
+			if err != nil {
+				w.LogError("%s", err)
+				os.Exit(1)
+			}
+			if err := runGeneratePyPIProject(w, args[0], tool, release); err != nil {
 				w.LogError("%s", err)
 				os.Exit(1)
 			}
 		},
 	}
-
-	return genCmd
-}
-
-func generatePyPIProjectCommand(w *Wrun, project, tool string) *cobra.Command {
-	genCmd := &cobra.Command{
-		Use:   tool + " [VERSION]",
-		Short: "generate wrun command line arguments for " + tool,
-		Args:  cobra.MaximumNArgs(1),
-		Run: func(_ *cobra.Command, args []string) {
-			if err := runGeneratePyPIProject(w, project, tool, args); err != nil {
-				w.LogError("%s", err)
-				os.Exit(1)
-			}
-		},
+	genCmd.Flags().StringVarP(&tool, "tool", "T", "", "tool name to search within archive, defaults to project name")
+	if err := genCmd.RegisterFlagCompletionFunc("tool", cobra.NoFileCompletions); err != nil {
+		w.LogBug("register --tool completion", err)
 	}
 
 	return genCmd
@@ -85,7 +85,7 @@ func preferredVersion(p pypi.SimpleProject) string {
 	return v.String()
 }
 
-func runGeneratePyPIProject(w *Wrun, project, tool string, args []string) error {
+func runGeneratePyPIProject(w *Wrun, project, tool string, version string) error {
 	url := fmt.Sprintf("https://pypi.org/simple/%s/", url.PathEscape(project))
 	resp, err := w.HTTPGet(url, "Accept:application/vnd.pypi.simple.v1+json")
 	if err != nil {
@@ -100,11 +100,10 @@ func runGeneratePyPIProject(w *Wrun, project, tool string, args []string) error 
 		return fmt.Errorf("unmarshal project from %s: %w", url, err)
 	}
 
-	var version string
-	if len(args) != 0 {
-		version = strings.TrimPrefix(args[0], "v")
-	} else {
+	if version == "" {
 		version = preferredVersion(p)
+	} else {
+		version = strings.TrimPrefix(version, "v")
 	}
 
 	osArchFiles, otherFiles := p.PreferredOsArchSimpleFiles(version)
