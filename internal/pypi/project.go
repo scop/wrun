@@ -231,10 +231,7 @@ var osArchPlatformTags = []map[string]string{
 func (p SimpleProject) PreferredOsArchSimpleFiles(version string) (osArchPreferred map[string]SimpleFile, others []SimpleFile) {
 	osArchPreferred = make(map[string]SimpleFile, len(p.Files))
 	for _, file := range p.Files {
-		if !file.Filename.Info.IsBinaryDistribution || file.Yanked != "" {
-			continue
-		}
-		if file.Filename.Info.Version.String() != version {
+		if !file.Filename.Info.IsBinaryDistribution || file.Yanked != "" || file.Filename.Info.Version.String() != version {
 			continue
 		}
 

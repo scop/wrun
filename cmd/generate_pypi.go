@@ -32,7 +32,7 @@ import (
 )
 
 func generateArbitraryPyPIProjectCommand(w *Wrun) *cobra.Command {
-	var tool string
+	var tool, release string
 	genCmd := &cobra.Command{
 		Use:   "pypi PROJECT",
 		Short: "generate wrun command line arguments for tool in PyPI project wrapper wheel",
@@ -47,11 +47,6 @@ func generateArbitraryPyPIProjectCommand(w *Wrun) *cobra.Command {
 			if tool == "" {
 				tool = args[0] // Default tool = project name
 			}
-			release, err := cmd.Flags().GetString("release")
-			if err != nil {
-				w.LogError("%s", err)
-				os.Exit(1)
-			}
 			if err := runGeneratePyPIProject(w, args[0], tool, release); err != nil {
 				w.LogError("%s", err)
 				os.Exit(1)
@@ -60,10 +55,32 @@ func generateArbitraryPyPIProjectCommand(w *Wrun) *cobra.Command {
 	}
 	genCmd.Flags().StringVarP(&tool, "tool", "T", "", "tool name to search within archive, defaults to project name")
 	if err := genCmd.RegisterFlagCompletionFunc("tool", cobra.NoFileCompletions); err != nil {
-		w.LogBug("register --tool completion", err)
+		w.LogBug("register --tool completion: %s", err)
+	}
+	genCmd.Flags().StringVarP(&tool, "release", "r", "", "project release version, defaults to automatically selected")
+	if err := genCmd.RegisterFlagCompletionFunc("release", pypiVersionCompleter(w)); err != nil {
+		w.LogBug("register --release completion: %s", err)
 	}
 
 	return genCmd
+}
+
+func pypiVersionCompleter(w *Wrun) func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	return func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		p, err := getPyPIProject(w, args[0])
+		if err != nil {
+			return nil, cobra.ShellCompDirectiveError
+		}
+		versions := p.ValidVersions()
+		ret := make([]string, 0, len(versions))
+		for _, v := range versions {
+			vs := v.String()
+			if strings.HasPrefix(vs, toComplete) {
+				ret = append(ret, vs)
+			}
+		}
+		return ret, cobra.ShellCompDirectiveNoFileComp
+	}
 }
 
 func preferredVersion(p pypi.SimpleProject) string {
@@ -85,11 +102,11 @@ func preferredVersion(p pypi.SimpleProject) string {
 	return v.String()
 }
 
-func runGeneratePyPIProject(w *Wrun, project, tool string, version string) error {
+func getPyPIProject(w *Wrun, project string) (*pypi.SimpleProject, error) {
 	url := fmt.Sprintf("https://pypi.org/simple/%s/", url.PathEscape(project))
 	resp, err := w.HTTPGet(url, "Accept:application/vnd.pypi.simple.v1+json")
 	if err != nil {
-		return fmt.Errorf("get %s versions: %w", project, err)
+		return nil, fmt.Errorf("get %s versions: %w", project, err)
 	}
 	var p pypi.SimpleProject
 	err = json.NewDecoder(resp.Body).Decode(&p)
@@ -97,11 +114,19 @@ func runGeneratePyPIProject(w *Wrun, project, tool string, version string) error
 		w.LogWarn("close %s body: %v", url, cErr)
 	}
 	if err != nil {
-		return fmt.Errorf("unmarshal project from %s: %w", url, err)
+		return nil, fmt.Errorf("unmarshal project from %s: %w", url, err)
+	}
+	return &p, nil
+}
+
+func runGeneratePyPIProject(w *Wrun, project, tool string, version string) error {
+	p, err := getPyPIProject(w, project)
+	if err != nil {
+		return err
 	}
 
 	if version == "" {
-		version = preferredVersion(p)
+		version = preferredVersion(*p)
 	} else {
 		version = strings.TrimPrefix(version, "v")
 	}
@@ -136,8 +161,8 @@ func runGeneratePyPIProject(w *Wrun, project, tool string, version string) error
 			return fmt.Errorf("decode hex digest: %w", err)
 		}
 
-		// TODO skip download if skip-verify given
-		if resp, err = w.HTTPGet(pf.URL); err != nil {
+		resp, err := w.HTTPGet(pf.URL)
+		if err != nil {
 			return err
 		}
 

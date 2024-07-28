@@ -31,23 +31,28 @@ import (
 	"github.com/scop/wrun/internal/files"
 )
 
+const (
+	terraformOwner   = "hashicorp"
+	terraformProject = "terraform"
+)
+
 func generateTerraformCommand(w *Wrun) *cobra.Command {
+	var release string
 	genCmd := &cobra.Command{
 		Use:               "terraform",
 		Short:             "generate wrun command line arguments for terraform",
 		ValidArgsFunction: cobra.NoFileCompletions,
 		Args:              cobra.NoArgs,
 		Run: func(cmd *cobra.Command, args []string) {
-			release, err := cmd.Flags().GetString("release")
-			if err != nil {
-				w.LogError("%s", err)
-				os.Exit(1)
-			}
 			if err := runGenerateTerraform(w, release); err != nil {
 				w.LogError("%s", err)
 				os.Exit(1)
 			}
 		},
+	}
+	genCmd.Flags().StringVarP(&release, "release", "r", "", "project release version, defaults to automatically selected")
+	if err := genCmd.RegisterFlagCompletionFunc("release", gitHubVersionCompleter(w, terraformOwner, terraformProject)); err != nil {
+		w.LogBug("register --release completion: %s", err)
 	}
 
 	return genCmd
@@ -55,10 +60,9 @@ func generateTerraformCommand(w *Wrun) *cobra.Command {
 
 func runGenerateTerraform(w *Wrun, version string) error {
 	if version == "" {
-		owner, project := "hashicorp", "terraform"
-		rels, err := releasesFromGitHubAPI(w, owner, project)
+		rels, err := releasesFromGitHubAPI(w, terraformOwner, terraformProject)
 		if err != nil {
-			return fmt.Errorf("get %s/%s releases: %w", owner, project, err)
+			return fmt.Errorf("get %s/%s releases: %w", terraformOwner, terraformProject, err)
 		}
 		version = preferredRelease(rels).TagName
 	}

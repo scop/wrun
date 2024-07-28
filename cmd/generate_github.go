@@ -33,7 +33,7 @@ import (
 )
 
 func generateArbitraryGitHubProjectCommand(w *Wrun) *cobra.Command {
-	var tool string
+	var tool, release string
 	genCmd := &cobra.Command{
 		Use:   "github OWNER [PROJECT]",
 		Short: "generate wrun command line arguments for tool in GitHub project asset",
@@ -54,11 +54,6 @@ func generateArbitraryGitHubProjectCommand(w *Wrun) *cobra.Command {
 			if tool == "" {
 				tool = args[1] // Default tool = project
 			}
-			release, err := cmd.Flags().GetString("release")
-			if err != nil {
-				w.LogError("%s", err)
-				os.Exit(1)
-			}
 			if err := runGenerateGitHubProject(w, args[0], args[1], tool, release, nil); err != nil {
 				w.LogError("%s", err)
 				os.Exit(1)
@@ -67,42 +62,74 @@ func generateArbitraryGitHubProjectCommand(w *Wrun) *cobra.Command {
 	}
 	genCmd.Flags().StringVarP(&tool, "tool", "T", "", "tool name to search within archive, defaults to project name")
 	if err := genCmd.RegisterFlagCompletionFunc("tool", cobra.NoFileCompletions); err != nil {
-		w.LogBug("register --tool completion", err)
+		w.LogBug("register --tool completion: %v", err)
+	}
+	genCmd.Flags().StringVarP(&release, "release", "r", "", "project release version, defaults to automatically selected")
+	if err := genCmd.RegisterFlagCompletionFunc("release", gitHubVersionCompleter(w, "", "")); err != nil {
+		w.LogBug("register --release completion: %s", err)
 	}
 
 	return genCmd
 }
 
+func gitHubVersionCompleter(w *Wrun, owner, project string) func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	return func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		if owner == "" {
+			owner = args[0]
+		}
+		if project == "" {
+			project = owner
+			if project == "" && len(args) == 1 {
+				project = args[0]
+			}
+		}
+
+		releases, err := releasesFromGitHubAPI(w, owner, project)
+		if err != nil {
+			return nil, cobra.ShellCompDirectiveError
+		}
+		ret := make([]string, 0, len(releases))
+		for _, r := range releases {
+			if strings.HasPrefix(r.TagName, toComplete) {
+				ret = append(ret, r.TagName)
+			}
+		}
+		return ret, cobra.ShellCompDirectiveNoFileComp
+	}
+}
+
 func generateGitHubProjectCommand(w *Wrun, owner, project, tool string, osArchOverrideREs map[string]*regexp.Regexp) *cobra.Command {
+	var release string
 	genCmd := &cobra.Command{
 		Use:               tool,
 		Short:             "generate wrun command line arguments for " + tool,
 		ValidArgsFunction: cobra.NoFileCompletions,
 		Args:              cobra.NoArgs,
 		Run: func(cmd *cobra.Command, args []string) {
-			release, err := cmd.Flags().GetString("release")
-			if err != nil {
-				w.LogError("%s", err)
-				os.Exit(1)
-			}
 			if err := runGenerateGitHubProject(w, owner, project, tool, release, osArchOverrideREs); err != nil {
 				w.LogError("%s", err)
 				os.Exit(1)
 			}
 		},
 	}
+	genCmd.Flags().StringVarP(&release, "release", "r", "", "project release version, defaults to automatically selected")
+	if err := genCmd.RegisterFlagCompletionFunc("release", gitHubVersionCompleter(w, owner, project)); err != nil {
+		w.LogBug("register --release completion: %s", err)
+	}
 
 	return genCmd
 }
 
 func releasesFromGitHubAPI(w *Wrun, owner, project string) ([]github.Release, error) {
-	const n = 10
-	url := fmt.Sprintf("https://api.github.com/repos/%s/%s/releases?per_page=%d", url.PathEscape(owner), url.PathEscape(project), n)
+	// Note: response is paginated, apparently 30 per page, and 100 is the max it can be bumped to.
+	// Not really a problem for version autoselection, but may raise an eyebrow for release completions, even if not really a problem there either.
+	const perPage = 100
+	url := fmt.Sprintf("https://api.github.com/repos/%s/%s/releases?per_page=%d", url.PathEscape(owner), url.PathEscape(project), perPage)
 	resp, err := w.HTTPGet(url, "X-GitHub-Api-Version:2022-11-28", "Accept:application/vnd.github+json")
 	if err != nil {
 		return nil, err
 	}
-	rels := make([]github.Release, 0, n)
+	var rels []github.Release
 	err = json.NewDecoder(resp.Body).Decode(&rels)
 	if cErr := resp.Body.Close(); cErr != nil {
 		w.LogWarn("close %s body: %v", url, cErr)

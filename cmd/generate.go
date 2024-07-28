@@ -45,10 +45,6 @@ func generateCommand(w *Wrun) *cobra.Command {
 		generateShellcheckCommand(w),
 		generateTerraformCommand(w),
 	)
-	_ = genCmd.PersistentFlags().StringP("release", "r", "", "project release version, defaults to automatically selected")
-	if err := genCmd.RegisterFlagCompletionFunc("release", cobra.NoFileCompletions); err != nil {
-		w.LogBug("register --release completion", err)
-	}
 	return genCmd
 }
 

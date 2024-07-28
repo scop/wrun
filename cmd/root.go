@@ -240,7 +240,7 @@ Environment variables:
 	pfs := rootCmd.PersistentFlags()
 	pfs.DurationVarP(&httpTimeout, "http-timeout", "t", defaultHTTPTimeout, "HTTP client timeout")
 	if err := rootCmd.RegisterFlagCompletionFunc("http-timeout", cobra.NoFileCompletions); err != nil {
-		w.LogBug("register --http-timeout completion", err)
+		w.LogBug("register --http-timeout completion: %v", err)
 	}
 
 	rootCmd.AddCommand(generateCommand(w))
