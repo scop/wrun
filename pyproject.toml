@@ -24,3 +24,6 @@ classifiers = [
 
 [project.urls]
 Homepage = "https://github.com/scop/wrun"
+
+[tool.setuptools]
+packages = []
