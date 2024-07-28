@@ -41,11 +41,11 @@ func Categorize[T any](fileAssets map[string]T, overrides map[string]*regexp.Reg
 	// instead of on init or such.
 
 	osParts := []string{
-		`(?P<os>aix|android|(?:apple-)?darwin|dragonfly|freebsd|illumos|ios|js|linux|macos|netbsd|openbsd|pc-windows-msvc|plan9|solaris|unknown-linux-musl|wasip1|windows)`,
-		`(?P<os>unknown-linux-gnu)`,
+		`(?P<os>aix|android|(?:apple-)?darwin|dragonfly|freebsd|illumos|ios|js|linux|macos|netbsd|openbsd|pc-windows-msvc|plan9|solaris|unknown-linux-musl(?:eabihf)?|wasip1|windows)`,
+		`(?P<os>unknown-linux-gnu(?:eabihf)?)`,
 	}
 	archParts := []string{
-		`(?P<arch>i?386|amd64|arm|arm64|loong64|mips|mips64|mips64le|mipsle|ppc64|ppc64le|riscv64|s390x|wasm|x86_64)`,
+		`(?P<arch>i?[36]86|amd64|arm|arm64|loong64|mips|mips64|mips64le|mipsle|p(?:ower)?pc64(?:le)?|riscv64|s390x|wasm|x86_64)`,
 		`(?P<arch>32bit|64bit|aarch64|armv7)`,
 		`(?P<arch>armv6|armv6hf)`,
 	}
@@ -108,11 +108,11 @@ func Categorize[T any](fileAssets map[string]T, overrides map[string]*regexp.Reg
 					os = "darwin"
 				case "pc-windows-msvc":
 					os = "windows"
-				case "unknown-linux-gnu", "unknown-linux-musl":
+				case "unknown-linux-gnu", "unknown-linux-gnueabihf", "unknown-linux-musl", "unknown-linux-musleabihf":
 					os = "linux"
 				}
 				switch arch {
-				case "32bit", "i386":
+				case "32bit", "i386", "686", "i686":
 					arch = "386"
 				case "64bit", "x86_64":
 					arch = "amd64"
@@ -120,6 +120,10 @@ func Categorize[T any](fileAssets map[string]T, overrides map[string]*regexp.Reg
 					arch = "arm64"
 				case "armv6", "armv6hf", "armv7":
 					arch = "arm"
+				case "powerpc64":
+					arch = "ppc64"
+				case "powerpc64le":
+					arch = "ppc64le"
 				}
 				osArch := os + "/" + arch
 				if _, found := osArchPreferred[osArch]; !found {

@@ -38,12 +38,13 @@ func generateArbitraryGitHubProjectCommand(w *Wrun) *cobra.Command {
 		Use:   "github OWNER [PROJECT]",
 		Short: "generate wrun command line arguments for tool in GitHub project asset",
 		Example: strings.TrimSpace("" +
+			w.ProgName + " generate github aquasecurity trivy\n" +
+			w.ProgName + " generate github astral-sh ruff\n" +
+			w.ProgName + " generate github daveshanley vacuum\n" +
 			w.ProgName + " generate github dprint\n" +
 			w.ProgName + " generate github golangci golangci-lint\n" +
 			w.ProgName + " generate github hadolint\n" +
 			w.ProgName + " generate github mvdan sh --tool shfmt\n" +
-			w.ProgName + " generate github aquasecurity trivy\n" +
-			w.ProgName + " generate github daveshanley vacuum\n" +
 			""),
 		ValidArgsFunction: cobra.NoFileCompletions,
 		Args:              cobra.RangeArgs(1, 2),

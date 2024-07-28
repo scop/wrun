@@ -23,6 +23,7 @@ import (
 	"hash"
 	"net/url"
 	"path"
+	"slices"
 	"strings"
 
 	"github.com/klauspost/compress/zip"
@@ -155,5 +156,6 @@ func generateExePathArgs(osArchExePaths map[string]string) []string {
 			ret = []string{prevExePath}
 		}
 	}
+	slices.Sort(ret) // for stable output between runs
 	return ret
 }
