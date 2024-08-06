@@ -45,6 +45,7 @@ func generateArbitraryGitHubProjectCommand(w *Wrun) *cobra.Command {
 			w.ProgName + " generate github golangci golangci-lint\n" +
 			w.ProgName + " generate github hadolint\n" +
 			w.ProgName + " generate github mvdan sh --tool shfmt\n" +
+			w.ProgName + " generate github opentofu --tool tofu\n" +
 			""),
 		ValidArgsFunction: cobra.NoFileCompletions,
 		Args:              cobra.RangeArgs(1, 2),
