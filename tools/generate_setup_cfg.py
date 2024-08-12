@@ -24,34 +24,6 @@ from urllib.request import urlopen
 
 # TODO: verify linux/386 (i386), linux/armv6hf, and windows/386 markers
 setup_cfg_template = """
-[metadata]
-name = wrun_py
-version = ${python_pkg_version}
-description = Web executable launcher
-long_description = file: README.md
-long_description_content_type = text/markdown
-url = https://github.com/scop/wrun
-author = Ville Skyttä
-author_email = ville.skytta@iki.fi
-license = Apache License 2.0
-license_files = LICENSE
-classifiers =
-    Development Status :: 4 - Beta
-    Intended Audience :: Developers
-    License :: OSI Approved :: Apache Software License
-    Operating System :: MacOS
-    Operating System :: Microsoft :: Windows
-    Operating System :: POSIX :: Linux
-    Programming Language :: Go
-    Topic :: Internet :: WWW/HTTP
-    Topic :: Utilities
-
-[options]
-packages =
-python_requires = >=3.8
-setup_requires =
-    setuptools-download
-
 [setuptools_download]
 download_scripts =
     [wrun]
