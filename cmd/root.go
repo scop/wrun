@@ -359,11 +359,11 @@ func runRoot(w *Wrun, cfg *rootCmdConfig, args []string) exitStatus {
 	// exec from cache
 
 	exec := func(exe string) error {
-		args := make([]string, len(args)+1)
-		args[0] = exe
-		copy(args[1:], args)
+		exeArgs := make([]string, len(args)+1)
+		exeArgs[0] = exe
+		copy(exeArgs[1:], args)
 		if cfg.dryRun {
-			w.LogInfo("exec (...not, but stat due to dry-run): %v", args)
+			w.LogInfo("exec (...not, but stat due to dry-run): %v", exeArgs)
 			if fi, statErr := os.Stat(exe); statErr != nil {
 				return statErr
 			} else if !fi.Mode().IsRegular() {
@@ -371,8 +371,8 @@ func runRoot(w *Wrun, cfg *rootCmdConfig, args []string) exitStatus {
 			}
 			return nil
 		}
-		w.LogInfo("exec cached: %v", args)
-		return syscall.Exec(exe, args, os.Environ())
+		w.LogInfo("exec cached: %v", exeArgs)
+		return syscall.Exec(exe, exeArgs, os.Environ())
 	}
 
 	if err = exec(exePath); err != nil {
