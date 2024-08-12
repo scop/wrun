@@ -14,7 +14,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-package util
+package hashes
 
 import (
 	"crypto"
@@ -52,6 +52,18 @@ func HashName(h crypto.Hash) string {
 	return hn
 }
 
+func HashByName(name string) (crypto.Hash, error) {
+	var hashType crypto.Hash
+	hashType, found := hashesByName[strings.ToLower(name)]
+	if !found {
+		return 0, fmt.Errorf("no supported hash with name %q", name)
+	}
+	if !hashType.Available() {
+		return 0, fmt.Errorf("hash %s not available", hashType)
+	}
+	return hashType, nil
+}
+
 // ParseHashFragment prepares a hash corresponding to the given URL fragment string.
 // It returns the hash and the digest to check with it.
 // If s is empty, 0 is returned as the hash.
@@ -67,13 +79,9 @@ func ParseHashFragment(s string) (crypto.Hash, []byte, error) {
 	if err != nil {
 		return 0, nil, err
 	}
-	var hashType crypto.Hash
-	hashType, found = hashesByName[strings.ToLower(name)]
-	if !found {
-		return 0, nil, fmt.Errorf("no supported hash with name %q", name)
-	}
-	if !hashType.Available() {
-		return 0, nil, fmt.Errorf("hash %s not available", hashType)
+	hashType, err := HashByName(name)
+	if err != nil {
+		return 0, nil, err
 	}
 	return hashType, digest, nil
 }

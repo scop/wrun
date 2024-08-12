@@ -1,4 +1,4 @@
-// Copyright 2023 Ville Skyttä
+// Copyright 2024 Ville Skyttä
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,541 +18,170 @@ package cmd
 
 import (
 	"bytes"
-	"crypto"
-	"encoding/hex"
-	"encoding/json"
 	"errors"
-	"flag"
 	"fmt"
 	"hash"
 	"io"
 	"net/http"
-	"net/url"
 	"os"
 	"path"
-	"path/filepath"
-	"runtime"
-	"runtime/debug"
 	"strconv"
 	"strings"
-	"syscall"
-	"time"
-
-	"github.com/mholt/archiver/v3"
-
-	wrun "github.com/scop/wrun/internal"
 )
 
-var (
-	version       = "devel"
-	versionString = ""
-)
+type Wrun struct {
+	ProgName   string
+	httpClient *http.Client
+	verbose    *bool
+}
 
-func init() {
-	vs := make([]string, 0, 15)
-	vs = append(vs, "wrun ", version)
-	if bi, ok := debug.ReadBuildInfo(); ok {
-		if bi.GoVersion != "" {
-			vs = append(vs, ", built with ", bi.GoVersion)
-		}
-		for _, bs := range bi.Settings {
-			if bs.Key == "GOOS" {
-				vs = append(vs, ", for ", bs.Value)
-				for _, bs = range bi.Settings {
-					if bs.Key == "GOARCH" {
-						vs = append(vs, "/", bs.Value)
-						break
-					}
-				}
-				break
-			}
-		}
-		for _, bs := range bi.Settings {
-			if bs.Key == "vcs" {
-				vs = append(vs, ", from ", bs.Value)
-				for _, bs = range bi.Settings {
-					if bs.Key == "vcs.revision" {
-						vs = append(vs, " rev ", bs.Value)
-						break
-					}
-				}
-				for _, bs = range bi.Settings {
-					if bs.Key == "vcs.time" {
-						vs = append(vs, " dated ", bs.Value)
-						break
-					}
-				}
-				for _, bs = range bi.Settings {
-					if bs.Key == "vcs.modified" {
-						if dirty, err := strconv.ParseBool(bs.Value); err == nil && dirty {
-							vs = append(vs, " (dirty)")
-						}
-						break
-					}
-				}
-				break
-			}
-		}
+func NewWrun(progName string) *Wrun {
+	w := &Wrun{
+		ProgName:   progName,
+		httpClient: &http.Client{},
 	}
-	versionString = strings.Join(vs, "")
-}
-
-const (
-	cacheHomeEnvVar           = "WRUN_CACHE_HOME"
-	verboseEnvVar             = "WRUN_VERBOSE"
-	osArchEnvVar              = "WRUN_OS_ARCH"
-	cacheVersion              = "v2"
-	cacheDirDigestPlaceholder = "_"
-	defaultHTTPTimeout        = 5 * time.Minute
-)
-
-// urlDir gets the cache directory to use for a URL.
-func urlDir(u *url.URL, h crypto.Hash, digest []byte) string {
-	segs := make([]string, 0, strings.Count(u.Path, "/")+3)
-	segs = append(segs, strings.ReplaceAll(u.Host, ":", "_"))
-	segs = append(segs, strings.Split(u.Path, "/")...) // Note: filepath.Join later ignores possible empty segments
-	if u.RawQuery != "" {
-		segs[len(segs)-1] = segs[len(segs)-1] + url.PathEscape("?"+u.RawQuery)
-	}
-	if h == 0 {
-		segs = append(segs, cacheDirDigestPlaceholder)
-	} else {
-		segs = append(segs, wrun.HashName(h)+"-"+hex.EncodeToString(digest))
-	}
-	return filepath.Join(segs...)
-}
-
-type urlMatch struct {
-	pattern string
-	url     *url.URL
-}
-
-type archiveExePathMatch struct {
-	pattern string
-	exePath string
-}
-
-type config struct {
-	urlMatches            []urlMatch
-	archiveExePathMatches []archiveExePathMatch
-	httpTimeout           time.Duration
-	dryRun                bool
-	done                  bool
-}
-
-// parseFlags parses command line flags using the given flag set.
-// It returns the parsed config, or an error if any occurs.
-func parseFlags(set *flag.FlagSet, args []string) (config, error) {
-	cfg := config{}
-	cfg.urlMatches = make([]urlMatch, 0, len(args)/2+3)
-	set.Func("url", "[OS/arch=]URL matcher (at least one required)", func(s string) error {
-		pattern, ur, found := strings.Cut(s, "=")
-		if found {
-			if strings.Contains(pattern, "://") {
-				ur = s
-				pattern = "*/*"
-			} else if pattern == "" {
-				pattern = "*/*"
-			}
-		} else {
-			ur = pattern
-			pattern = "*/*"
-		}
-		if u, err := url.Parse(ur); err != nil {
-			return err
-		} else {
-			cfg.urlMatches = append(cfg.urlMatches, urlMatch{pattern, u})
-			return nil
-		}
-	})
-	set.Func("archive-exe-path", "[OS/arch=]path to executable within archive matcher (separator always /, implies archive processing)", func(s string) error {
-		pattern, pth, found := strings.Cut(s, "=")
-		if found {
-			if pattern == "" {
-				pattern = "*/*"
-			}
-			if pth == "" {
-				return fmt.Errorf("missing path in %q", s)
-			}
-		} else {
-			pth = pattern
-			pattern = "*/*"
-		}
-		cfg.archiveExePathMatches = append(cfg.archiveExePathMatches, archiveExePathMatch{pattern, pth})
-		return nil
-	})
-	set.DurationVar(&cfg.httpTimeout, "http-timeout", defaultHTTPTimeout, "HTTP client timeout")
-	set.BoolFunc("version", "Output version and exit", func(_ string) error {
-		if _, err := fmt.Fprintln(set.Output(), versionString); err != nil {
-			return fmt.Errorf("write version: %w", err)
-		}
-		cfg.done = true
-		return nil
-	})
-	set.BoolVar(&cfg.dryRun, "dry-run", false, "Dry run, skip execution (but do download/set up cache)")
-	if err := set.Parse(args); err != nil {
-		return config{}, err
-	}
-	if !cfg.done && len(cfg.urlMatches) == 0 {
-		err := errors.New("flag must occur at least once: -url")
-		_, _ = fmt.Fprintln(set.Output(), err)
-		set.Usage()
-		return config{}, err
-	}
-	return cfg, nil
-}
-
-// selectURL selects a URL for a system from the given matches.
-func selectURL(s string, matches []urlMatch) (*url.URL, error) {
-	for _, m := range matches {
-		match, err := filepath.Match(m.pattern, s)
-		if err != nil {
-			return nil, err
-		}
-		if match {
-			return m.url, nil
-		}
-	}
-	return nil, nil
-}
-
-// selectArchiveExePath selects an archive exe path for a system from the given matches.
-func selectArchiveExePath(s string, matches []archiveExePathMatch) (string, error) {
-	for _, m := range matches {
-		match, err := filepath.Match(m.pattern, s)
-		if err != nil {
-			return "", err
-		}
-		if match {
-			exePath := m.exePath
-			// Auto append .exe to Windows wildcard matches having no filename extension
-			if strings.HasPrefix(s, "windows/") && strings.HasPrefix(m.pattern, "*/") && filepath.Ext(exePath) == "" {
-				exePath += ".exe"
-			}
-			return exePath, nil
-		}
-	}
-	return "", nil
-}
-
-func resolveCacheDir() (string, error) {
-	cacheDir := os.Getenv(cacheHomeEnvVar)
-	if cacheDir == "" {
-		var err error
-		cacheDir, err = os.UserCacheDir()
-		if err != nil {
-			return "", fmt.Errorf("cache dir: %w", err)
-		}
-		cacheDir = filepath.Join(cacheDir, "wrun")
-	}
-	cacheDir = filepath.Join(cacheDir, cacheVersion)
-	return cacheDir, nil
-}
-
-func Execute() {
-	// Basics
-
-	rc := 0
-	defer func() {
-		os.Exit(rc)
-	}()
-	prog := filepath.Base(os.Args[0])
-
-	// Set up output
-
-	var verbose *bool
 	if s, ok := os.LookupEnv(verboseEnvVar); ok {
 		v, _ := strconv.ParseBool(s)
-		verbose = &v
+		w.verbose = &v
 	}
-	_out := func(w io.Writer, level, format string, a ...any) {
-		_, _ = fmt.Fprintf(w, prog+": "+level+": "+format+"\n", a...)
+	return w
+}
+
+type level = string
+
+const (
+	levelBug   level = "BUG"
+	levelError level = "ERR"
+	levelWarn  level = "WARN"
+	levelInfo  level = "INFO"
+)
+
+var levelFormat = fmt.Sprintf("%%%-ds", len(levelInfo))
+
+func (w *Wrun) logFormat(lvl level, format string, args ...any) string {
+	s := fmt.Sprintf(w.ProgName+": "+fmt.Sprintf(levelFormat, lvl)+": "+format, args...)
+	return s
+}
+
+func (w *Wrun) LogInfo(format string, args ...any) {
+	if w.verbose != nil && *w.verbose {
+		fmt.Fprintln(os.Stderr, w.logFormat(levelInfo, format, args...))
 	}
-	infoOut := func(format string, a ...any) {
-		if verbose != nil && *verbose {
-			_out(os.Stdout, "INFO", format, a...)
-		}
+}
+
+func (w *Wrun) LogWarn(format string, args ...any) {
+	if w.verbose == nil || *w.verbose {
+		fmt.Fprintln(os.Stderr, w.logFormat(levelWarn, format, args...))
 	}
-	warnOut := func(format string, a ...any) {
-		if verbose == nil || *verbose {
-			_out(os.Stderr, "WARN", format, a...)
-		}
+}
+
+func (w *Wrun) LogError(format string, args ...any) {
+	fmt.Fprintln(os.Stderr, w.logFormat(levelError, format, args...))
+}
+
+func (w *Wrun) LogBug(format string, args ...any) {
+	panic(w.logFormat(levelBug, format, args...))
+}
+
+// HTTPGet sends an HTTP GET request to url with headers.
+// It returns the HTTP response and any encountered error.
+// An error is also returned on responses having status other than 200.
+// headers are colon separated name:value strings.
+func (w *Wrun) HTTPGet(url string, headers ...string) (*http.Response, error) {
+	const method = http.MethodGet
+	w.LogInfo("%s %s", method, url)
+	req, err := http.NewRequest(method, url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("%s %s new request: %w", method, url, err)
 	}
-	errorOut := func(format string, a ...any) {
-		_out(os.Stderr, "ERROR", format, a...)
-	}
-
-	// Process flags
-
-	var (
-		err error
-		cfg config
-	)
-	flagSet := flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
-	if cfg, err = parseFlags(flagSet, os.Args[1:]); err != nil {
-		if errors.Is(err, flag.ErrHelp) {
-			fmt.Printf(`
-%s downloads, caches, and runs executables.
-
-OS and architecture matcher arguments for URLs to download and (if applicable) executables within archives can be used to construct command lines that work across multiple operating systems and architectures.
-
-The OS and architecture wrun was built for are matched against the given matchers.
-OS and architecture parts of the matcher may be globs.
-Order of the matcher arguments is significant: the first match of each is chosen.
-
-As a special case, a matcher argument with no matcher part is treated as if it was given with the matcher */*.
-On Windows, .exe is automatically appended to any archive exe path resulting from a */ prefixed match.
-
-URL fragments, if present, are treated as hashAlgo-hexDigest strings, and downloads are checked against them.
-
-The first non-flag argument or -- terminates %s arguments.
-Remaining ones are passed to the downloaded one.
-
-Environment variables:
-- %s: cache location, defaults to wrun subdir in the user's cache dir
-- %s: override OS/arch for matching
-- %s: output verbosity, false decreases, true increases
-`, prog, prog, cacheHomeEnvVar, osArchEnvVar, verboseEnvVar)
+	req.Header.Set("User-Agent", w.ProgName+"/"+version)
+	for _, h := range headers {
+		if k, v, found := strings.Cut(h, ":"); found {
+			req.Header.Set(k, v)
 		} else {
-			// Error already printed
-			rc = 2 // usage
-		}
-		return
-	} else if cfg.done {
-		// All done
-		return
-	}
-	infoOut("%s", versionString)
-
-	// Figure out download URL and exe path in archive
-
-	osArch := os.Getenv(osArchEnvVar)
-	if osArch == "" {
-		osArch = runtime.GOOS + "/" + runtime.GOARCH
-	}
-	infoOut("OS/arch: %s", osArch)
-
-	ur, err := selectURL(osArch, cfg.urlMatches)
-	if err != nil {
-		errorOut("select URL: %v", err)
-		rc = 2 // usage, bad pattern
-		return
-	}
-	if ur == nil {
-		errorOut("no URL available for OS/architecture %s", osArch)
-		rc = 1
-		return
-	}
-	infoOut("URL: %s", ur)
-
-	archiveExePath, err := selectArchiveExePath(osArch, cfg.archiveExePathMatches)
-	if err != nil {
-		errorOut("select archive exe path: %v", err)
-		rc = 2 // usage, bad pattern
-		return
-	}
-
-	// Set up hashing
-
-	hshType, expectedDigest, err := wrun.ParseHashFragment(ur.Fragment)
-	if err != nil {
-		errorOut("parse hash fragment: %v", err)
-		rc = 1
-		return
-	}
-
-	// Set up cache
-
-	var cacheDir string
-	cacheDir, err = resolveCacheDir()
-	if err != nil {
-		errorOut("cache setup: %v", err)
-		rc = 1
-		return
-	}
-	// Here's hoping we don't hit path too long errors with this implementation anywhere
-	ps := make([]string, 0, strings.Count(archiveExePath, "/")+3)
-	_, dlBase := path.Split(ur.Path)
-	ps = append(ps, cacheDir, urlDir(ur, hshType, expectedDigest), dlBase)
-	dlPath := filepath.Join(ps...)
-	ps = append(ps, strings.Split(archiveExePath, "/")...)
-	exePath := filepath.Join(ps...)
-	err = os.MkdirAll(filepath.Dir(exePath), 0o777)
-	if err != nil {
-		errorOut("cache setup: %v", err)
-		rc = 1
-		return
-	}
-	infoOut("path to executable: %s", exePath)
-
-	// exec from cache
-
-	exec := func(exe string) error {
-		args := make([]string, len(flagSet.Args())+1)
-		args[0] = exe
-		copy(args[1:], flagSet.Args())
-		if cfg.dryRun {
-			infoOut("exec (...not, stat due to dry-run): %v", args)
-			if fi, statErr := os.Stat(exe); statErr != nil {
-				return statErr
-			} else if !fi.Mode().IsRegular() {
-				return fmt.Errorf("not a regular file: %v", exe)
-			}
-			return nil
-		}
-		infoOut("exec: %v", args)
-		return syscall.Exec(exe, args, os.Environ())
-	}
-
-	if err = exec(exePath); err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			infoOut("exec cached: %v", err)
-		} else {
-			warnOut("exec cached: %v", err)
-		}
-	} else if cfg.dryRun {
-		return
-	} else {
-		panic("BUG: unreachable; successful non-dry-run cache exec")
-	}
-
-	// Set up tempfile for download
-
-	// Use temp filename _prefix_, archiver recognizes by filename extension
-	tmpf, err := os.CreateTemp(filepath.Dir(dlPath), "tmp*-"+filepath.Base(dlPath))
-	if err != nil {
-		errorOut("set up tempfile: %v", err)
-		rc = 1
-		return
-	}
-	cleanUpTempFile := func() {
-		if closeErr := tmpf.Close(); closeErr != nil && !errors.Is(closeErr, os.ErrClosed) {
-			warnOut("close tempfile: %v", closeErr)
-		}
-		if rmErr := os.Remove(tmpf.Name()); rmErr != nil && !errors.Is(rmErr, os.ErrNotExist) {
-			warnOut("remove tempfile: %v", rmErr)
+			return nil, fmt.Errorf("%s %s set request headers: no colon in header: %q", req.Method, url, h)
 		}
 	}
-	defer cleanUpTempFile() // Note: does not happen if we exec successfully
-
-	// Download
-
-	hc := http.Client{
-		Timeout: cfg.httpTimeout,
-	}
-	req, err := http.NewRequest(http.MethodGet, ur.String(), nil)
-	if err != nil {
-		errorOut("prepare request: %v", err)
-		rc = 1
-		return
-	}
-	req.Header.Set("User-Agent", prog+"/"+version)
 	// TODO if no checksum, do conditional get: If-None-Match, If-Modified-Since?
 
-	resp, err := hc.Do(req)
+	resp, err := w.httpClient.Do(req)
 	if err != nil {
-		errorOut("get %s: %v", ur.String(), err)
-		rc = 1
-		return
+		return nil, fmt.Errorf("%s %s: %w", req.Method, url, err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		if err = resp.Body.Close(); err != nil {
+			w.LogWarn("close HTTP response: %v", err)
+		}
+		return nil, fmt.Errorf("%s %s: HTTP status %s", req.Method, url, resp.Status)
+	}
+	return resp, nil
+}
+
+func (w *Wrun) Download(resp *http.Response, dest io.Writer, hsh hash.Hash, expectedDigest []byte) error {
+	var wr io.Writer
+	switch {
+	case dest == nil && hsh == nil:
+		w.LogBug("%s", "destination or hash required to download")
+	case dest == nil:
+		wr = hsh
+	case hsh == nil:
+		wr = dest
+	default:
+		wr = io.MultiWriter(dest, hsh)
 	}
 
-	var (
-		hsh hash.Hash
-		w   io.Writer
-	)
-	if hshType == 0 {
-		w = tmpf
+	n, err := io.Copy(wr, resp.Body)
+	if cErr := resp.Body.Close(); cErr != nil {
+		w.LogWarn("close HTTP response: %v", cErr)
+	}
+	if err != nil {
+		return fmt.Errorf("copy stream: %w", err)
+	}
+	var gotDigest []byte
+	if hsh == nil {
+		w.LogInfo("got %d bytes", n)
 	} else {
-		hsh = hshType.New()
-		w = io.MultiWriter(hsh, tmpf)
+		gotDigest = hsh.Sum(nil)
+		w.LogInfo("got %d bytes, digest %x", n, gotDigest)
 	}
 
-	meta := make(map[string]string)
-	for _, key := range []string{"ETag", "Last-Modified"} {
-		meta[key] = resp.Header.Get(key)
-	}
-
-	n, err := io.Copy(w, resp.Body)
-	if closeErr := resp.Body.Close(); closeErr != nil {
-		warnOut("close http response: %v", closeErr)
-	}
-	if err != nil {
-		errorOut("download: %v", err)
-		rc = 1
-		return
-	}
-	if err = tmpf.Close(); err != nil {
-		errorOut("close tempfile: %v", err)
-		rc = 1
-		return
-	}
-	infoOut("downloaded %d bytes", n)
-
-	// Check digest
-
-	if hsh != nil {
-		gotDigest := hsh.Sum(nil)
+	var digestErr error
+	if expectedDigest != nil {
 		if bytes.Equal(gotDigest, expectedDigest) {
-			infoOut("%s digest match: %s", hshType, hex.EncodeToString(expectedDigest))
+			w.LogInfo("digest match: %x", gotDigest)
 		} else {
-			errorOut("%s digest mismatch: got %s, expected %s", hex.EncodeToString(gotDigest), hex.EncodeToString(expectedDigest))
-			rc = 1
-			return
+			digestErr = fmt.Errorf("digest mismatch: expected %x, got %x", expectedDigest, gotDigest)
+		}
+
+	}
+	var closeErr error
+	if c, ok := dest.(io.Closer); ok {
+		if closeErr = c.Close(); closeErr != nil {
+			closeErr = fmt.Errorf("close destination: %w", closeErr)
 		}
 	}
 
-	// Move to final location, make executable
+	return errors.Join(digestErr, closeErr)
+}
 
-	if archiveExePath == "" {
-		if err = os.Rename(tmpf.Name(), exePath); err != nil {
-			errorOut("rename tempfile: %v", err)
-			rc = 1
-			return
-		}
-	} else {
-		var archiveName string
-		if strings.HasSuffix(tmpf.Name(), ".whl") { // Need to rename to .zip for archiver
-			archiveName = strings.TrimSuffix(tmpf.Name(), ".whl") + ".zip"
-			if err = os.Symlink(filepath.Base(tmpf.Name()), archiveName); err != nil { // Failure if new name exists is desirable
-				errorOut("symlink tempfile: %v", err)
-			}
-		} else {
-			archiveName = tmpf.Name()
-		}
-		err = archiver.Unarchive(archiveName, dlPath)
-		if archiveName != tmpf.Name() {
-			if rmErr := os.Remove(archiveName); rmErr != nil {
-				warnOut("remove tempfile symlink: %v", rmErr)
-			}
-		}
-		if err != nil {
-			errorOut("unarchive: %v", err)
-			rc = 1
-			return
-		}
+func (w *Wrun) SetUpTempfile(url, dir string) (f *os.File, cleanup func(), err error) {
+	// Use temp filename _prefix_, archiver recognizes by filename extension
+	tmpName := strings.ToLower(path.Base(url))
+	if strings.HasSuffix(tmpName, ".whl") {
+		tmpName = strings.TrimSuffix(tmpName, ".whl") + ".zip" // Make archiver recognize it
 	}
-	if err = wrun.MakeExecutable(exePath); err != nil {
-		errorOut("make executable: %v", err)
-		rc = 1
-		return
-	}
-
-	// Write metadata
-
-	data, err := json.Marshal(meta)
+	f, err = os.CreateTemp(dir, "wrun*-"+tmpName)
 	if err != nil {
-		warnOut("encode metadata: %v", err)
-	} else if err = os.WriteFile(dlPath+"-metadata.json", data, 0o666); err != nil {
-		warnOut("write metadata: %v", err)
+		return nil, nil, fmt.Errorf("set up tempfile: %w", err)
 	}
-
-	// Execute
-
-	cleanUpTempFile() // Note: deferred cleanup does not happen if we exec successfully
-	if err = exec(exePath); err != nil {
-		errorOut("exec: %v", err)
-		rc = 1
-	} else if !cfg.dryRun {
-		panic("BUG: unreachable; successful non-dry-run exec")
+	cleanup = func() {
+		if closeErr := f.Close(); closeErr != nil && !errors.Is(closeErr, os.ErrClosed) {
+			w.LogWarn("close tempfile: %v", closeErr)
+		}
+		if rmErr := os.Remove(f.Name()); rmErr != nil && !errors.Is(rmErr, os.ErrNotExist) {
+			w.LogWarn("remove tempfile: %v", rmErr)
+		}
 	}
+	return
+
 }

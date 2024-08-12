@@ -4,17 +4,7 @@
 with the same one command for multiple OS/architectures.
 
 ```shellsession
-$ wrun -help
-Usage of wrun:
-  -archive-exe-path value
-    	[OS/arch=]path to executable within archive matcher (separator always /, implies archive processing)
-  -dry-run
-    	Dry run, skip execution (but do download/set up cache)
-  -http-timeout duration
-    	HTTP client timeout (default 5m0s)
-  -url value
-    	[OS/arch=]URL matcher (at least one required)
-
+$ wrun --help
 wrun downloads, caches, and runs executables.
 
 OS and architecture matcher arguments for URLs to download and (if applicable) executables within archives can be used to construct command lines that work across multiple operating systems and architectures.
@@ -29,12 +19,31 @@ On Windows, .exe is automatically appended to any archive exe path resulting fro
 URL fragments, if present, are treated as hashAlgo-hexDigest strings, and downloads are checked against them.
 
 The first non-flag argument or -- terminates wrun arguments.
-Remaining ones are passed to the downloaded one.
+Remaining ones are passed to the downloaded executable.
 
 Environment variables:
 - WRUN_CACHE_HOME: cache location, defaults to wrun subdir in the user's cache dir
 - WRUN_OS_ARCH: override OS/arch for matching
 - WRUN_VERBOSE: output verbosity, false decreases, true increases
+
+Usage:
+  wrun [flags] -- [executable arguments]
+  wrun [command]
+
+Available Commands:
+  completion  Generate the autocompletion script for the specified shell
+  generate    generate wrun command line arguments for various tools
+  help        Help about any command
+
+Flags:
+  -p, --archive-exe-path strings   [OS/arch=]path to executable within archive matcher (separator always /, implies archive processing)
+  -n, --dry-run                    dry run, skip execution (but do download/set up cache)
+  -h, --help                       help for wrun
+  -t, --http-timeout duration      HTTP client timeout (default 5m0s)
+  -u, --url strings                [OS/arch=]URL matcher (at least one required)
+  -v, --version                    version for wrun
+
+Use "wrun [command] --help" for more information about a command.
 ```
 
 ## Installation
@@ -97,11 +106,15 @@ the [user's cache directory](https://pkg.go.dev/os#UserCacheDir).
 [pre-commit.ci](https://pre-commit.ci) is not supported, because it
 [disallows network access at runtime](https://github.com/pre-commit-ci/issues/issues/196#issuecomment-1810937079).
 
-## Command line argument generators
+## Generating command line arguments
 
-The [src/wrun_py/generators](src/wrun_py/generators/) directory contains scripts that can be
-used to generate command line arguments for various tools commonly
-used tools. See [README.md](src/wrun_py/generators/README.md) there for more information.
+The `generate` subcommand can be used to generate wrun command line arguments for various tools.
+
+It supports tools shipped in GitHub releases and PyPI executable wrapper wheels that meet its expectations
+about asset filenames regarding their OS and architecture.
+
+Some additional tool specific generators are available as well for tools that are not served by the generic GitHub and PyPI generators.
+See `wrun generate --help` for more information.
 
 ## License
 

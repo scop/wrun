@@ -18,14 +18,13 @@ package cmd
 
 import (
 	"crypto"
-	"flag"
 	"net/url"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	wrun "github.com/scop/wrun/internal"
+	"github.com/scop/wrun/internal/hashes"
 )
 
 func mustParseURL(t *testing.T, s string) *url.URL {
@@ -36,17 +35,16 @@ func mustParseURL(t *testing.T, s string) *url.URL {
 }
 
 func Test_parseFlags(t *testing.T) {
-	var err error
 	url1 := "https://example.com/os1-arch1"
 	url2 := "https://example.com/os2-arch2"
 	urld := "https://example.com/default-no-pattern"
-	set := flag.NewFlagSet("test", flag.ContinueOnError)
-	args := []string{
-		"--url", "os1/arch1=" + url1,
-		"--url", "os2/arch2=" + url2,
-		"--url", urld,
+	urlArgs := []string{
+		"os1/arch1=" + url1,
+		"os2/arch2=" + url2,
+		urld,
 	}
-	want := config{
+	exePathArgs := []string{}
+	want := &rootCmdConfig{
 		urlMatches: []urlMatch{
 			{
 				pattern: "os1/arch1",
@@ -62,11 +60,11 @@ func Test_parseFlags(t *testing.T) {
 			},
 		},
 		archiveExePathMatches: nil,
-		httpTimeout:           defaultHTTPTimeout,
 	}
-	got, err := parseFlags(set, args)
+	cfg := &rootCmdConfig{}
+	err := parseFlags(cfg, urlArgs, exePathArgs)
 	require.NoError(t, err)
-	assert.Equal(t, want, got)
+	assert.Equal(t, want, cfg)
 }
 
 func Test_selectURL(t *testing.T) {
@@ -252,7 +250,7 @@ func Test_urlDir(t *testing.T) {
 		t.Run(tt.url, func(t *testing.T) {
 			u, err := url.Parse(tt.url)
 			require.NoError(t, err)
-			h, digest, err := wrun.ParseHashFragment(u.Fragment)
+			h, digest, err := hashes.ParseHashFragment(u.Fragment)
 			require.NoError(t, err)
 			assert.Equal(t, tt.want, urlDir(u, h, digest))
 		})
@@ -288,7 +286,7 @@ func Test_prepareHash(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.fragment, func(t *testing.T) {
-			hash, _, err := wrun.ParseHashFragment(tt.fragment)
+			hash, _, err := hashes.ParseHashFragment(tt.fragment)
 			if tt.wantInErr == "" {
 				require.NoError(t, err)
 				assert.Equal(t, tt.wantHash, hash)

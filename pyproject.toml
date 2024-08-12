@@ -22,20 +22,8 @@ classifiers = [
     "Topic :: Utilities",
 ]
 
-[project.scripts]
-wrun-black-args = "wrun_py.generators.black:main"
-wrun-committed-args = "wrun_py.generators.committed:main"
-wrun-dprint-args = "wrun_py.generators.dprint:main"
-wrun-golangci-lint-args = "wrun_py.generators.golangci_lint:main"
-wrun-hadolint-args = "wrun_py.generators.hadolint:main"
-wrun-ruff-args = "wrun_py.generators.ruff:main"
-wrun-shellcheck-args = "wrun_py.generators.shellcheck:main"
-wrun-shfmt-args = "wrun_py.generators.shfmt:main"
-wrun-terraform-args = "wrun_py.generators.terraform:main"
-wrun-tflint-args = "wrun_py.generators.tflint:main"
-wrun-trivy-args = "wrun_py.generators.trivy:main"
-wrun-typos-args = "wrun_py.generators.typos:main"
-wrun-vacuum-args = "wrun_py.generators.vacuum:main"
-
 [project.urls]
 Homepage = "https://github.com/scop/wrun"
+
+[tool.setuptools]
+packages = []

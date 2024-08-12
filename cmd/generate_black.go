@@ -14,17 +14,19 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-//go:build !windows
-
-package util
+package cmd
 
 import (
-	"os"
-	"syscall"
+	"regexp"
+
+	"github.com/spf13/cobra"
 )
 
-func MakeExecutable(path string) error {
-	umask := syscall.Umask(0)
-	syscall.Umask(umask)
-	return os.Chmod(path, os.FileMode(0o777 & ^umask))
+func generateBlackCommand(w *Wrun) *cobra.Command {
+	overrides := map[string]*regexp.Regexp{
+		"darwin/amd64":  regexp.MustCompile(`_macos$`),
+		"linux/amd64":   regexp.MustCompile(`_linux$`),
+		"windows/amd64": regexp.MustCompile(`_windows\.exe$`),
+	}
+	return generateGitHubProjectCommand(w, "psf", "black", "black", overrides)
 }

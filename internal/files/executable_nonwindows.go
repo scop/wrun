@@ -14,10 +14,17 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-//go:build windows
+//go:build !windows
 
-package util
+package files
 
-func MakeExecutable(_ string) error {
-	return nil
+import (
+	"os"
+	"syscall"
+)
+
+func MakeExecutable(path string) error {
+	umask := syscall.Umask(0)
+	syscall.Umask(umask)
+	return os.Chmod(path, os.FileMode(0o777 & ^umask))
 }
