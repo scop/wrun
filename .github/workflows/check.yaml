@@ -25,8 +25,12 @@ jobs:
         run: |
           go build -v .
       - name: Run lefthook pre-commit
+        env:
+          CLICOLOR_FORCE: true # lefthook, through github.com/muesli/termenv
+          LEFTHOOK_QUIET: meta,execution
+          WRUN_VERBOSE: true
         run: |
-          export PATH=$PWD:$PATH LEFTHOOK_QUIET=meta,execution WRUN_VERBOSE=true
+          export PATH=$PWD:$PATH
           npm exec --yes -- lefthook run pre-commit --all-files --force --no-tty
   test:
     runs-on: ubuntu-latest
