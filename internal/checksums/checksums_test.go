@@ -19,8 +19,9 @@ package checksums_test
 import (
 	"testing"
 
-	util "github.com/scop/wrun/internal/checksums"
 	"github.com/stretchr/testify/assert"
+
+	util "github.com/scop/wrun/internal/checksums"
 )
 
 func TestChecksums_UnmarshalText(t *testing.T) {

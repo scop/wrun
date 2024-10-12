@@ -27,9 +27,10 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/spf13/cobra"
+
 	"github.com/scop/wrun/internal/checksums"
 	"github.com/scop/wrun/internal/github"
-	"github.com/spf13/cobra"
 )
 
 func generateArbitraryGitHubProjectCommand(w *Wrun) *cobra.Command {

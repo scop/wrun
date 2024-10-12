@@ -22,8 +22,9 @@ import (
 	"testing"
 
 	pep440 "github.com/aquasecurity/go-pep440-version"
-	"github.com/scop/wrun/internal/pypi"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/scop/wrun/internal/pypi"
 )
 
 func TestUnmarshalText(t *testing.T) {

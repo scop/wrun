@@ -27,8 +27,9 @@ import (
 	"strings"
 
 	pep440 "github.com/aquasecurity/go-pep440-version"
-	"github.com/scop/wrun/internal/pypi"
 	"github.com/spf13/cobra"
+
+	"github.com/scop/wrun/internal/pypi"
 )
 
 func generateArbitraryPyPIProjectCommand(w *Wrun) *cobra.Command {

@@ -11,7 +11,6 @@ linters:
     - exhaustruct
     - forbidigo
     - funlen
-    - gci
     - gochecknoglobals
     - gochecknoinits
     - gocognit
@@ -35,6 +34,11 @@ linters:
     - wsl
 
 linters-settings:
+  gci:
+    sections:
+      - standard
+      - default
+      - prefix(github.com/scop/wrun)
   gofumpt:
     extra-rules: true
   nolintlint:

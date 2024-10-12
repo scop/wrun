@@ -20,8 +20,9 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/scop/wrun/internal/files"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/scop/wrun/internal/files"
 )
 
 func TestCategorize_Basic(t *testing.T) {

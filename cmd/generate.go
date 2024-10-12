@@ -28,9 +28,10 @@ import (
 
 	"github.com/klauspost/compress/zip"
 	"github.com/mholt/archiver/v3"
+	"github.com/spf13/cobra"
+
 	"github.com/scop/wrun/internal/checksums"
 	"github.com/scop/wrun/internal/files"
-	"github.com/spf13/cobra"
 )
 
 func generateCommand(w *Wrun) *cobra.Command {
