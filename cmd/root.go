@@ -48,8 +48,8 @@ var (
 )
 
 func init() {
-	vs := make([]string, 0, 15)
-	vs = append(vs, "wrun ", version)
+	vs := make([]string, 0, 14)
+	vs = append(vs, version)
 	if bi, ok := debug.ReadBuildInfo(); ok {
 		if bi.GoVersion != "" {
 			vs = append(vs, ", built with ", bi.GoVersion)
