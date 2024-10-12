@@ -49,7 +49,7 @@ func generateArbitraryGitHubProjectCommand(w *Wrun) *cobra.Command {
 			""),
 		ValidArgsFunction: cobra.NoFileCompletions,
 		Args:              cobra.RangeArgs(1, 2),
-		Run: func(cmd *cobra.Command, args []string) {
+		Run: func(_ *cobra.Command, args []string) {
 			if len(args) == 1 { // Default project = owner
 				args = append(args, args[0])
 			}
@@ -75,7 +75,7 @@ func generateArbitraryGitHubProjectCommand(w *Wrun) *cobra.Command {
 }
 
 func gitHubVersionCompleter(w *Wrun, owner, project string) func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-	return func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	return func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if owner == "" {
 			owner = args[0]
 		}
@@ -107,7 +107,7 @@ func generateGitHubProjectCommand(w *Wrun, owner, project, tool string, osArchOv
 		Short:             "generate wrun command line arguments for " + tool,
 		ValidArgsFunction: cobra.NoFileCompletions,
 		Args:              cobra.NoArgs,
-		Run: func(cmd *cobra.Command, args []string) {
+		Run: func(_ *cobra.Command, _ []string) {
 			if err := runGenerateGitHubProject(w, owner, project, tool, release, osArchOverrideREs); err != nil {
 				w.LogError("%s", err)
 				os.Exit(1)

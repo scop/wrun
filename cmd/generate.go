@@ -91,9 +91,8 @@ func processGenerateAsset(w *Wrun, ur, tool string, hsh hash.Hash, csums checksu
 						w.LogInfo("digest match for %q: %x", ur, ce.Digest)
 						matchFound = true
 						break
-					} else {
-						w.LogInfo("digest candidate for %q mismatch: expected %x, have %x", ur, ce.Digest, digest)
 					}
+					w.LogInfo("digest candidate for %q mismatch: expected %x, have %x", ur, ce.Digest, digest)
 				} else {
 					w.LogInfo("digest candidate for %q skipped due to length mismatch: %x, have %x", ur, ce.Digest, digest)
 				}

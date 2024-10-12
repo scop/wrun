@@ -157,11 +157,11 @@ func parseFlags(cfg *rootCmdConfig, urlArgs []string, exePathArgs []string) erro
 			ur = pattern
 			pattern = "*/*"
 		}
-		if u, err := url.Parse(ur); err != nil {
+		u, err := url.Parse(ur)
+		if err != nil {
 			return err
-		} else {
-			cfg.urlMatches = append(cfg.urlMatches, urlMatch{pattern, u})
 		}
+		cfg.urlMatches = append(cfg.urlMatches, urlMatch{pattern, u})
 	}
 
 	for _, s := range exePathArgs {
@@ -217,7 +217,7 @@ Environment variables:
 `, w.ProgName, w.ProgName, cacheHomeEnvVar, osArchEnvVar, verboseEnvVar),
 		Args:    cobra.ArbitraryArgs,
 		Version: versionString,
-		PersistentPreRun: func(_ *cobra.Command, args []string) {
+		PersistentPreRun: func(_ *cobra.Command, _ []string) {
 			w.httpClient = &http.Client{
 				Timeout: httpTimeout,
 			}

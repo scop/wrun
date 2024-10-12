@@ -43,7 +43,7 @@ func generateTerraformCommand(w *Wrun) *cobra.Command {
 		Short:             "generate wrun command line arguments for terraform",
 		ValidArgsFunction: cobra.NoFileCompletions,
 		Args:              cobra.NoArgs,
-		Run: func(cmd *cobra.Command, args []string) {
+		Run: func(_ *cobra.Command, _ []string) {
 			if err := runGenerateTerraform(w, release); err != nil {
 				w.LogError("%s", err)
 				os.Exit(1)

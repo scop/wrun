@@ -43,7 +43,7 @@ func generateArbitraryPyPIProjectCommand(w *Wrun) *cobra.Command {
 			""),
 		ValidArgsFunction: cobra.NoFileCompletions,
 		Args:              cobra.ExactArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
+		Run: func(_ *cobra.Command, args []string) {
 			if tool == "" {
 				tool = args[0] // Default tool = project name
 			}
@@ -66,7 +66,7 @@ func generateArbitraryPyPIProjectCommand(w *Wrun) *cobra.Command {
 }
 
 func pypiVersionCompleter(w *Wrun) func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-	return func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	return func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		p, err := getPyPIProject(w, args[0])
 		if err != nil {
 			return nil, cobra.ShellCompDirectiveError
