@@ -82,9 +82,9 @@ func TestUnmarshalText(t *testing.T) {
 			w := pypi.FilenameInfo{}
 			err := w.UnmarshalText([]byte(test.input))
 			if test.errorMsg == "" {
-				assert.NoError(t, err)
+				assert.NoError(t, err) //nolint:testifylint // no require; we want to check checksums return value on error too
 			} else {
-				assert.ErrorContains(t, err, test.errorMsg)
+				assert.ErrorContains(t, err, test.errorMsg) //nolint:testifylint // no require; we want to check checksums return value on error too
 			}
 			assert.Equal(t, test.expected, w)
 		})

@@ -78,9 +78,9 @@ func TestChecksums_UnmarshalText(t *testing.T) {
 			for _, input := range c.input {
 				err := cs.UnmarshalText([]byte(input))
 				if c.errExpected {
-					assert.Error(t, err)
+					assert.Error(t, err) //nolint:testifylint // no require; we want to check checksums return value on error too
 				} else {
-					assert.NoError(t, err)
+					assert.NoError(t, err) //nolint:testifylint // no require; we want to check checksums return value on error too
 				}
 			}
 			assert.Equal(t, c.expected, cs)
