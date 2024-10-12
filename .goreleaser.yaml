@@ -2,6 +2,8 @@ version: 2
 
 builds:
   - id: wrun
+    ldflags:
+      - -s -w -X github.com/scop/wrun/cmd.version={{.Version}}
     env:
       - CGO_ENABLED=0
     main: .
