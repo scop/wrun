@@ -35,3 +35,8 @@ linters:
     - whitespace
     - wrapcheck
     - wsl
+
+linters-settings:
+  nolintlint:
+    require-explanation: true
+    require-specific: true
