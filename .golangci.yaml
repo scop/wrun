@@ -1,5 +1,37 @@
 linters:
-  enable:
-    - revive
-    - testifylint
-
+  enable-all: true
+  disable:
+    - exportloopref # replaced by copyloopvar
+    - execinquery # deprecated
+    - gomnd # replaced by mnd
+    # TODO
+    - cyclop
+    - depguard
+    - err113
+    - exhaustruct
+    - forbidigo
+    - funlen
+    - gci
+    - gochecknoglobals
+    - gochecknoinits
+    - gocognit
+    - goconst
+    - godox
+    - gofumpt
+    - gosec
+    - lll
+    - mnd
+    - nakedret
+    - nestif
+    - nilnil
+    - nlreturn
+    - noctx
+    - nonamedreturns
+    - paralleltest
+    - perfsprint
+    - tagliatelle
+    - testpackage
+    - varnamelen
+    - whitespace
+    - wrapcheck
+    - wsl
