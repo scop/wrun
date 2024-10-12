@@ -26,7 +26,6 @@ import (
 
 func TestCategorize_Basic(t *testing.T) {
 	for _, path := range []string{"https://github.com/scop/wrun/releases/v1.0.0/", ""} {
-
 		fileAssets := map[string]string{
 			path + "checksums.txt":                          "checksums",
 			path + "example-1.0.0-darwin-arm64.zip":         "darwin-arm64-zip",

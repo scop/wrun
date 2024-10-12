@@ -45,7 +45,7 @@ type ReleaseAsset struct {
 	// Hence ignore it altogether here, so we are forced to be consistent and use BrowserDownloadURL for both above mentioned purposes.
 }
 
-func (r Release) PreferredOsArchReleaseAssets(osArchOverrideREs map[string]*regexp.Regexp) (osArchAssets map[string]ReleaseAsset, checksumAssets []ReleaseAsset, otherAssets []ReleaseAsset) {
+func (r Release) PreferredOsArchReleaseAssets(osArchOverrideREs map[string]*regexp.Regexp) (osArchAssets map[string]ReleaseAsset, checksumAssets, otherAssets []ReleaseAsset) {
 	urlAssets := make(map[string]ReleaseAsset, len(r.Assets))
 	for _, asset := range r.Assets {
 		urlAssets[asset.BrowserDownloadURL] = asset

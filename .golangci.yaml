@@ -17,7 +17,6 @@ linters:
     - gocognit
     - goconst
     - godox
-    - gofumpt
     - gosec
     - lll
     - mnd
@@ -32,11 +31,12 @@ linters:
     - tagliatelle
     - testpackage
     - varnamelen
-    - whitespace
     - wrapcheck
     - wsl
 
 linters-settings:
+  gofumpt:
+    extra-rules: true
   nolintlint:
     require-explanation: true
     require-specific: true

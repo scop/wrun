@@ -143,7 +143,7 @@ type rootCmdConfig struct {
 	dryRun                bool
 }
 
-func parseFlags(cfg *rootCmdConfig, urlArgs []string, exePathArgs []string) error {
+func parseFlags(cfg *rootCmdConfig, urlArgs, exePathArgs []string) error {
 	for _, s := range urlArgs {
 		pattern, ur, found := strings.Cut(s, "=")
 		if found {
@@ -184,7 +184,6 @@ func parseFlags(cfg *rootCmdConfig, urlArgs []string, exePathArgs []string) erro
 }
 
 func Execute() {
-
 	var urlArgs, exePathArgs []string
 	var httpTimeout time.Duration
 	w := NewWrun(filepath.Base(os.Args[0]))

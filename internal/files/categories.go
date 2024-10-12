@@ -32,8 +32,7 @@ import (
 // The returned osArchPreferred is has OS/arch strings as keys, and the corresponding assets as values.
 // All given assets are present in at most one of the return values.
 // The only ones that are not in any are ones that apply to an OS/architecture combination, but for which a more preferred one was found.
-func Categorize[T any](fileAssets map[string]T, overrides map[string]*regexp.Regexp) (osArchPreferred map[string]T, checksums []T, others []T) {
-
+func Categorize[T any](fileAssets map[string]T, overrides map[string]*regexp.Regexp) (osArchPreferred map[string]T, checksums, others []T) {
 	// OS and arch parts slices are patterns to match in decreasing order of preference.
 	// For example, we want to match musl linuxes before gnu ones for portability reasons, and similarly armv7 for arm before armv6 etc.
 

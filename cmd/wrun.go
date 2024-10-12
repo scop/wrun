@@ -152,7 +152,6 @@ func (w *Wrun) Download(resp *http.Response, dest io.Writer, hsh hash.Hash, expe
 		} else {
 			digestErr = fmt.Errorf("digest mismatch: expected %x, got %x", expectedDigest, gotDigest)
 		}
-
 	}
 	var closeErr error
 	if c, ok := dest.(io.Closer); ok {
@@ -183,5 +182,4 @@ func (w *Wrun) SetUpTempfile(url, dir string) (f *os.File, cleanup func(), err e
 		}
 	}
 	return
-
 }

@@ -119,7 +119,7 @@ func getPyPIProject(w *Wrun, project string) (*pypi.SimpleProject, error) {
 	return &p, nil
 }
 
-func runGeneratePyPIProject(w *Wrun, project, tool string, version string) error {
+func runGeneratePyPIProject(w *Wrun, project, tool, version string) error {
 	p, err := getPyPIProject(w, project)
 	if err != nil {
 		return err

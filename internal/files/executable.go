@@ -21,5 +21,5 @@ import (
 )
 
 func HasExecutablePerms(fi os.FileInfo) bool {
-	return fi.Mode().Perm()&0111 != 0
+	return fi.Mode().Perm()&0o111 != 0
 }
