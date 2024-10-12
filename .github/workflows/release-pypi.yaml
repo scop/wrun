@@ -30,11 +30,6 @@ jobs:
           ls wheelhouse
       - name: Build wheels
         env:
-          # With 0.2.1 binaries on macos-13 builder out of the box:
-          # > delocate.libsana.DelocationError: Library dependencies do not satisfy target MacOS version 10.9:
-          # > .../wrun_py-0.2.1.post1.data/scripts/wrun has a minimum target of 10.13
-          # https://cibuildwheel.pypa.io/en/stable/faq/#macos-library-dependencies-do-not-satisfy-target-macos
-          CIBW_ENVIRONMENT: MACOSX_DEPLOYMENT_TARGET=10.13
           # cibuildwheel has issues building with Python 3.8 on macos-latest (= -14 at time of writing) arm64:
           # https://github.com/pypa/cibuildwheel/issues/1278 (similar, maybe)
           CIBW_SKIP: cp38-macosx_arm64
