@@ -1,8 +1,6 @@
 module github.com/scop/wrun
 
-go 1.22.0
-
-toolchain go1.22.5
+go 1.23
 
 require (
 	github.com/aquasecurity/go-pep440-version v0.0.0-20210121094942-22b2f8951d46
