@@ -19,6 +19,7 @@ package hashes
 import (
 	"crypto"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"strings"
 )
@@ -73,7 +74,7 @@ func ParseHashFragment(s string) (crypto.Hash, []byte, error) {
 	}
 	name, hexHash, found := strings.Cut(s, "-")
 	if name == "" || hexHash == "" || !found {
-		return 0, nil, fmt.Errorf("invalid fragment format, use hashAlgo-hexDigest")
+		return 0, nil, errors.New("invalid fragment format, use hashAlgo-hexDigest")
 	}
 	digest, err := hex.DecodeString(hexHash)
 	if err != nil {
