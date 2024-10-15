@@ -21,7 +21,7 @@ jobs:
         with:
           go-version-file: go.mod
           check-latest: true
-      - name: Install dependencies
+      - name: Install dependencies for golangci-lint
         run: |
           go build -v .
       - name: Run lefthook pre-commit

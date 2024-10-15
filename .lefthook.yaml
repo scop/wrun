@@ -5,25 +5,25 @@ pre-commit:
       glob: "*.{json,jsonc,md}"
       env:
         WRUN_ARGS_FILE: .lefthook/wrun-args-dprint.txt
-      run: wrun -- fmt {staged_files}
+      run: go run . -- fmt {staged_files}
     golangci-lint:
       priority: 1
       glob: "*.go"
       env:
         WRUN_ARGS_FILE: .lefthook/wrun-args-golangci-lint.txt
-      run: wrun -- run
+      run: go run . -- run
     ruff:
       priority: 1
       glob: "*.{py,pyi}"
       env:
         WRUN_ARGS_FILE: .lefthook/wrun-args-ruff.txt
-      run: wrun -- check {staged_files}
+      run: go run . -- check {staged_files}
     ruff-format:
       priority: 1
       glob: "*.{py,pyi}"
       env:
         WRUN_ARGS_FILE: .lefthook/wrun-args-ruff.txt
-      run: wrun -- format {staged_files}
+      run: go run . -- format {staged_files}
     check for changes made by hooks:
       run: |-
         if test -n "${CI-}"; then
