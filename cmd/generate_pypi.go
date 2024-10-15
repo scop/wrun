@@ -191,10 +191,10 @@ func runGeneratePyPIProject(w *Wrun, project, tool, version string) error {
 		}
 		hsh.Reset()
 
-		fmt.Printf("--url %s=%s#sha256-%s\n", osArch, pf.URL, pf.Hashes.SHA256)
+		fmt.Printf("--url=%s=%s#sha256-%s\n", osArch, pf.URL, pf.Hashes.SHA256)
 	}
 	for _, ep := range generateExePathArgs(exePaths) {
-		fmt.Printf("--archive-exe-path %s\n", ep)
+		fmt.Printf("--archive-exe-path=%s\n", ep)
 	}
 
 	return nil

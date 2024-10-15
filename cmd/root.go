@@ -17,6 +17,7 @@
 package cmd
 
 import (
+	"bufio"
 	"crypto"
 	"encoding/hex"
 	"encoding/json"
@@ -102,6 +103,7 @@ const (
 	cacheHomeEnvVar           = "WRUN_CACHE_HOME"
 	verboseEnvVar             = "WRUN_VERBOSE"
 	osArchEnvVar              = "WRUN_OS_ARCH"
+	argsFileEnvVar            = "WRUN_ARGS_FILE"
 	cacheVersion              = "v2"
 	cacheDirDigestPlaceholder = "_"
 	defaultHTTPTimeout        = 5 * time.Minute
@@ -210,10 +212,11 @@ The first non-flag argument or -- terminates %s arguments.
 Remaining ones are passed to the downloaded executable.
 
 Environment variables:
+- %s: path to file containing command line arguments to prepend, one per line
 - %s: cache location, defaults to wrun subdir in the user's cache dir
 - %s: override OS/arch for matching
 - %s: output verbosity, false decreases, true increases
-`, w.ProgName, w.ProgName, cacheHomeEnvVar, osArchEnvVar, verboseEnvVar),
+`, w.ProgName, w.ProgName, argsFileEnvVar, cacheHomeEnvVar, osArchEnvVar, verboseEnvVar),
 		Args:    cobra.ArbitraryArgs,
 		Version: versionString,
 		PersistentPreRun: func(_ *cobra.Command, _ []string) {
@@ -228,6 +231,12 @@ Environment variables:
 			rc = runRoot(w, cfg, args)
 		},
 	}
+
+	if err := prepareArgs(w); err != nil {
+		w.LogError("prepare arguments: %v", err)
+		os.Exit(esError)
+	}
+	w.LogInfo("arguments: %v", os.Args)
 
 	fs := rootCmd.Flags()
 	fs.BoolVarP(&cfg.dryRun, "dry-run", "n", false, "dry run, skip execution (but do download/set up cache)")
@@ -455,4 +464,34 @@ func runRoot(w *Wrun, cfg *rootCmdConfig, args []string) exitStatus {
 	}
 
 	return esSuccess
+}
+
+// prepareArgs preprocesses command line arguments, prepending args from WRUN_ARGS_FILE to them.
+func prepareArgs(w *Wrun) error {
+	if os.Getenv(argsFileEnvVar) != "" {
+		if f, err := os.Open(os.Getenv(argsFileEnvVar)); err == nil {
+			defer func() {
+				if err = f.Close(); err != nil {
+					w.LogWarn("close %s: %v", f.Name, err)
+				}
+			}()
+			// Prepend args instead of appending,
+			// usual use case being having --url and --archive-exe-paths in the file,
+			// generated using the generate sub command.
+			// If we appended, would have to do it before a --, if any.
+			args := make([]string, 0, len(os.Args)+30)
+			args = append(args, os.Args[0])
+			s := bufio.NewScanner(bufio.NewReader(f))
+			for s.Scan() {
+				if arg := strings.TrimSpace(s.Text()); arg != "" && !strings.HasPrefix(arg, "#") {
+					args = append(args, arg)
+				}
+			}
+			args = append(args, os.Args[1:]...)
+			os.Args = args
+		} else {
+			return err
+		}
+	}
+	return nil
 }

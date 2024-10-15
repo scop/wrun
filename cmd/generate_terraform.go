@@ -129,12 +129,12 @@ func runGenerateTerraform(w *Wrun, version string) error {
 			if exePath != "" {
 				exePaths[osArch] = exePath
 			}
-			fmt.Printf("--url %s=%s#sha256-%x\n", osArch, u, digest)
+			fmt.Printf("--url=%s=%s#sha256-%x\n", osArch, u, digest)
 		}
 	}
 
 	for _, ep := range generateExePathArgs(exePaths) {
-		fmt.Printf("--archive-exe-path %s\n", ep)
+		fmt.Printf("--archive-exe-path=%s\n", ep)
 	}
 
 	return nil
