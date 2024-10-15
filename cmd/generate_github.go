@@ -253,11 +253,11 @@ func runGenerateGitHubProject(w *Wrun, owner, project, tool, version string, osA
 		if exePath != "" {
 			exePaths[osArch] = exePath
 		}
-		fmt.Printf("--url %s=%s#sha256-%x\n", osArch, asset.BrowserDownloadURL, digest)
+		fmt.Printf("--url=%s=%s#sha256-%x\n", osArch, asset.BrowserDownloadURL, digest)
 	}
 
 	for _, ep := range generateExePathArgs(exePaths) {
-		fmt.Printf("--archive-exe-path %s\n", ep)
+		fmt.Printf("--archive-exe-path=%s\n", ep)
 	}
 
 	return nil

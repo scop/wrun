@@ -22,6 +22,7 @@ The first non-flag argument or -- terminates wrun arguments.
 Remaining ones are passed to the downloaded executable.
 
 Environment variables:
+- WRUN_ARGS_FILE: path to file containing command line arguments to prepend, one per line
 - WRUN_CACHE_HOME: cache location, defaults to wrun subdir in the user's cache dir
 - WRUN_OS_ARCH: override OS/arch for matching
 - WRUN_VERBOSE: output verbosity, false decreases, true increases
