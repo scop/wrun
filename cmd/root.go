@@ -146,18 +146,19 @@ type rootCmdConfig struct {
 }
 
 func parseFlags(cfg *rootCmdConfig, urlArgs, exePathArgs []string) error {
+	const matchAll = "*/*"
 	for _, s := range urlArgs {
 		pattern, ur, found := strings.Cut(s, "=")
 		if found {
 			if strings.Contains(pattern, "://") {
 				ur = s
-				pattern = "*/*"
+				pattern = matchAll
 			} else if pattern == "" {
-				pattern = "*/*"
+				pattern = matchAll
 			}
 		} else {
 			ur = pattern
-			pattern = "*/*"
+			pattern = matchAll
 		}
 		u, err := url.Parse(ur)
 		if err != nil {
@@ -170,14 +171,14 @@ func parseFlags(cfg *rootCmdConfig, urlArgs, exePathArgs []string) error {
 		pattern, pth, found := strings.Cut(s, "=")
 		if found {
 			if pattern == "" {
-				pattern = "*/*"
+				pattern = matchAll
 			}
 			if pth == "" {
 				return fmt.Errorf("missing path in %q", s)
 			}
 		} else {
 			pth = pattern
-			pattern = "*/*"
+			pattern = matchAll
 		}
 		cfg.archiveExePathMatches = append(cfg.archiveExePathMatches, archiveExePathMatch{pattern, pth})
 	}
