@@ -26,5 +26,6 @@ func generateShellcheckCommand(w *Wrun) *cobra.Command {
 	osArchOverrideREs := map[string]*regexp.Regexp{
 		"windows/amd64": regexp.MustCompile(`/shellcheck-v[0-9.]+\.zip$`),
 	}
+
 	return generateGitHubProjectCommand(w, "koalaman", "shellcheck", "shellcheck", osArchOverrideREs)
 }

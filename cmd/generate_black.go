@@ -28,5 +28,6 @@ func generateBlackCommand(w *Wrun) *cobra.Command {
 		"linux/amd64":   regexp.MustCompile(`_linux$`),
 		"windows/amd64": regexp.MustCompile(`_windows\.exe$`),
 	}
+
 	return generateGitHubProjectCommand(w, "psf", "black", "black", overrides)
 }

@@ -44,6 +44,7 @@ func NewWrun(progName string) *Wrun {
 		v, _ := strconv.ParseBool(s)
 		w.verbose = &v
 	}
+
 	return w
 }
 
@@ -60,6 +61,7 @@ var levelFormat = fmt.Sprintf("%%%-ds", len(levelInfo))
 
 func (w *Wrun) logFormat(lvl level, format string, args ...any) string {
 	s := fmt.Sprintf(w.ProgName+": "+fmt.Sprintf(levelFormat, lvl)+": "+format, args...)
+
 	return s
 }
 
@@ -112,8 +114,10 @@ func (w *Wrun) HTTPGet(url string, headers ...string) (*http.Response, error) {
 		if err = resp.Body.Close(); err != nil {
 			w.LogWarn("close HTTP response: %v", err)
 		}
+
 		return nil, fmt.Errorf("%s %s: HTTP status %s", req.Method, url, resp.Status)
 	}
+
 	return resp, nil
 }
 
@@ -181,5 +185,6 @@ func (w *Wrun) SetUpTempfile(url, dir string) (f *os.File, cleanup func(), err e
 			w.LogWarn("remove tempfile: %v", rmErr)
 		}
 	}
+
 	return
 }

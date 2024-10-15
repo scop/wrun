@@ -53,11 +53,13 @@ func (c *Checksums) UnmarshalText(text []byte) error {
 		ix := strings.IndexAny(line, separators)
 		if ix == -1 || ix%2 == 1 {
 			c.InvalidLines++
+
 			continue
 		}
 		digest, err := hex.DecodeString(line[:ix])
 		if err != nil {
 			c.InvalidLines++
+
 			continue
 		}
 		entry := Entry{
@@ -72,6 +74,7 @@ func (c *Checksums) UnmarshalText(text []byte) error {
 		}
 		if entry.Filename == "" {
 			c.InvalidLines++
+
 			continue
 		}
 		c.Entries = append(c.Entries, entry)
@@ -79,6 +82,7 @@ func (c *Checksums) UnmarshalText(text []byte) error {
 	if origN == len(c.Entries) {
 		return errors.New("no properly formatted checksum lines found")
 	}
+
 	return nil
 }
 
@@ -94,6 +98,7 @@ func (c *Checksums) MarshalText() ([]byte, error) {
 		_, _ = buf.WriteString(entry.Filename)
 		_ = buf.WriteByte('\n')
 	}
+
 	return buf.Bytes(), nil
 }
 
@@ -104,5 +109,6 @@ func (c *Checksums) Get(filename string) []Entry {
 			got = append(got, entry)
 		}
 	}
+
 	return got
 }

@@ -47,6 +47,7 @@ func generateCommand(w *Wrun) *cobra.Command {
 		generateShellcheckCommand(w),
 		generateTerraformCommand(w),
 	)
+
 	return genCmd
 }
 
@@ -63,6 +64,7 @@ func processGenerateAsset(w *Wrun, ur, tool string, hsh hash.Hash, csums checksu
 
 	if err = w.Download(resp, tmpf, hsh, nil); err != nil {
 		cleanUpTempFile()
+
 		return nil, "", fmt.Errorf("download: %w", err)
 	}
 	digest = hsh.Sum(nil)
@@ -91,6 +93,7 @@ func processGenerateAsset(w *Wrun, ur, tool string, hsh hash.Hash, csums checksu
 					if bytes.Equal(ce.Digest, digest) {
 						w.LogInfo("digest match for %q: %x", ur, ce.Digest)
 						matchFound = true
+
 						break
 					}
 					w.LogInfo("digest candidate for %q mismatch: expected %x, have %x", ur, ce.Digest, digest)
@@ -127,11 +130,13 @@ func findToolInArchive(filename, toolExe string) (path string, err error) {
 				return archiver.ErrStopWalk
 			}
 		}
+
 		return nil
 	})
 	if err != nil {
 		err = fmt.Errorf("walk archive: %w", err)
 	}
+
 	return
 }
 
@@ -157,5 +162,6 @@ func generateExePathArgs(osArchExePaths map[string]string) []string {
 		}
 	}
 	slices.Sort(ret) // for stable output between runs
+
 	return ret
 }

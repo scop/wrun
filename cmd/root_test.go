@@ -31,6 +31,7 @@ func mustParseURL(t *testing.T, s string) *url.URL {
 	t.Helper()
 	ur, err := url.Parse(s)
 	require.NoError(t, err)
+
 	return ur
 }
 

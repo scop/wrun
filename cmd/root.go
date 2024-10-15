@@ -61,9 +61,11 @@ func init() {
 				for _, bs = range bi.Settings {
 					if bs.Key == "GOARCH" {
 						vs = append(vs, "/", bs.Value)
+
 						break
 					}
 				}
+
 				break
 			}
 		}
@@ -73,12 +75,14 @@ func init() {
 				for _, bs = range bi.Settings {
 					if bs.Key == "vcs.revision" {
 						vs = append(vs, " rev ", bs.Value)
+
 						break
 					}
 				}
 				for _, bs = range bi.Settings {
 					if bs.Key == "vcs.time" {
 						vs = append(vs, " dated ", bs.Value)
+
 						break
 					}
 				}
@@ -87,9 +91,11 @@ func init() {
 						if dirty, err := strconv.ParseBool(bs.Value); err == nil && dirty {
 							vs = append(vs, " (dirty)")
 						}
+
 						break
 					}
 				}
+
 				break
 			}
 		}
@@ -126,6 +132,7 @@ func urlDir(u *url.URL, h crypto.Hash, digest []byte) string {
 	} else {
 		segs = append(segs, hashes.HashName(h)+"-"+hex.EncodeToString(digest))
 	}
+
 	return filepath.Join(segs...)
 }
 
@@ -271,6 +278,7 @@ func selectURL(s string, matches []urlMatch) (*url.URL, error) {
 			return m.url, nil
 		}
 	}
+
 	return nil, nil
 }
 
@@ -287,9 +295,11 @@ func selectArchiveExePath(s string, matches []archiveExePathMatch) (string, erro
 			if strings.HasPrefix(s, "windows/") && strings.HasPrefix(m.pattern, "*/") && filepath.Ext(exePath) == "" {
 				exePath += ".exe"
 			}
+
 			return exePath, nil
 		}
 	}
+
 	return "", nil
 }
 
@@ -304,6 +314,7 @@ func resolveCacheDir() (string, error) {
 		cacheDir = filepath.Join(cacheDir, "wrun")
 	}
 	cacheDir = filepath.Join(cacheDir, cacheVersion)
+
 	return cacheDir, nil
 }
 
@@ -321,10 +332,12 @@ func runRoot(w *Wrun, cfg *rootCmdConfig, args []string) exitStatus {
 	ur, err := selectURL(osArch, cfg.urlMatches)
 	if err != nil {
 		w.LogError("select URL: %v", err)
+
 		return esUsage // bad pattern
 	}
 	if ur == nil {
 		w.LogError("no URL available for OS/architecture %s", osArch)
+
 		return esError
 	}
 	w.LogInfo("URL: %s", ur)
@@ -332,6 +345,7 @@ func runRoot(w *Wrun, cfg *rootCmdConfig, args []string) exitStatus {
 	archiveExePath, err := selectArchiveExePath(osArch, cfg.archiveExePathMatches)
 	if err != nil {
 		w.LogError("select archive exe path: %v", err)
+
 		return esUsage // bad pattern
 	}
 
@@ -340,6 +354,7 @@ func runRoot(w *Wrun, cfg *rootCmdConfig, args []string) exitStatus {
 	hshType, expectedDigest, err := hashes.ParseHashFragment(ur.Fragment)
 	if err != nil {
 		w.LogError("parse hash fragment: %v", err)
+
 		return esError
 	}
 
@@ -349,6 +364,7 @@ func runRoot(w *Wrun, cfg *rootCmdConfig, args []string) exitStatus {
 	cacheDir, err = resolveCacheDir()
 	if err != nil {
 		w.LogError("cache setup: %v", err)
+
 		return esError
 	}
 	// Here's hoping we don't hit path too long errors with this implementation anywhere
@@ -361,6 +377,7 @@ func runRoot(w *Wrun, cfg *rootCmdConfig, args []string) exitStatus {
 	err = os.MkdirAll(filepath.Dir(exePath), 0o777)
 	if err != nil {
 		w.LogError("cache setup: %v", err)
+
 		return esError
 	}
 	w.LogInfo("path to executable: %s", exePath)
@@ -378,9 +395,11 @@ func runRoot(w *Wrun, cfg *rootCmdConfig, args []string) exitStatus {
 			} else if !fi.Mode().IsRegular() {
 				return fmt.Errorf("not a regular file: %v", exe)
 			}
+
 			return nil
 		}
 		w.LogInfo("exec cached: %v", exeArgs)
+
 		return syscall.Exec(exe, exeArgs, os.Environ())
 	}
 
@@ -401,6 +420,7 @@ func runRoot(w *Wrun, cfg *rootCmdConfig, args []string) exitStatus {
 	tmpf, cleanUpTempFile, err := w.SetUpTempfile(filepath.Base(dlPath), filepath.Dir(dlPath))
 	if err != nil {
 		w.LogError("set up tempfile: %v", err)
+
 		return esError
 	}
 	defer cleanUpTempFile() // Note: defer does not happen if we exec successfully
@@ -410,6 +430,7 @@ func runRoot(w *Wrun, cfg *rootCmdConfig, args []string) exitStatus {
 	resp, err := w.HTTPGet(ur.String())
 	if err != nil {
 		w.LogError("download: %v", err)
+
 		return esError
 	}
 
@@ -424,6 +445,7 @@ func runRoot(w *Wrun, cfg *rootCmdConfig, args []string) exitStatus {
 	}
 	if err = w.Download(resp, tmpf, hsh, expectedDigest); err != nil {
 		w.LogError("download: %v", err)
+
 		return esError
 	}
 
@@ -432,16 +454,19 @@ func runRoot(w *Wrun, cfg *rootCmdConfig, args []string) exitStatus {
 	if archiveExePath == "" {
 		if err = os.Rename(tmpf.Name(), exePath); err != nil {
 			w.LogError("rename tempfile: %v", err)
+
 			return esError
 		}
 	} else {
 		if err = archiver.Unarchive(tmpf.Name(), dlPath); err != nil {
 			w.LogError("unarchive: %v", err)
+
 			return esError
 		}
 	}
 	if err = files.MakeExecutable(exePath); err != nil {
 		w.LogError("make executable: %v", err)
+
 		return esError
 	}
 
@@ -459,6 +484,7 @@ func runRoot(w *Wrun, cfg *rootCmdConfig, args []string) exitStatus {
 	cleanUpTempFile() // Note: deferred cleanup does not happen if we exec successfully
 	if err = exec(exePath); err != nil {
 		w.LogError("exec: %v", err)
+
 		return esError
 	} else if !cfg.dryRun {
 		w.LogBug("unreachable; successful non-dry-run exec")
@@ -494,5 +520,6 @@ func prepareArgs(w *Wrun) error {
 			return err
 		}
 	}
+
 	return nil
 }

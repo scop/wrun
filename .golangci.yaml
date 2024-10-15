@@ -21,7 +21,6 @@ linters:
     - nakedret
     - nestif
     - nilnil
-    - nlreturn
     - noctx
     - nonamedreturns
     - paralleltest

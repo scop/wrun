@@ -97,6 +97,7 @@ func gitHubVersionCompleter(w *Wrun, owner, project string) func(cmd *cobra.Comm
 				ret = append(ret, r.TagName)
 			}
 		}
+
 		return ret, cobra.ShellCompDirectiveNoFileComp
 	}
 }
@@ -140,6 +141,7 @@ func releasesFromGitHubAPI(w *Wrun, owner, project string) ([]github.Release, er
 	if err != nil {
 		return nil, fmt.Errorf("decode %s release info: %w", url, err)
 	}
+
 	return rels, nil
 }
 
@@ -157,6 +159,7 @@ func releaseFromGitHubAPI(w *Wrun, owner, project, version string) (github.Relea
 	if err != nil {
 		return github.Release{}, fmt.Errorf("decode %s release info: %w", url, err)
 	}
+
 	return rel, nil
 }
 
@@ -173,6 +176,7 @@ func preferredRelease(rels []github.Release) github.Release {
 		if !r.Prerelease {
 			relFound = true
 			rel = r
+
 			break
 		}
 		if !relFound { // Keep earlier seen prerelease
@@ -184,6 +188,7 @@ func preferredRelease(rels []github.Release) github.Release {
 		// Fall back to first
 		rel = rels[0]
 	}
+
 	return rel
 }
 

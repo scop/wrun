@@ -52,5 +52,6 @@ func (r Release) PreferredOsArchReleaseAssets(osArchOverrideREs map[string]*rege
 	}
 
 	osArchAssets, checksumAssets, otherAssets = files.Categorize(urlAssets, osArchOverrideREs)
+
 	return
 }

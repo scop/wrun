@@ -59,6 +59,7 @@ func (y *Yanked) UnmarshalJSON(data []byte) error {
 	} else {
 		return fmt.Errorf("invalid type: %T", raw)
 	}
+
 	return nil
 }
 
@@ -70,6 +71,7 @@ type Filename struct {
 func NewFilename(filename string) Filename {
 	f := Filename{string: filename}
 	_ = f.Info.UnmarshalText([]byte(filename))
+
 	return f
 }
 
@@ -79,6 +81,7 @@ func (f *Filename) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	*f = NewFilename(s)
+
 	return nil
 }
 
@@ -152,6 +155,7 @@ func (f *FilenameInfo) UnmarshalText(data []byte) error {
 			}
 		}
 		*f = info
+
 		return nil
 	}
 	if m := sdistFilenameRE.FindStringSubmatch(string(data)); m != nil {
@@ -172,8 +176,10 @@ func (f *FilenameInfo) UnmarshalText(data []byte) error {
 			}
 		}
 		*f = info
+
 		return nil
 	}
+
 	return fmt.Errorf("unparseable filename: %q", string(data))
 }
 
@@ -197,6 +203,7 @@ func (p SimpleProject) ValidVersions() []pep440.Version {
 	slices.SortFunc(pepVersions, func(a, b pep440.Version) int {
 		return -a.Compare(b)
 	})
+
 	return pepVersions
 }
 
@@ -253,5 +260,6 @@ func (p SimpleProject) PreferredOsArchSimpleFiles(version string) (osArchPreferr
 			others = append(others, file)
 		}
 	}
+
 	return osArchPreferred, others
 }

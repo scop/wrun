@@ -80,6 +80,7 @@ func pypiVersionCompleter(w *Wrun) func(cmd *cobra.Command, args []string, toCom
 				ret = append(ret, vs)
 			}
 		}
+
 		return ret, cobra.ShellCompDirectiveNoFileComp
 	}
 }
@@ -100,6 +101,7 @@ func preferredVersion(p pypi.SimpleProject) string {
 	if !versionFound {
 		v = versions[0]
 	}
+
 	return v.String()
 }
 
@@ -117,6 +119,7 @@ func getPyPIProject(w *Wrun, project string) (*pypi.SimpleProject, error) {
 	if err != nil {
 		return nil, fmt.Errorf("unmarshal project from %s: %w", url, err)
 	}
+
 	return &p, nil
 }
 
@@ -151,10 +154,12 @@ func runGeneratePyPIProject(w *Wrun, project, tool, version string) error {
 		pf := osArchFiles[osArch]
 		if pf.URL == "" {
 			w.LogWarn("missing URL for %q, ignoring", pf.Filename)
+
 			continue
 		}
 		if pf.Hashes.SHA256 == "" {
 			w.LogWarn("missing SHA-256 hash for %q, ignoring", pf.Filename)
+
 			continue
 		}
 		expectedDigest, err := hex.DecodeString(pf.Hashes.SHA256)
@@ -173,6 +178,7 @@ func runGeneratePyPIProject(w *Wrun, project, tool, version string) error {
 		}
 		if err = w.Download(resp, tmpf, hsh, expectedDigest); err != nil {
 			cleanupTempfile()
+
 			return fmt.Errorf("download: %w", err)
 		}
 

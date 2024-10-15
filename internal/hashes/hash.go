@@ -50,6 +50,7 @@ func HashName(h crypto.Hash) string {
 	hn = strings.ToLower(hn)
 	hn = strings.ReplaceAll(hn, "-", "")
 	hn = strings.ReplaceAll(hn, "/", "")
+
 	return hn
 }
 
@@ -62,6 +63,7 @@ func HashByName(name string) (crypto.Hash, error) {
 	if !hashType.Available() {
 		return 0, fmt.Errorf("hash %s not available", hashType)
 	}
+
 	return hashType, nil
 }
 
@@ -84,5 +86,6 @@ func ParseHashFragment(s string) (crypto.Hash, []byte, error) {
 	if err != nil {
 		return 0, nil, err
 	}
+
 	return hashType, digest, nil
 }
