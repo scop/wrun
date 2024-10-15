@@ -41,3 +41,10 @@ linters-settings:
   nolintlint:
     require-explanation: true
     require-specific: true
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+
+output:
+  uniq-by-line: true
