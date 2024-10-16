@@ -2,7 +2,7 @@ pre-commit:
   commands:
     dprint:
       priority: 1
-      glob: "*.{json,jsonc,md}"
+      glob: "*.{json,jsonc,md,yaml}"
       env:
         WRUN_ARGS_FILE: .lefthook/wrun-args-dprint.txt
       run: go run . -- fmt {staged_files}
