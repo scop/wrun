@@ -34,3 +34,17 @@ pre-commit:
         rc=$?
         test $rc -eq 0 || echo "error: found files modified by hooks" >&2
         exit $rc
+
+update-tools:
+  commands:
+    dprint:
+      priority: 1
+      run: go run . generate github dprint >.lefthook/wrun-args-dprint.txt
+    dprint-plugins:
+      env:
+        WRUN_ARGS_FILE: .lefthook/wrun-args-dprint.txt
+      run: go run . -- config update
+    golangci-lint:
+      run: go run . generate github golangci golangci-lint >.lefthook/wrun-args-golangci-lint.txt
+    ruff:
+      run: go run . generate github astral-sh ruff >.lefthook/wrun-args-ruff.txt
