@@ -41,6 +41,7 @@ func generateArbitraryGitHubProjectCommand(w *Wrun) *cobra.Command {
 		Example: strings.TrimSpace("" +
 			w.ProgName + " generate github aquasecurity trivy\n" +
 			w.ProgName + " generate github astral-sh ruff\n" +
+			w.ProgName + " generate github astral-sh uv --tool uvx\n" +
 			w.ProgName + " generate github daveshanley vacuum\n" +
 			w.ProgName + " generate github dprint\n" +
 			w.ProgName + " generate github golangci golangci-lint\n" +
