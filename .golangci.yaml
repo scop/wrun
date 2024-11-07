@@ -19,7 +19,6 @@ linters:
     - gosec
     - lll
     - mnd
-    - nakedret
     - nestif
     - nilnil
     - noctx

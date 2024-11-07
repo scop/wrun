@@ -149,5 +149,5 @@ func Categorize[T any](fileAssets map[string]T, overrides map[string]*regexp.Reg
 		}
 	}
 
-	return
+	return osArchPreferred, checksums, others
 }
