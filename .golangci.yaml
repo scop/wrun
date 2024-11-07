@@ -3,7 +3,9 @@ linters:
   disable:
     - exportloopref # replaced by copyloopvar
     - execinquery # deprecated
+    - godox # unwanted
     - gomnd # replaced by mnd
+    - tagliatelle # only upstream defined schemas in use
     # TODO
     - cyclop
     - depguard
@@ -14,7 +16,6 @@ linters:
     - gochecknoglobals
     - gochecknoinits
     - gocognit
-    - godox
     - gosec
     - lll
     - mnd
@@ -24,7 +25,6 @@ linters:
     - noctx
     - nonamedreturns
     - paralleltest
-    - tagliatelle
     - testpackage
     - varnamelen
     - wrapcheck
