@@ -3,6 +3,15 @@
 `wrun` downloads, caches, and runs an executable,
 with the same one command for multiple OS/architectures.
 
+The primary use case for what it was created is to be able to use a single static command line to download
+and invoke executables in git pre-commit hooks, without OS or architecture conditionals.
+
+Executables to download can be standalone as-is, or inside archives.
+Downloads are cached locally, and optionally checked against checksums on download.
+
+<details>
+<summary>Detailed usage message</summary>
+
 ```shellsession
 $ wrun --help
 wrun downloads, caches, and runs executables.
@@ -46,6 +55,8 @@ Flags:
 
 Use "wrun [command] --help" for more information about a command.
 ```
+
+</details>
 
 ## Installation
 
