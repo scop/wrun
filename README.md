@@ -118,19 +118,22 @@ for how it runs wrun in the lefthook managed git pre-commit hook, and its
 [`.github/workflows/check.yml`](https://github.com/scop/vault-token-helper-secret-tool/blob/main/.github/workflows/check.yaml)
 for how it installs wrun and installs and runs lefthook in CI.
 
-## Usage with pre-commit
+## Usage with [pre-commit](https://pre-commit.com)
 
 See `.pre-commit-config.yaml` examples in
 [`.pre-commit-hooks.yaml`](.pre-commit-hooks.yaml).
 
-## Usage in CI
+[pre-commit.ci](https://pre-commit.ci) is not supported, because it
+[disallows network access at runtime](https://github.com/pre-commit-ci/issues/issues/196#issuecomment-1810937079).
+
+## Caching
 
 Cache resides by default in the `wrun` subdirectory of
 the [user's cache directory](https://pkg.go.dev/os#UserCacheDir).
 `$WRUN_CACHE_HOME` overrides it.
 
-[pre-commit.ci](https://pre-commit.ci) is not supported, because it
-[disallows network access at runtime](https://github.com/pre-commit-ci/issues/issues/196#issuecomment-1810937079).
+Cache the cache dir in CI to avoid unnecessary executable downloads.
+A GitHub actions example is in [this repository's workflow configs](https://github.com/scop/wrun/blob/9438206aac358acf9f13fc8c72cf8297272dfcd3/.github/workflows/check.yaml#L14-L19).
 
 ## Generating command line arguments
 
