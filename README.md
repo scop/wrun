@@ -145,6 +145,45 @@ about asset filenames regarding their OS and architecture.
 Some additional tool specific generators are available as well for tools that are not served by the generic GitHub and PyPI generators.
 See `wrun generate --help` for more information.
 
+<details>
+<summary>`generate` output excerpts</summary>
+
+```shellsession
+$ wrun generate --help
+[...]
+Available Commands:
+  black       generate wrun command line arguments for black
+  github      generate wrun command line arguments for tool in GitHub project asset
+  pypi        generate wrun command line arguments for tool in PyPI project wrapper wheel
+  shellcheck  generate wrun command line arguments for shellcheck
+  terraform   generate wrun command line arguments for terraform
+[...]
+
+$ wrun generate github --help
+[...]
+Examples:
+wrun generate github aquasecurity trivy
+wrun generate github astral-sh ruff
+wrun generate github astral-sh uv --tool uvx
+wrun generate github daveshanley vacuum
+wrun generate github dprint
+wrun generate github golangci golangci-lint
+wrun generate github hadolint
+wrun generate github mvdan sh --tool shfmt
+wrun generate github opentofu --tool tofu
+[...]
+
+$ wrun generate pypi --help
+[...]
+Examples:
+wrun generate pypi committed
+wrun generate pypi ruff
+wrun generate pypi typos
+[...]
+```
+
+</details>
+
 ### Automating executable updates
 
 By default, `generate` generates command line arguments pointing to the version of the executable in question that it considers the latest.
