@@ -23,5 +23,6 @@ jobs:
         with:
           token: ${{ secrets.TOOLS_UPDATE_TOKEN }}
           push-to-fork: bot-${{ github.repository }}
+          delete-branch: true
           commit-message: "chore: automated tools update"
           title: "chore: tooling updates"
