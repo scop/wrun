@@ -104,6 +104,20 @@ For example:
 
 - `#sha256-2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9842`
 
+## Usage with [lefthook](https://github.com/evilmartians/lefthook)
+
+See [`.lefthook.yaml` in this repo](.lefthook.yaml) for an example.
+
+Note that because in this repository we want to dogfood the latest wrun itself,
+we invoke `go run .` instead of `wrun`.
+
+Another example is in
+[scop/vault-token-helper-secret-tool](https://github.com/scop/vault-token-helper-secret-tool).
+See [its `.lefthook.yaml`](https://github.com/scop/vault-token-helper-secret-tool/blob/main/.lefthook.yaml)
+for how it runs wrun in the lefthook managed git pre-commit hook, and its
+[`.github/workflows/check.yml`](https://github.com/scop/vault-token-helper-secret-tool/blob/main/.github/workflows/check.yaml)
+for how it installs wrun and installs and runs lefthook in CI.
+
 ## Usage with pre-commit
 
 See `.pre-commit-config.yaml` examples in
