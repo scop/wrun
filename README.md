@@ -7,7 +7,7 @@ The primary use case for what it was created is to be able to use a single stati
 and invoke executables in git pre-commit hooks, without OS or architecture conditionals.
 
 Executables to download can be standalone as-is, or inside archives.
-Downloads are cached locally, and optionally checked against checksums on download.
+Downloads are cached locally, and optionally [checksum verified](#download-digests) on download.
 
 <details>
 <summary>Detailed usage message</summary>
