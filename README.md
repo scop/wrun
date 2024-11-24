@@ -146,7 +146,7 @@ Some additional tool specific generators are available as well for tools that ar
 See `wrun generate --help` for more information.
 
 <details>
-<summary>`generate` output excerpts</summary>
+<summary>generate output excerpts</summary>
 
 ```shellsession
 $ wrun generate --help
