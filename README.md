@@ -145,6 +145,25 @@ about asset filenames regarding their OS and architecture.
 Some additional tool specific generators are available as well for tools that are not served by the generic GitHub and PyPI generators.
 See `wrun generate --help` for more information.
 
+### Automating executable updates
+
+By default, `generate` generates command line arguments pointing to the version of the executable in question that it considers the latest.
+This mode together with wrun's ability to load command line arguments from a file
+can be used to help with automating executable updates.
+
+An example of this is in this repo's [`.lefthook.yaml`](.lefthook.yaml) (lefthook part),
+and [`.github/workflows/updates-tools.html`](.github/workflows/updates-tools.html) (CI part).
+[#98](https://github.com/scop/wrun/pull/98) is an example automated pull request automatically created by this config.
+(See the note about `go run .` vs `wrun` in the [lefthook](#usage-with-lefthook) chapter above.)
+
+The PR creation part of that makes use of the [peter-evans/create-pull-request](https://github.com/peter-evans/create-pull-request)
+GitHub action, but naturally the `generate` subcommand could be run manully and its output copy pasted to appropriate configuration file,
+and the related PR created manually.
+
+[Renovate](https://docs.renovatebot.com) e.g. along with its [regex](https://docs.renovatebot.com/modules/manager/regex/) manager
+could be used to achieve the same. However, at time of writing (2024-12), [download digests](#download-digests) are not doable with it,
+and thus this approach, while possibly more convenient, is arguably inferior compared to the above.
+
 ## License
 
 SPDX-License-Identifier: Apache-2.0
