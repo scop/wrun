@@ -151,8 +151,8 @@ By default, `generate` generates command line arguments pointing to the version 
 This mode together with wrun's ability to load command line arguments from a file
 can be used to help with automating executable updates.
 
-An example of this is in this repo's [`.lefthook.yaml`](.lefthook.yaml) (lefthook part),
-and [`.github/workflows/updates-tools.html`](.github/workflows/updates-tools.html) (CI part).
+An example of this is in this repo's [`.lefthook.yaml`](.lefthook.yaml) (lefthook part, see the `update-tools` "hook" in it),
+and [`.github/workflows/update-tools.yaml`](.github/workflows/update-tools.yaml) (CI part).
 [#98](https://github.com/scop/wrun/pull/98) is an example automated pull request automatically created by this config.
 (See the note about `go run .` vs `wrun` in the [lefthook](#usage-with-lefthook) chapter above.)
 
