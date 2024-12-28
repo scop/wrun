@@ -1,5 +1,9 @@
 # wrun
 
+> [!NOTE]
+> As of 2024-12-28, wrun is deprecated and this project is archived, no future work or releases are planned.
+> The problem wrun set out to solve has multiple solutions already that work great, for example (but not limited to) [mise](https://mise.jdx.dev) and [aqua](https://aquaproj.github.io).
+
 `wrun` downloads, caches, and runs an executable,
 with the same one command for multiple OS/architectures.
 
